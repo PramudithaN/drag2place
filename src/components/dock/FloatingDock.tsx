@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp, Link2 } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
