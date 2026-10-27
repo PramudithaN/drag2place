@@ -26,8 +26,8 @@ export const InfiniteCanvas: React.FC = () => {
     loadBoard,
   } = useBoardStore();
 
-  const cards = getActiveCards();
-  const connections = getActiveConnections();
+  const cards = getActiveCards() || [];
+  const connections = getActiveConnections() || [];
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);

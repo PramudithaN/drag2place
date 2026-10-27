@@ -204,12 +204,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   getActiveCards: () => {
     const { allCards, activeBoardId } = get();
-    return allCards.filter((c) => c.boardId === activeBoardId);
+    return (allCards || []).filter((c) => c.boardId === activeBoardId);
   },
 
   getActiveConnections: () => {
     const { allConnections, activeBoardId } = get();
-    return allConnections.filter((c) => c.boardId === activeBoardId);
+    return (allConnections || []).filter((c) => c.boardId === activeBoardId);
   },
 
   switchBoard: (boardId: string) => {
