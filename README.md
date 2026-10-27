@@ -56,7 +56,7 @@ flowchart TD
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
 
 ### 3. Visual Card Suite
-- **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**.
+- **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**. Features clean, uncluttered placeholders and auto-focus so users can immediately begin writing without deleting sample text.
 - **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, priority badges, strikethrough transitions, and particle confetti upon task completion.
 - **Code Snippet & Terminal**: Dark obsidian terminal window with line numbers, syntax formatting, copy button, and built-in JSON prettifier and validator.
 - **Interactive Color Palettes**: Swatch cards with click-to-copy Hex/Pantone codes, real-time WCAG contrast ratio compliance badges (AA/AAA), and custom color addition.
@@ -87,10 +87,12 @@ flowchart TD
 - **Dual Notification System**: Native browser Push Notifications paired with an in-app slide-out alert drawer tracking active, overdue, and upcoming milestone reminders.
 
 ### 8. Cloud Synchronization and Local-First Resilience
-- **Offline-First Persistence**: Workspaces are saved to browser `localStorage` on every stroke, permitting complete offline functionality.
-- **Supabase Cloud Synchronization**: Seamless background push to PostgreSQL when authenticated.
-- **Human-Friendly Status**: Plain-language sync indicators avoiding database jargon.
-- **Profile Popover**: User avatar, email badge, and confirmation-guarded sign-out controls.
+- **Offline-First Persistence**: Workspaces are saved instantly to browser `localStorage` on every stroke, permitting complete offline functionality with zero UI latency.
+- **Offline Draft Indicator**: Amber pulsing badge in the header whenever logged out, alerting the user that edits are currently stored on the device only with a one-click *"Sign in to Sync"* action.
+- **Smart Re-Login Reconciliation**: When signing in, any offline edits or cards created while logged out are automatically merged and pushed to Supabase PostgreSQL without overwriting or losing work.
+- **Batched Cloud Sync**: Debounced 3-second background batch upserts (`supabase.from(...).upsert([...])`) that bundle entire workspace updates into single requests, preventing infinite loops, server strain, and unnecessary network traffic.
+- **Human-Friendly Status**: Plain-language sync indicators avoiding database jargon (live spinning sync indicator, serene emerald dot when synced).
+- **Profile Popover**: User avatar, email badge, cloud sync status, and confirmation-guarded sign-out controls.
 
 ### 9. High-Resolution Export and Backups
 - **2x Canvas PNG Capture**: Generate publication-ready PNG snapshots of visible canvas regions using `html-to-image`.
