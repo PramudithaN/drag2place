@@ -60,3 +60,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #BCB4A4;
 }
+
+/* Global Interactive Pointer: Ensure all buttons, clickable triggers, links, checkboxes, color chips, and selects show cursor: pointer */
+button,
+[role="button"],
+a,
+select,
+summary,
+input[type="checkbox"],
+input[type="radio"],
+input[type="color"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+label[for],
+.clickable {
+  cursor: pointer;
+}

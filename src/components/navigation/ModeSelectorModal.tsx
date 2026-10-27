@@ -17,7 +17,6 @@ import {
   Music,
   BookOpen,
   ArrowRight,
-  Sparkles,
 } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
@@ -110,8 +109,8 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         {/* Header */}
         <div className="flex items-start justify-between p-6 pb-4 border-b border-stone-200/70 dark:border-stone-800/70">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1.5">
-              <Sparkles size={12} /> Curated Headstarter Workspaces
+            <div className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1.5">
+              Curated Headstarter Workspaces
             </div>
             <h2 className="text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
               Select Your Workspace Mode
