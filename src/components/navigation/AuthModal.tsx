@@ -60,7 +60,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         if (error) throw error;
         if (data.session) {
           soundFx.playChime();
-          await useBoardStore.getState().syncWithSupabase();
+          await useBoardStore.getState().hydrateFromSupabase();
           onSuccess();
           onClose();
         } else {
@@ -72,7 +72,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         soundFx.playChime();
-        await useBoardStore.getState().syncWithSupabase();
+        await useBoardStore.getState().hydrateFromSupabase();
         onSuccess();
         onClose();
       }

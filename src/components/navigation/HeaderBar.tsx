@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
-import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown, Compass } from 'lucide-react';
+import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown, Compass, RefreshCw } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -15,7 +15,16 @@ import { ModeSelectorModal } from './ModeSelectorModal';
 import { soundFx } from '@/lib/sound';
 
 export const HeaderBar: React.FC = () => {
-  const { activeTool, cancelConnecting, connectingFromCardId, theme, toggleTheme, openConfirmModal } = useBoardStore();
+  const {
+    activeTool,
+    cancelConnecting,
+    connectingFromCardId,
+    theme,
+    toggleTheme,
+    openConfirmModal,
+    isSyncing,
+    hydrateFromSupabase,
+  } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -57,7 +66,7 @@ export const HeaderBar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Listen to live Supabase login / logout state
+  // Listen to live Supabase login / logout state and automatically sync
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -68,16 +77,21 @@ export const HeaderBar: React.FC = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setCurrentUser({ email: session.user.email, id: session.user.id });
+        if (event === 'SIGNED_IN') {
+          soundFx.playChime();
+          await hydrateFromSupabase();
+          notificationService.trigger('Cloud Synced', 'Your offline changes have been automatically backed up to your account.');
+        }
       } else {
         setCurrentUser(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [hydrateFromSupabase]);
 
   const handleSignOut = async () => {
     const supabase = getSupabase();
@@ -210,11 +224,18 @@ export const HeaderBar: React.FC = () => {
               {/* Profile button */}
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1.5 px-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs text-stone-700 dark:text-stone-300 shadow-sm transition-colors group"
-                title="Account profile"
+                className="flex items-center gap-2 p-1.5 px-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs text-stone-700 dark:text-stone-300 shadow-sm transition-colors group cursor-pointer"
+                title="Account profile & cloud sync"
               >
-                <div className="w-5 h-5 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase shadow-xs">
-                  {currentUser.email ? currentUser.email[0] : <User size={11} />}
+                <div className="relative">
+                  <div className="w-5 h-5 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase shadow-xs">
+                    {currentUser.email ? currentUser.email[0] : <User size={11} />}
+                  </div>
+                  {isSyncing ? (
+                    <RefreshCw size={8} className="absolute -bottom-0.5 -right-0.5 text-amber-500 animate-spin" />
+                  ) : (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#1C1A17]" />
+                  )}
                 </div>
                 <span className="hidden sm:inline max-w-[130px] truncate text-[11px] font-medium font-sans text-stone-800 dark:text-stone-200">
                   {currentUser.email}
@@ -233,19 +254,25 @@ export const HeaderBar: React.FC = () => {
                   onWheel={(e) => e.stopPropagation()}
                   className="absolute right-0 top-full mt-2 w-56 p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1"
                 >
-                  <div className="px-2.5 py-1.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                  <div className="px-2.5 py-1.5 border-b border-stone-200/70 dark:border-stone-800/70 space-y-1">
                     <div className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500">
                       Account
                     </div>
-                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200 truncate mt-0.5" title={currentUser.email}>
+                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200 truncate" title={currentUser.email}>
                       {currentUser.email}
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] pt-1 text-stone-500 dark:text-stone-400">
+                      <span>Cloud Sync</span>
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Active
+                      </span>
                     </div>
                   </div>
 
                   {/* Sign Out Button */}
                   <button
                     onClick={handleSignOutClick}
-                    className="flex items-center gap-2 w-full p-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors text-left"
+                    className="flex items-center gap-2 w-full p-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors text-left cursor-pointer"
                     title="Sign Out of Cloud Account"
                   >
                     <LogOut size={13} />
@@ -256,14 +283,22 @@ export const HeaderBar: React.FC = () => {
             </div>
           ) : (
             <button
+              type="button"
               onClick={() => setIsAuthOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs font-medium text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
-              title="Work is currently saved on this computer only. Click to back up your boards to the cloud."
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-300/60 dark:border-amber-700/60 rounded-2xl text-xs font-medium shadow-xs transition-all active:scale-95 cursor-pointer group"
+              title="You are currently in offline draft mode. Edits made now are saved to this device only. Click to sign in and automatically back them up to your cloud account across all devices."
             >
-              <CloudOff size={14} className="text-stone-400 dark:text-stone-500" />
-              <span>Save to Cloud</span>
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 rounded-md text-stone-800 dark:text-stone-200 ml-0.5">
-                Sign In
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <div className="flex items-center gap-1.5">
+                <CloudOff size={13} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="font-semibold">Offline Draft</span>
+                <span className="hidden md:inline text-stone-500 dark:text-stone-400 font-normal">• Saved locally</span>
+              </div>
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-900 dark:text-amber-100 rounded-md ml-0.5 group-hover:bg-amber-500/30">
+                Sign in to Sync
               </span>
             </button>
           )}

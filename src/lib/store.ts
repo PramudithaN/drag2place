@@ -70,10 +70,52 @@ interface BoardState {
   // Sync, Export & Import
   loadBoard: () => void;
   saveBoardLocally: () => void;
+  scheduleCloudSync: () => void;
   syncWithSupabase: () => Promise<void>;
+  hydrateFromSupabase: () => Promise<void>;
+  isSyncing: boolean;
+  lastSyncedAt: string | null;
   checkReminders: () => void;
   exportWorkspaceJson: () => string;
   importWorkspaceJson: (jsonString: string) => boolean;
+}
+
+interface SupabaseBoardRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  pan_x?: number;
+  pan_y?: number;
+  zoom?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SupabaseCardRow {
+  id: string;
+  board_id: string;
+  user_id: string;
+  type: CardType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z_index: number;
+  color: CardColor;
+  content: CardContent;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SupabaseConnRow {
+  id: string;
+  board_id: string;
+  from_card_id: string;
+  to_card_id: string;
+  color?: string;
+  label?: string;
+  style?: 'solid' | 'dashed' | 'curved';
 }
 
 const DEFAULT_BOARD_ID = 'main-board';
@@ -196,6 +238,8 @@ const INITIAL_CONNECTIONS: Connection[] = [
   },
 ];
 
+let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+
 export const useBoardStore = create<BoardState>((set, get) => ({
   boards: INITIAL_BOARDS,
   activeBoardId: DEFAULT_BOARD_ID,
@@ -211,6 +255,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   openConfirmModal: (config: ConfirmModalConfig) => set({ confirmModal: config }),
   closeConfirmModal: () => set({ confirmModal: null }),
   theme: 'light',
+  isSyncing: false,
+  lastSyncedAt: null,
 
   getActiveCards: () => {
     const { allCards, activeBoardId } = get();
@@ -704,9 +750,19 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       localStorage.setItem('drag2place_boards', JSON.stringify(boards));
       localStorage.setItem('drag2place_active_board_id', activeBoardId);
       localStorage.setItem('drag2place_theme', theme);
+
+      // Debounced background sync to cloud if user is logged in
+      get().scheduleCloudSync();
     } catch {
       // Storage error handle
     }
+  },
+
+  scheduleCloudSync: () => {
+    if (syncTimeout) clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+      get().syncWithSupabase();
+    }, 1200);
   },
 
   syncWithSupabase: async () => {
@@ -717,6 +773,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      set({ isSyncing: true });
       const { allCards, allConnections, boards } = get();
 
       for (const b of boards) {
@@ -758,8 +815,112 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           label: conn.label || '',
         });
       }
+
+      set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
       console.error('Supabase sync error:', err);
+      set({ isSyncing: false });
+    }
+  },
+
+  hydrateFromSupabase: async () => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      set({ isSyncing: true });
+
+      const { data: cloudBoards, error: bErr } = await supabase
+        .from('boards')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (bErr || !cloudBoards || cloudBoards.length === 0) {
+        // No existing boards in cloud yet, automatically push current local workspace
+        await get().syncWithSupabase();
+        set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
+        return;
+      }
+
+      const { data: cloudCards } = await supabase
+        .from('cards')
+        .select('*')
+        .eq('user_id', user.id);
+
+      const { data: cloudConns } = await supabase
+        .from('connections')
+        .select('*');
+
+      const mappedBoards: Board[] = (cloudBoards as unknown as SupabaseBoardRow[]).map((b) => ({
+        id: b.id,
+        title: b.title,
+        description: b.description || '',
+        theme: get().theme,
+        pan: { x: b.pan_x ?? 0, y: b.pan_y ?? 0 },
+        zoom: b.zoom ?? 1,
+        createdAt: b.created_at,
+        updatedAt: b.updated_at,
+      }));
+
+      const mappedCards: Card[] = ((cloudCards || []) as unknown as SupabaseCardRow[]).map((c) => ({
+        id: c.id,
+        boardId: c.board_id,
+        type: c.type,
+        x: c.x,
+        y: c.y,
+        width: c.width,
+        height: c.height,
+        zIndex: c.z_index,
+        color: c.color,
+        content: c.content,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+      }));
+
+      const mappedConns: Connection[] = ((cloudConns || []) as unknown as SupabaseConnRow[]).map((conn) => ({
+        id: conn.id,
+        boardId: conn.board_id,
+        fromCardId: conn.from_card_id,
+        toCardId: conn.to_card_id,
+        color: conn.color,
+        label: conn.label,
+        style: conn.style,
+      }));
+
+      // Merge offline work: preserve any newly created cards crafted while logged out
+      const localCards = get().allCards;
+      const cloudCardIds = new Set(mappedCards.map((c) => c.id));
+      const newlyCreatedOfflineCards = localCards.filter(
+        (lc) => !cloudCardIds.has(lc.id) && !lc.id.startsWith('card-welcome') && !lc.id.startsWith('card-launch')
+      );
+
+      const mergedCards = [...mappedCards, ...newlyCreatedOfflineCards];
+
+      const activeId = mappedBoards[0]?.id || DEFAULT_BOARD_ID;
+      const current = mappedBoards[0] || INITIAL_BOARDS[0];
+
+      set({
+        boards: mappedBoards,
+        allCards: mergedCards,
+        allConnections: mappedConns,
+        activeBoardId: activeId,
+        currentBoard: current,
+        isSyncing: false,
+        lastSyncedAt: new Date().toISOString(),
+      });
+
+      get().saveBoardLocally();
+
+      // If there were newly created offline cards, sync them to cloud now
+      if (newlyCreatedOfflineCards.length > 0) {
+        await get().syncWithSupabase();
+      }
+    } catch (err) {
+      console.error('Supabase hydration error:', err);
+      set({ isSyncing: false });
     }
   },
 
