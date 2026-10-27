@@ -213,7 +213,7 @@ export const InfiniteCanvas: React.FC = () => {
   const handleMouseUp = () => {
     if (isPanning) {
       setIsPanning(false);
-      useBoardStore.getState().saveBoardLocally();
+      useBoardStore.getState().saveBoardLocally(true);
     }
   };
 

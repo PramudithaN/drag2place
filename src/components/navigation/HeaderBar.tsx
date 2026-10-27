@@ -23,7 +23,6 @@ export const HeaderBar: React.FC = () => {
     toggleTheme,
     openConfirmModal,
     isSyncing,
-    hydrateFromSupabase,
   } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -34,6 +33,7 @@ export const HeaderBar: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{ email?: string; id?: string } | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const hasHydratedRef = useRef(false);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -66,7 +66,7 @@ export const HeaderBar: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Listen to live Supabase login / logout state and automatically sync
+  // Listen to live Supabase login / logout state
   useEffect(() => {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -80,18 +80,20 @@ export const HeaderBar: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setCurrentUser({ email: session.user.email, id: session.user.id });
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && !hasHydratedRef.current) {
+          hasHydratedRef.current = true;
           soundFx.playChime();
-          await hydrateFromSupabase();
-          notificationService.trigger('Cloud Synced', 'Your offline changes have been automatically backed up to your account.');
+          await useBoardStore.getState().hydrateFromSupabase();
+          notificationService.trigger('Cloud Synced', 'Your boards are synchronized with your account.');
         }
       } else {
         setCurrentUser(null);
+        hasHydratedRef.current = false;
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [hydrateFromSupabase]);
+  }, []);
 
   const handleSignOut = async () => {
     const supabase = getSupabase();

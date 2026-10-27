@@ -69,7 +69,7 @@ interface BoardState {
   
   // Sync, Export & Import
   loadBoard: () => void;
-  saveBoardLocally: () => void;
+  saveBoardLocally: (skipCloudSync?: boolean) => void;
   scheduleCloudSync: () => void;
   syncWithSupabase: () => Promise<void>;
   hydrateFromSupabase: () => Promise<void>;
@@ -741,7 +741,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }
   },
 
-  saveBoardLocally: () => {
+  saveBoardLocally: (skipCloudSync = false) => {
     if (typeof window === 'undefined') return;
     try {
       const { allCards, allConnections, boards, activeBoardId, theme } = get();
@@ -752,7 +752,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       localStorage.setItem('drag2place_theme', theme);
 
       // Debounced background sync to cloud if user is logged in
-      get().scheduleCloudSync();
+      if (!skipCloudSync) {
+        get().scheduleCloudSync();
+      }
     } catch {
       // Storage error handle
     }
@@ -762,12 +764,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (syncTimeout) clearTimeout(syncTimeout);
     syncTimeout = setTimeout(() => {
       get().syncWithSupabase();
-    }, 1200);
+    }, 3000);
   },
 
   syncWithSupabase: async () => {
     const supabase = getSupabase();
     if (!supabase) return;
+
+    // Prevent concurrent sync executions
+    if (get().isSyncing) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -776,44 +781,53 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       set({ isSyncing: true });
       const { allCards, allConnections, boards } = get();
 
-      for (const b of boards) {
-        await supabase.from('boards').upsert({
-          id: b.id,
-          user_id: user.id,
-          title: b.title,
-          pan_x: b.pan.x,
-          pan_y: b.pan.y,
-          zoom: b.zoom,
-          updated_at: new Date().toISOString(),
-        });
+      // Batch upsert boards in a single request
+      if (boards.length > 0) {
+        await supabase.from('boards').upsert(
+          boards.map((b) => ({
+            id: b.id,
+            user_id: user.id,
+            title: b.title,
+            pan_x: b.pan.x,
+            pan_y: b.pan.y,
+            zoom: b.zoom,
+            updated_at: new Date().toISOString(),
+          }))
+        );
       }
 
-      for (const card of allCards) {
-        await supabase.from('cards').upsert({
-          id: card.id,
-          board_id: card.boardId,
-          user_id: user.id,
-          type: card.type,
-          x: card.x,
-          y: card.y,
-          width: card.width,
-          height: card.height,
-          z_index: card.zIndex,
-          color: card.color,
-          content: card.content,
-          updated_at: new Date().toISOString(),
-        });
+      // Batch upsert cards in a single request
+      if (allCards.length > 0) {
+        await supabase.from('cards').upsert(
+          allCards.map((card) => ({
+            id: card.id,
+            board_id: card.boardId,
+            user_id: user.id,
+            type: card.type,
+            x: card.x,
+            y: card.y,
+            width: card.width,
+            height: card.height,
+            z_index: card.zIndex,
+            color: card.color,
+            content: card.content,
+            updated_at: new Date().toISOString(),
+          }))
+        );
       }
 
-      for (const conn of allConnections) {
-        await supabase.from('connections').upsert({
-          id: conn.id,
-          board_id: conn.boardId,
-          from_card_id: conn.fromCardId,
-          to_card_id: conn.toCardId,
-          style: conn.style || 'curved',
-          label: conn.label || '',
-        });
+      // Batch upsert connections in a single request
+      if (allConnections.length > 0) {
+        await supabase.from('connections').upsert(
+          allConnections.map((conn) => ({
+            id: conn.id,
+            board_id: conn.boardId,
+            from_card_id: conn.fromCardId,
+            to_card_id: conn.toCardId,
+            style: conn.style || 'curved',
+            label: conn.label || '',
+          }))
+        );
       }
 
       set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
@@ -912,7 +926,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         lastSyncedAt: new Date().toISOString(),
       });
 
-      get().saveBoardLocally();
+      get().saveBoardLocally(true);
 
       // If there were newly created offline cards, sync them to cloud now
       if (newlyCreatedOfflineCards.length > 0) {
