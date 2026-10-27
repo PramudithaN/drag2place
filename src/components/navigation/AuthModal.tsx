@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { X, AlertCircle, Cloud } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
@@ -93,22 +94,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <X size={18} />
         </button>
 
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-2">
-            <Cloud size={13} /> Cloud Backup & Sync
+        <div className="flex items-start gap-3.5">
+          <Image
+            src="/drag2placeLogo.png"
+            alt="Drag2Place Logo"
+            width={40}
+            height={40}
+            className="rounded-xl object-contain shadow-xs shrink-0 mt-0.5"
+          />
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1.5">
+              <Cloud size={12} /> Cloud Backup & Sync
+            </div>
+            <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">
+              {isSignUp ? (
+                <span className="font-serif">Create your Account</span>
+              ) : (
+                <span>
+                  Sign In to <span className="font-oregon font-bold">Drag2Place</span>
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
+              Back up your tasks, moodboards, and ideas securely in the cloud and access them from any device.
+            </p>
           </div>
-          <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">
-            {isSignUp ? (
-              <span className="font-serif">Create your Account</span>
-            ) : (
-              <span>
-                Sign In to <span className="font-oregon font-bold">Drag2Place</span>
-              </span>
-            )}
-          </h2>
-          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-            Back up your tasks, moodboards, and ideas securely in the cloud and access them from any device.
-          </p>
         </div>
 
         {!isSupabaseConfigured && (

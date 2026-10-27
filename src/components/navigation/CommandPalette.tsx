@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
 import { Search, StickyNote, CheckSquare, Calendar, Image as ImageIcon, Sun, Moon, ArrowRight, X } from 'lucide-react';
 import { CardContent, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
@@ -186,6 +187,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-stone-600" />}
             <span>Toggle {theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
           </button>
+        </div>
+
+        {/* Footer with logo */}
+        <div className="flex items-center justify-between px-4 py-2.5 bg-stone-100/70 dark:bg-stone-900/70 border-t border-stone-200/70 dark:border-stone-800/70 text-[11px] text-stone-400 font-sans">
+          <div className="flex items-center gap-1.5 font-oregon font-semibold text-stone-600 dark:text-stone-300">
+            <Image
+              src="/drag2placeLogo.png"
+              alt="Drag2Place Logo"
+              width={15}
+              height={15}
+              className="rounded-sm object-contain"
+            />
+            Drag2Place
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-mono">
+            <span>Quick actions & search</span>
+            <kbd className="px-1.5 py-0.5 bg-white dark:bg-stone-800 rounded border border-stone-300 dark:border-stone-700">ESC</kbd>
+          </div>
         </div>
       </div>
     </div>

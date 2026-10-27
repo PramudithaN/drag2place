@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
 import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
@@ -108,9 +109,14 @@ export const HeaderBar: React.FC = () => {
         {/* Brand & Multi-Board Switcher */}
         <div className="flex items-center gap-3.5 p-2 px-4 bg-[#FAF8F5]/95 dark:bg-[#1C1A17]/95 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-sm pointer-events-auto">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 flex items-center justify-center font-oregon font-bold text-sm shadow-xs">
-              D
-            </div>
+            <Image
+              src="/drag2placeLogo.png"
+              alt="Drag2Place Logo"
+              width={26}
+              height={26}
+              className="rounded-lg object-contain shadow-xs shrink-0"
+              priority
+            />
             <span className="font-oregon font-bold text-lg tracking-wide text-stone-900 dark:text-stone-100 select-none">
               Drag2Place
             </span>

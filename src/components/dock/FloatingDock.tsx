@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Sparkles } from 'lucide-react';
+import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 import { CardType } from '@/types/board';
 
@@ -80,7 +81,13 @@ export const FloatingDock: React.FC = () => {
         />
 
         <div className="hidden sm:flex items-center pl-1 pr-2 text-[11px] font-oregon text-stone-500 dark:text-stone-400 font-semibold tracking-wide select-none">
-          <Sparkles size={12} className="mr-1 text-amber-500" />
+          <Image
+            src="/drag2placeLogo.png"
+            alt="Drag2Place Logo"
+            width={16}
+            height={16}
+            className="rounded-md mr-1.5 object-contain"
+          />
           Drag2Place space
         </div>
       </motion.div>

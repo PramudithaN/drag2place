@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
 import { toPng } from 'html-to-image';
 import { X, Image as ImageIcon, Download, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
@@ -102,13 +103,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
           <X size={18} />
         </button>
 
-        <div>
-          <h2 className="text-xl font-oregon font-bold text-stone-900 dark:text-stone-100">
-            Export & Backup Board
-          </h2>
-          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-            Save a high-resolution snapshot or download a complete data backup.
-          </p>
+        <div className="flex items-center gap-3">
+          <Image
+            src="/drag2placeLogo.png"
+            alt="Drag2Place Logo"
+            width={38}
+            height={38}
+            className="rounded-xl object-contain shadow-xs shrink-0"
+          />
+          <div>
+            <h2 className="text-xl font-oregon font-bold text-stone-900 dark:text-stone-100">
+              Export & Backup Board
+            </h2>
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
+              Save a high-resolution snapshot or download a complete data backup.
+            </p>
+          </div>
         </div>
 
         {successMsg && (
