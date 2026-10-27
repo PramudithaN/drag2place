@@ -82,13 +82,17 @@ export const BoardSwitcher: React.FC = () => {
         ) : (
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg hover:bg-stone-500/10 transition-colors group text-left"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-stone-500/10 transition-colors group text-left cursor-pointer"
+            title={`Active Workspace: ${currentBoard.title} (${activeCardsCount} ${activeCardsCount === 1 ? 'card' : 'cards'})`}
           >
             <span className="font-oregon font-semibold text-stone-800 dark:text-stone-200 text-sm">
               {currentBoard.title}
             </span>
-            <span className="text-[11px] font-mono text-stone-400 dark:text-stone-500">
-              ({activeCardsCount})
+            <span
+              title={`${activeCardsCount} ${activeCardsCount === 1 ? 'card' : 'cards'} on this board`}
+              className="text-[11px] font-mono text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+            >
+              ({activeCardsCount} {activeCardsCount === 1 ? 'card' : 'cards'})
             </span>
             <ChevronDown size={13} className="text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-transform" />
           </button>
@@ -139,8 +143,11 @@ export const BoardSwitcher: React.FC = () => {
                     <span className="font-oregon truncate">{b.title}</span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <span className="text-[10px] opacity-60 font-mono">
-                      {count}
+                    <span
+                      className="text-[10px] opacity-60 font-mono"
+                      title={`${count} ${count === 1 ? 'card' : 'cards'} on this board`}
+                    >
+                      {count} {count === 1 ? 'card' : 'cards'}
                     </span>
                     {boards.length > 1 && (
                       <button

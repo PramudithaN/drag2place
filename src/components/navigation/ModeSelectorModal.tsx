@@ -118,6 +118,10 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
               Launch a tailored canvas with domain-specific cards, task checklists, and aesthetic moodboards structured for your profession.
             </p>
+            <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span><strong>Does not replace your current board:</strong> Selecting any mode creates a brand new workspace. Your existing boards and cards remain safe and untouched.</span>
+            </div>
           </div>
 
           <button
