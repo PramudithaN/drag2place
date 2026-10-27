@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useBoardStore } from '@/lib/store';
-import { Bell, Cloud, CloudOff, Sun, Moon, Search, Download, LogOut, User } from 'lucide-react';
+import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -20,6 +20,20 @@ export const HeaderBar: React.FC = () => {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState<{ email?: string; id?: string } | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileOpen]);
 
   useEffect(() => {
     const unsub = notificationService.subscribe((items: AppNotification[]) => {
@@ -76,6 +90,7 @@ export const HeaderBar: React.FC = () => {
   };
 
   const handleSignOutClick = () => {
+    setIsProfileOpen(false);
     openConfirmModal({
       title: 'Sign Out of Account?',
       message: 'Your boards and cards will remain saved on this computer, but automatic cloud backup will pause until you sign in again.',
@@ -171,40 +186,52 @@ export const HeaderBar: React.FC = () => {
             )}
           </button>
 
-          {/* Cloud Sync & User Profile / Sign In */}
+          {/* User Profile / Sign In */}
           {currentUser ? (
-            <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-sm">
-              {/* Cloud Synced pill */}
-              <div
-                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl text-[11px] font-medium text-emerald-800 dark:text-emerald-200"
-                title="All changes are automatically backed up to the cloud"
+            <div ref={profileRef} className="relative">
+              {/* Profile button */}
+              <button
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 p-1.5 px-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs text-stone-700 dark:text-stone-300 shadow-sm transition-colors group"
+                title="Account profile"
               >
-                <Cloud size={13} className="text-emerald-600 dark:text-emerald-400" />
-                <span className="hidden md:inline">Cloud Synced</span>
-              </div>
-
-              {/* User avatar and email */}
-              <div
-                className="flex items-center gap-1.5 px-2 py-1 text-xs text-stone-700 dark:text-stone-300"
-                title={`Signed in as ${currentUser.email}`}
-              >
-                <div className="w-5 h-5 rounded-lg bg-stone-800 dark:bg-stone-200 text-stone-100 dark:text-stone-900 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase">
+                <div className="w-5 h-5 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase shadow-xs">
                   {currentUser.email ? currentUser.email[0] : <User size={11} />}
                 </div>
-                <span className="hidden lg:inline max-w-[110px] truncate text-[11px] font-medium font-sans">
+                <span className="hidden sm:inline max-w-[130px] truncate text-[11px] font-medium font-sans text-stone-800 dark:text-stone-200">
                   {currentUser.email}
                 </span>
-              </div>
-
-              {/* Sign Out Button */}
-              <button
-                onClick={handleSignOutClick}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-stone-500 hover:text-rose-600 dark:text-stone-400 dark:hover:text-rose-400 hover:bg-rose-50/60 dark:hover:bg-rose-950/30 rounded-xl transition-colors"
-                title="Sign Out of Cloud Account"
-              >
-                <LogOut size={12} />
-                <span className="hidden sm:inline">Sign Out</span>
+                <ChevronDown
+                  size={12}
+                  className={`text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-transform duration-150 ${
+                    isProfileOpen ? 'rotate-180' : ''
+                  }`}
+                />
               </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1">
+                  <div className="px-2.5 py-1.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                      Account
+                    </div>
+                    <div className="text-xs font-semibold text-stone-800 dark:text-stone-200 truncate mt-0.5" title={currentUser.email}>
+                      {currentUser.email}
+                    </div>
+                  </div>
+
+                  {/* Sign Out Button */}
+                  <button
+                    onClick={handleSignOutClick}
+                    className="flex items-center gap-2 w-full p-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors text-left"
+                    title="Sign Out of Cloud Account"
+                  >
+                    <LogOut size={13} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <button
