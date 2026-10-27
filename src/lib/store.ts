@@ -488,7 +488,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     } else if (type === 'comment') {
       initialContent = {
         author: 'Reviewer',
-        text: 'Add your review note or spatial comment here...',
+        text: '',
         resolved: false,
         createdAt: new Date().toISOString(),
       };

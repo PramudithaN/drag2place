@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp, MessageSquare, Link2 } from 'lucide-react';
+import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp, Link2 } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 import { CardType } from '@/types/board';
 
@@ -84,11 +83,6 @@ export const FloatingDock: React.FC = () => {
           icon={<ImageIcon size={18} />}
           label="Media (I)"
           onClick={() => handleAdd('image')}
-        />
-        <DockItem
-          icon={<MessageSquare size={18} />}
-          label="Canvas Comment"
-          onClick={() => handleAdd('comment')}
         />
         <DockItem
           icon={<Link2 size={18} />}

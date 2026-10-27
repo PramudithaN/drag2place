@@ -5,6 +5,8 @@ import { useBoardStore } from '@/lib/store';
 import { CanvasGrid } from './CanvasGrid';
 import { ConnectionLine } from './ConnectionLine';
 import { CardWrapper } from '../cards/CardWrapper';
+import { CanvasCommentPin } from './CanvasCommentPin';
+import { CanvasContextMenu } from './CanvasContextMenu';
 import { FloatingDock } from '../dock/FloatingDock';
 import { CanvasControls } from './CanvasControls';
 import { HeaderBar } from '../navigation/HeaderBar';
@@ -17,6 +19,7 @@ export const InfiniteCanvas: React.FC = () => {
     getActiveConnections,
     setPan,
     setZoom,
+    resetView,
     clearSelection,
     activeTool,
     addCard,
@@ -34,6 +37,12 @@ export const InfiniteCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    screenX: number;
+    screenY: number;
+    canvasX: number;
+    canvasY: number;
+  } | null>(null);
   const startPanRef = useRef<{ x: number; y: number; mouseX: number; mouseY: number }>({
     x: 0,
     y: 0,
@@ -144,8 +153,11 @@ export const InfiniteCanvas: React.FC = () => {
     [currentBoard.pan, currentBoard.zoom, setPan, setZoom]
   );
 
-  // Pan start
+  // Pan start & dismiss context menu
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (contextMenu) {
+      setContextMenu(null);
+    }
     if (e.button === 1 || isSpacePressed || e.target === containerRef.current) {
       e.preventDefault();
       setIsPanning(true);
@@ -159,6 +171,32 @@ export const InfiniteCanvas: React.FC = () => {
         clearSelection();
       }
     }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Allow native context menu on text inputs and editable fields
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+
+    e.preventDefault();
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Convert mouse screen coordinates into infinite canvas world coordinates
+    const canvasX = Math.round(mouseX / currentBoard.zoom - currentBoard.pan.x);
+    const canvasY = Math.round(mouseY / currentBoard.zoom - currentBoard.pan.y);
+
+    setContextMenu({
+      screenX: e.clientX,
+      screenY: e.clientY,
+      canvasX,
+      canvasY,
+    });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -187,6 +225,7 @@ export const InfiniteCanvas: React.FC = () => {
       ref={containerRef}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
+      onContextMenu={handleContextMenu}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -247,10 +286,14 @@ export const InfiniteCanvas: React.FC = () => {
           </g>
         </svg>
 
-        {/* Cards layer */}
-        {cards.map((card) => (
-          <CardWrapper key={card.id} card={card} zoom={currentBoard.zoom} />
-        ))}
+        {/* Cards & Canvas Pins layer */}
+        {cards.map((card) =>
+          card.type === 'comment' ? (
+            <CanvasCommentPin key={card.id} card={card} zoom={currentBoard.zoom} />
+          ) : (
+            <CardWrapper key={card.id} card={card} zoom={currentBoard.zoom} />
+          )
+        )}
       </div>
 
       {/* Bottom Floating macOS Dock */}
@@ -261,6 +304,21 @@ export const InfiniteCanvas: React.FC = () => {
 
       {/* Confirmation Modal */}
       <ConfirmationModal />
+
+      {/* Right-Click Spatial Context Menu */}
+      {contextMenu && (
+        <CanvasContextMenu
+          x={contextMenu.screenX}
+          y={contextMenu.screenY}
+          onAddComment={() => addCard('comment', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddNote={() => addCard('note', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddTodo={() => addCard('todo', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddCode={() => addCard('code', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddLink={() => addCard('link', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onResetView={resetView}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 };

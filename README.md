@@ -45,6 +45,7 @@ flowchart TD
 ### 1. Spatial Infinite Canvas
 - **Freeform Viewport**: Navigate across unlimited spatial coordinates using `Space + Drag`, middle-mouse panning, or trackpad gestures.
 - **Precision Zooming**: Zoom from 25% to 250% anchored dynamically to cursor coordinates via `Ctrl + Wheel` or trackpad pinch.
+- **Right-Click Spatial Context Menu**: Contextual right-click menu anywhere on the canvas viewport to drop spatial comment pins at exact coordinates, spawn cards directly under the cursor, or reset the viewport.
 - **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
 - **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.
 
@@ -60,7 +61,7 @@ flowchart TD
 - **Code Snippet & Terminal**: Dark obsidian terminal window with line numbers, syntax formatting, copy button, and built-in JSON prettifier and validator.
 - **Interactive Color Palettes**: Swatch cards with click-to-copy Hex/Pantone codes, real-time WCAG contrast ratio compliance badges (AA/AAA), and custom color addition.
 - **KPI Goal Metrics**: Numeric target trackers with animated progress bars, percentage completion indicators, and quick adjustment buttons (+1, +10, -1, -10).
-- **Canvas Comments**: Spatial review cards with author badge, timestamp, textarea, and active/resolved status toggles.
+- **Canvas Comments & Spatial Pins**: Collaborative review pins placed at exact canvas coordinates via right-click. Designed as tactile circular avatar pins with expandable discussion balloons, drag repositioning, timestamps, and active/resolved status toggles.
 - **Rich Web Link Previews**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons.
 - **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (*Today*, *Tomorrow*, *In X days*), and customizable reminder intervals.
 - **Media and Moodboards**: Image integration via URL or local file upload, accompanied by customizable captions and a full-screen lightbox modal.
