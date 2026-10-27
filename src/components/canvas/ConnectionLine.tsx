@@ -103,7 +103,7 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
         strokeWidth={isHovered ? 2.5 : 2}
         strokeDasharray={connection.style === 'dashed' ? '6,5' : undefined}
         markerEnd="url(#arrowhead)"
-        className="transition-all duration-200"
+        className="transition-[stroke,stroke-width] duration-150"
       />
 
       <foreignObject

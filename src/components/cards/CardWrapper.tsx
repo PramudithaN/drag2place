@@ -72,6 +72,8 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
   } = useBoardStore();
 
   const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const isSelected = selectedCardIds.includes(card.id);
   const isConnectingOrigin = connectingFromCardId === card.id;
   const isConnectingTarget = activeTool === 'connect' && connectingFromCardId !== null && connectingFromCardId !== card.id;
@@ -87,19 +89,32 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     e.stopPropagation();
     bringToFront(card.id);
     selectCard(card.id, e.shiftKey);
+    setIsDragging(true);
 
     const startMouseX = e.clientX;
     const startMouseY = e.clientY;
     const startCardX = card.x;
     const startCardY = card.y;
 
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = (moveEvent.clientX - startMouseX) / zoom;
       const deltaY = (moveEvent.clientY - startMouseY) / zoom;
-      updateCardPosition(card.id, startCardX + deltaX, startCardY + deltaY);
+      const nextX = startCardX + deltaX;
+      const nextY = startCardY + deltaY;
+
+      if (cardRef.current) {
+        cardRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`;
+      }
+      updateCardPosition(card.id, nextX, nextY);
     };
 
     const handleMouseUp = () => {
+      setIsDragging(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       useBoardStore.getState().saveBoardLocally();
@@ -114,11 +129,15 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     e.stopPropagation();
     e.preventDefault();
     bringToFront(card.id);
+    setIsResizing(true);
 
     const startMouseX = e.clientX;
     const startMouseY = e.clientY;
     const startWidth = card.width;
     const startHeight = card.height;
+
+    document.body.style.cursor = 'nwse-resize';
+    document.body.style.userSelect = 'none';
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaW = (moveEvent.clientX - startMouseX) / zoom;
@@ -127,6 +146,9 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     };
 
     const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       useBoardStore.getState().saveBoardLocally();
@@ -181,9 +203,14 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         transform: `translate(${card.x}px, ${card.y}px)`,
         width: `${card.width}px`,
         height: `${card.height}px`,
-        zIndex: card.zIndex,
+        zIndex: isDragging ? 9999 : card.zIndex,
+        willChange: isDragging ? 'transform' : 'auto',
       }}
-      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm transition-[box-shadow,border-color,transform] duration-150 ${
+      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm ${
+        isDragging || isResizing
+          ? 'transition-none cursor-grabbing shadow-2xl opacity-95 ring-2 ring-stone-800/40 dark:ring-stone-200/40'
+          : 'transition-[box-shadow,border-color] duration-150'
+      } ${
         colorStyle.bg
       } ${colorStyle.border} ${
         isSelected
