@@ -12,8 +12,8 @@ import { HeaderBar } from '../navigation/HeaderBar';
 export const InfiniteCanvas: React.FC = () => {
   const {
     currentBoard,
-    cards,
-    connections,
+    getActiveCards,
+    getActiveConnections,
     setPan,
     setZoom,
     clearSelection,
@@ -25,6 +25,9 @@ export const InfiniteCanvas: React.FC = () => {
     checkReminders,
     loadBoard,
   } = useBoardStore();
+
+  const cards = getActiveCards();
+  const connections = getActiveConnections();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -53,7 +56,6 @@ export const InfiniteCanvas: React.FC = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger shortcuts if typing inside inputs/textareas
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) {
         return;
@@ -105,7 +107,6 @@ export const InfiniteCanvas: React.FC = () => {
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        // Anchor zoom around cursor position
         const newPanX = mouseX - (mouseX - currentBoard.pan.x) * (newZoom / currentBoard.zoom);
         const newPanY = mouseY - (mouseY - currentBoard.pan.y) * (newZoom / currentBoard.zoom);
 
@@ -122,7 +123,7 @@ export const InfiniteCanvas: React.FC = () => {
     [currentBoard.pan, currentBoard.zoom, setPan, setZoom]
   );
 
-  // Pan start (middle mouse, spacebar + left click, or background drag)
+  // Pan start
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 1 || isSpacePressed || e.target === containerRef.current) {
       e.preventDefault();
@@ -168,7 +169,7 @@ export const InfiniteCanvas: React.FC = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] select-none ${
+      className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] select-none ${
         isSpacePressed || isPanning
           ? 'cursor-grab active:cursor-grabbing'
           : activeTool === 'connect'
@@ -182,8 +183,9 @@ export const InfiniteCanvas: React.FC = () => {
       {/* Header bar */}
       <HeaderBar />
 
-      {/* World Canvas Layer */}
+      {/* World Canvas Layer (target for html-to-image export) */}
       <div
+        id="infinite-canvas-viewport"
         className="absolute inset-0 origin-top-left pointer-events-auto"
         style={{
           transform: `scale(${currentBoard.zoom}) translate(${currentBoard.pan.x}px, ${currentBoard.pan.y}px)`,

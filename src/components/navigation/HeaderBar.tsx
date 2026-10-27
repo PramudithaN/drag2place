@@ -2,16 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBoardStore } from '@/lib/store';
-import { Bell, Cloud, CloudOff, Sun, Moon } from 'lucide-react';
+import { Bell, Cloud, CloudOff, Sun, Moon, Search, Download } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
 import { AuthModal } from './AuthModal';
+import { BoardSwitcher } from './BoardSwitcher';
+import { ExportModal } from './ExportModal';
+import { CommandPalette } from './CommandPalette';
 
 export const HeaderBar: React.FC = () => {
-  const { currentBoard, cards, activeTool, cancelConnecting, theme, toggleTheme } = useBoardStore();
+  const { activeTool, cancelConnecting, theme, toggleTheme } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -21,10 +26,22 @@ export const HeaderBar: React.FC = () => {
     return unsub;
   }, []);
 
+  // Keyboard shortcut Ctrl+K or Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <>
       <header className="fixed top-4 left-6 right-6 z-40 flex items-center justify-between pointer-events-none">
-        {/* Brand & Board title */}
+        {/* Brand & Multi-Board Switcher */}
         <div className="flex items-center gap-3.5 p-2 px-4 bg-[#FAF8F5]/95 dark:bg-[#1C1A17]/95 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-sm pointer-events-auto">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-lg bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 flex items-center justify-center font-oregon font-bold text-sm shadow-xs">
@@ -37,14 +54,8 @@ export const HeaderBar: React.FC = () => {
 
           <div className="w-[1px] h-4 bg-stone-300 dark:bg-stone-700" />
 
-          <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400">
-            <span className="font-oregon font-semibold text-stone-800 dark:text-stone-200 text-sm">
-              {currentBoard.title}
-            </span>
-            <span className="text-[11px] font-mono text-stone-400 dark:text-stone-500">
-              ({cards.length} cards)
-            </span>
-          </div>
+          {/* Multi-Board Dropdown */}
+          <BoardSwitcher />
         </div>
 
         {/* Center mode status banner if connecting cards */}
@@ -62,6 +73,28 @@ export const HeaderBar: React.FC = () => {
 
         {/* Right controls */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Quick Search / Command Palette */}
+          <button
+            onClick={() => setIsCommandOpen(true)}
+            className="flex items-center gap-2 p-2 px-3 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-600 dark:text-stone-300 shadow-sm transition-colors text-xs"
+            title="Search cards & actions (Ctrl + K)"
+          >
+            <Search size={14} />
+            <span className="hidden sm:inline font-sans text-[11px] text-stone-500">Search</span>
+            <kbd className="hidden sm:inline text-[9px] font-mono px-1 bg-stone-200/60 dark:bg-stone-800 rounded text-stone-400">
+              Ctrl K
+            </kbd>
+          </button>
+
+          {/* Export & Backup */}
+          <button
+            onClick={() => setIsExportOpen(true)}
+            className="p-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
+            title="Export image or backup board"
+          >
+            <Download size={16} />
+          </button>
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
@@ -93,12 +126,12 @@ export const HeaderBar: React.FC = () => {
             {isSupabaseConfigured ? (
               <>
                 <Cloud size={14} className="text-emerald-700 dark:text-emerald-400" />
-                <span>Supabase Ready</span>
+                <span className="hidden sm:inline">Supabase Ready</span>
               </>
             ) : (
               <>
                 <CloudOff size={14} className="text-stone-400 dark:text-stone-500" />
-                <span>Guest / Cloud Sync</span>
+                <span className="hidden sm:inline">Sync</span>
               </>
             )}
           </button>
@@ -112,6 +145,8 @@ export const HeaderBar: React.FC = () => {
         onClose={() => setIsAuthOpen(false)}
         onSuccess={() => setIsAuthOpen(false)}
       />
+      <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
     </>
   );
 };

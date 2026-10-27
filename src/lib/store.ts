@@ -5,9 +5,11 @@ import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
 
 interface BoardState {
+  boards: Board[];
+  activeBoardId: string;
   currentBoard: Board;
-  cards: Card[];
-  connections: Connection[];
+  allCards: Card[];
+  allConnections: Connection[];
   selectedCardIds: string[];
   activeTool: 'select' | 'connect' | 'pan';
   connectingFromCardId: string | null;
@@ -15,6 +17,16 @@ interface BoardState {
   soundEnabled: boolean;
   theme: 'light' | 'dark';
   
+  // Board getters for active board
+  getActiveCards: () => Card[];
+  getActiveConnections: () => Connection[];
+
+  // Board operations
+  switchBoard: (boardId: string) => void;
+  createBoard: (title: string, description?: string) => Board;
+  updateBoardTitle: (boardId: string, title: string) => void;
+  deleteBoard: (boardId: string) => void;
+
   // Theme actions
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
@@ -23,6 +35,7 @@ interface BoardState {
   setPan: (pan: { x: number; y: number }) => void;
   setZoom: (zoom: number) => void;
   resetView: () => void;
+  jumpToCard: (cardId: string) => void;
   setSnapToGrid: (snap: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
   
@@ -47,14 +60,39 @@ interface BoardState {
   cancelConnecting: () => void;
   deleteConnection: (id: string) => void;
   
-  // Sync & Storage
+  // Sync, Export & Import
   loadBoard: () => void;
   saveBoardLocally: () => void;
   syncWithSupabase: () => Promise<void>;
   checkReminders: () => void;
+  exportWorkspaceJson: () => string;
+  importWorkspaceJson: (jsonString: string) => boolean;
 }
 
 const DEFAULT_BOARD_ID = 'main-board';
+
+const INITIAL_BOARDS: Board[] = [
+  {
+    id: DEFAULT_BOARD_ID,
+    title: 'Daily Canvas & Ideas',
+    description: 'Personal aesthetic sanctuary for plans, tasks, and notes.',
+    theme: 'light',
+    pan: { x: 0, y: 0 },
+    zoom: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'project-launch',
+    title: 'Product Roadmap & Vision',
+    description: 'Quarterly milestones and high-level architectural designs.',
+    theme: 'light',
+    pan: { x: 0, y: 0 },
+    zoom: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 const INITIAL_CARDS: Card[] = [
   {
@@ -152,24 +190,98 @@ const INITIAL_CONNECTIONS: Connection[] = [
 ];
 
 export const useBoardStore = create<BoardState>((set, get) => ({
-  currentBoard: {
-    id: DEFAULT_BOARD_ID,
-    title: 'Daily Canvas & Ideas',
-    description: 'Personal aesthetic sanctuary for plans, tasks, and notes.',
-    theme: 'light',
-    pan: { x: 0, y: 0 },
-    zoom: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  cards: INITIAL_CARDS,
-  connections: INITIAL_CONNECTIONS,
+  boards: INITIAL_BOARDS,
+  activeBoardId: DEFAULT_BOARD_ID,
+  currentBoard: INITIAL_BOARDS[0],
+  allCards: INITIAL_CARDS,
+  allConnections: INITIAL_CONNECTIONS,
   selectedCardIds: [],
   activeTool: 'select',
   connectingFromCardId: null,
   snapToGrid: false,
   soundEnabled: true,
   theme: 'light',
+
+  getActiveCards: () => {
+    const { allCards, activeBoardId } = get();
+    return allCards.filter((c) => c.boardId === activeBoardId);
+  },
+
+  getActiveConnections: () => {
+    const { allConnections, activeBoardId } = get();
+    return allConnections.filter((c) => c.boardId === activeBoardId);
+  },
+
+  switchBoard: (boardId: string) => {
+    const { boards, currentBoard } = get();
+    // Save current pan & zoom to the board model
+    const updatedBoards = boards.map((b) => (b.id === currentBoard.id ? currentBoard : b));
+    const targetBoard = updatedBoards.find((b) => b.id === boardId) || updatedBoards[0];
+
+    soundFx.playDrop();
+    set({
+      boards: updatedBoards,
+      activeBoardId: targetBoard.id,
+      currentBoard: targetBoard,
+      selectedCardIds: [],
+      connectingFromCardId: null,
+      activeTool: 'select',
+    });
+    get().saveBoardLocally();
+  },
+
+  createBoard: (title: string, description = '') => {
+    const newBoard: Board = {
+      id: `board-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      title,
+      description,
+      theme: get().theme,
+      pan: { x: 0, y: 0 },
+      zoom: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    soundFx.playCheck();
+    set((state) => ({
+      boards: [...state.boards, newBoard],
+      activeBoardId: newBoard.id,
+      currentBoard: newBoard,
+      selectedCardIds: [],
+    }));
+
+    get().saveBoardLocally();
+    return newBoard;
+  },
+
+  updateBoardTitle: (boardId: string, title: string) => {
+    set((state) => {
+      const updatedBoards = state.boards.map((b) =>
+        b.id === boardId ? { ...b, title, updatedAt: new Date().toISOString() } : b
+      );
+      const updatedCurrent = state.currentBoard.id === boardId ? { ...state.currentBoard, title } : state.currentBoard;
+      return { boards: updatedBoards, currentBoard: updatedCurrent };
+    });
+    get().saveBoardLocally();
+  },
+
+  deleteBoard: (boardId: string) => {
+    const { boards, activeBoardId } = get();
+    if (boards.length <= 1) return; // Keep at least one board
+
+    const remainingBoards = boards.filter((b) => b.id !== boardId);
+    const nextActive = activeBoardId === boardId ? remainingBoards[0] : get().currentBoard;
+
+    soundFx.playDrop();
+    set((state) => ({
+      boards: remainingBoards,
+      activeBoardId: nextActive.id,
+      currentBoard: nextActive,
+      allCards: state.allCards.filter((c) => c.boardId !== boardId),
+      allConnections: state.allConnections.filter((conn) => conn.boardId !== boardId),
+    }));
+    get().saveBoardLocally();
+  },
 
   toggleTheme: () => {
     const nextTheme = get().theme === 'light' ? 'dark' : 'light';
@@ -204,6 +316,28 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       currentBoard: { ...state.currentBoard, pan: { x: 0, y: 0 }, zoom: 1 },
     })),
 
+  jumpToCard: (cardId: string) => {
+    const card = get().allCards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    if (card.boardId !== get().activeBoardId) {
+      get().switchBoard(card.boardId);
+    }
+
+    // Center card in the viewport
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    const targetPanX = viewportWidth / 2 - (card.x + card.width / 2);
+    const targetPanY = viewportHeight / 2 - (card.y + card.height / 2);
+
+    soundFx.playDrop();
+    set((state) => ({
+      currentBoard: { ...state.currentBoard, pan: { x: targetPanX, y: targetPanY }, zoom: 1 },
+      selectedCardIds: [cardId],
+    }));
+  },
+
   setSnapToGrid: (snapToGrid) => set({ snapToGrid }),
 
   setSoundEnabled: (enabled) => {
@@ -236,8 +370,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   clearSelection: () => set({ selectedCardIds: [] }),
 
   addCard: (type: CardType, position?: { x: number; y: number }) => {
-    const { currentBoard, cards } = get();
-    const highestZ = cards.reduce((max, c) => Math.max(max, c.zIndex), 0);
+    const { currentBoard, allCards, activeBoardId } = get();
+    const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
 
     const posX = position ? position.x : -currentBoard.pan.x + 250;
     const posY = position ? position.y : -currentBoard.pan.y + 150;
@@ -281,7 +415,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     const newCard: Card = {
       id: `card-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      boardId: currentBoard.id,
+      boardId: activeBoardId,
       type,
       x: posX,
       y: posY,
@@ -297,7 +431,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     soundFx.playDrop();
 
     set((state) => ({
-      cards: [...state.cards, newCard],
+      allCards: [...state.allCards, newCard],
       selectedCardIds: [newCard.id],
     }));
 
@@ -317,7 +451,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       }
 
       return {
-        cards: state.cards.map((c) =>
+        allCards: state.allCards.map((c) =>
           c.id === id ? { ...c, x: finalX, y: finalY, updatedAt: new Date().toISOString() } : c
         ),
       };
@@ -325,7 +459,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   updateCardSize: (id, width, height) =>
     set((state) => ({
-      cards: state.cards.map((c) =>
+      allCards: state.allCards.map((c) =>
         c.id === id
           ? {
               ...c,
@@ -339,7 +473,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   updateCardContent: (id, partialContent) =>
     set((state) => ({
-      cards: state.cards.map((c) =>
+      allCards: state.allCards.map((c) =>
         c.id === id
           ? {
               ...c,
@@ -352,24 +486,24 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   updateCardColor: (id, color) =>
     set((state) => ({
-      cards: state.cards.map((c) =>
+      allCards: state.allCards.map((c) =>
         c.id === id ? { ...c, color, updatedAt: new Date().toISOString() } : c
       ),
     })),
 
   bringToFront: (id) =>
     set((state) => {
-      const highestZ = state.cards.reduce((max, c) => Math.max(max, c.zIndex), 0);
+      const highestZ = state.allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
       return {
-        cards: state.cards.map((c) => (c.id === id ? { ...c, zIndex: highestZ + 1 } : c)),
+        allCards: state.allCards.map((c) => (c.id === id ? { ...c, zIndex: highestZ + 1 } : c)),
       };
     }),
 
   deleteCard: (id) => {
     soundFx.playDrop();
     set((state) => ({
-      cards: state.cards.filter((c) => c.id !== id),
-      connections: state.connections.filter((conn) => conn.fromCardId !== id && conn.toCardId !== id),
+      allCards: state.allCards.filter((c) => c.id !== id),
+      allConnections: state.allConnections.filter((conn) => conn.fromCardId !== id && conn.toCardId !== id),
       selectedCardIds: state.selectedCardIds.filter((cid) => cid !== id),
     }));
     get().saveBoardLocally();
@@ -383,13 +517,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   finishConnecting: (toCardId) => {
-    const { connectingFromCardId, connections, currentBoard } = get();
+    const { connectingFromCardId, allConnections, activeBoardId } = get();
     if (!connectingFromCardId || connectingFromCardId === toCardId) {
       set({ connectingFromCardId: null, activeTool: 'select' });
       return;
     }
 
-    const alreadyConnected = connections.some(
+    const alreadyConnected = allConnections.some(
       (c) =>
         (c.fromCardId === connectingFromCardId && c.toCardId === toCardId) ||
         (c.fromCardId === toCardId && c.toCardId === connectingFromCardId)
@@ -398,14 +532,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (!alreadyConnected) {
       const newConn: Connection = {
         id: `conn-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        boardId: currentBoard.id,
+        boardId: activeBoardId,
         fromCardId: connectingFromCardId,
         toCardId,
         style: 'curved',
       };
       soundFx.playCheck();
       set((state) => ({
-        connections: [...state.connections, newConn],
+        allConnections: [...state.allConnections, newConn],
         connectingFromCardId: null,
         activeTool: 'select',
       }));
@@ -421,7 +555,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   deleteConnection: (id) => {
     set((state) => ({
-      connections: state.connections.filter((c) => c.id !== id),
+      allConnections: state.allConnections.filter((c) => c.id !== id),
     }));
     get().saveBoardLocally();
   },
@@ -431,18 +565,34 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     try {
       const savedCards = localStorage.getItem('drag2place_cards');
       const savedConnections = localStorage.getItem('drag2place_connections');
-      const savedBoard = localStorage.getItem('drag2place_board');
+      const savedBoards = localStorage.getItem('drag2place_boards');
+      const savedActiveBoardId = localStorage.getItem('drag2place_active_board_id');
       const savedTheme = localStorage.getItem('drag2place_theme') as 'light' | 'dark' | null;
 
+      let boardsList = INITIAL_BOARDS;
+      if (savedBoards) {
+        boardsList = JSON.parse(savedBoards);
+        set({ boards: boardsList });
+      }
+
+      const activeId = savedActiveBoardId && boardsList.some((b) => b.id === savedActiveBoardId)
+        ? savedActiveBoardId
+        : boardsList[0].id;
+
+      const current = boardsList.find((b) => b.id === activeId) || boardsList[0];
+
       if (savedCards) {
-        set({ cards: JSON.parse(savedCards) });
+        set({ allCards: JSON.parse(savedCards) });
       }
       if (savedConnections) {
-        set({ connections: JSON.parse(savedConnections) });
+        set({ allConnections: JSON.parse(savedConnections) });
       }
-      if (savedBoard) {
-        set({ currentBoard: JSON.parse(savedBoard) });
-      }
+
+      set({
+        activeBoardId: activeId,
+        currentBoard: current,
+      });
+
       if (savedTheme) {
         set({ theme: savedTheme });
         document.documentElement.classList.toggle('dark', savedTheme === 'dark');
@@ -455,10 +605,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   saveBoardLocally: () => {
     if (typeof window === 'undefined') return;
     try {
-      const { cards, connections, currentBoard, theme } = get();
-      localStorage.setItem('drag2place_cards', JSON.stringify(cards));
-      localStorage.setItem('drag2place_connections', JSON.stringify(connections));
-      localStorage.setItem('drag2place_board', JSON.stringify(currentBoard));
+      const { allCards, allConnections, boards, activeBoardId, theme } = get();
+      localStorage.setItem('drag2place_cards', JSON.stringify(allCards));
+      localStorage.setItem('drag2place_connections', JSON.stringify(allConnections));
+      localStorage.setItem('drag2place_boards', JSON.stringify(boards));
+      localStorage.setItem('drag2place_active_board_id', activeBoardId);
       localStorage.setItem('drag2place_theme', theme);
     } catch {
       // Storage error handle
@@ -473,22 +624,24 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { currentBoard, cards, connections } = get();
+      const { currentBoard, allCards, allConnections, boards } = get();
 
-      await supabase.from('boards').upsert({
-        id: currentBoard.id,
-        user_id: user.id,
-        title: currentBoard.title,
-        pan_x: currentBoard.pan.x,
-        pan_y: currentBoard.pan.y,
-        zoom: currentBoard.zoom,
-        updated_at: new Date().toISOString(),
-      });
+      for (const b of boards) {
+        await supabase.from('boards').upsert({
+          id: b.id,
+          user_id: user.id,
+          title: b.title,
+          pan_x: b.pan.x,
+          pan_y: b.pan.y,
+          zoom: b.zoom,
+          updated_at: new Date().toISOString(),
+        });
+      }
 
-      for (const card of cards) {
+      for (const card of allCards) {
         await supabase.from('cards').upsert({
           id: card.id,
-          board_id: currentBoard.id,
+          board_id: card.boardId,
           user_id: user.id,
           type: card.type,
           x: card.x,
@@ -502,10 +655,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         });
       }
 
-      for (const conn of connections) {
+      for (const conn of allConnections) {
         await supabase.from('connections').upsert({
           id: conn.id,
-          board_id: currentBoard.id,
+          board_id: conn.boardId,
           from_card_id: conn.fromCardId,
           to_card_id: conn.toCardId,
           style: conn.style || 'curved',
@@ -518,10 +671,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   checkReminders: () => {
-    const { cards } = get();
+    const { allCards } = get();
     const now = new Date();
 
-    cards.forEach((card) => {
+    allCards.forEach((card) => {
       if (card.type === 'event') {
         const ev = card.content as EventCardData;
         if (!ev.date || ev.notified) return;
@@ -540,5 +693,40 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         }
       }
     });
+  },
+
+  exportWorkspaceJson: () => {
+    const { boards, allCards, allConnections, theme } = get();
+    const data = {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      theme,
+      boards,
+      cards: allCards,
+      connections: allConnections,
+    };
+    return JSON.stringify(data, null, 2);
+  },
+
+  importWorkspaceJson: (jsonString: string) => {
+    try {
+      const data = JSON.parse(jsonString);
+      if (data && Array.isArray(data.boards) && Array.isArray(data.cards)) {
+        soundFx.playChime();
+        set({
+          boards: data.boards,
+          allCards: data.cards,
+          allConnections: Array.isArray(data.connections) ? data.connections : [],
+          activeBoardId: data.boards[0]?.id || DEFAULT_BOARD_ID,
+          currentBoard: data.boards[0] || INITIAL_BOARDS[0],
+          selectedCardIds: [],
+        });
+        get().saveBoardLocally();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   },
 }));
