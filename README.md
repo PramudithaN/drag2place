@@ -98,12 +98,12 @@ flowchart TD
 
 ### 11. Role-Based Workspace Modes and Headstarters
 Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, moodboards, and vector connection paths:
-- **Developer**: System architecture specifications, sprint backlog with priority tags, production release milestones, and architecture diagram moodboards.
-- **Designer**: UI/UX design token foundations, design sprint checklists, critique session milestones, and minimalist spatial inspiration.
-- **Video Editor**: Director edit treatments, 4K post-production pipeline checklists, client delivery milestones, and cinematic lighting storyboards.
-- **Graphic Designer**: Brand identity guidelines, asset package checklists, client presentation milestones, and tactile material moodboards.
-- **Marketing**: Go-to-market campaign strategy, launch activation checklists, Product Hunt launch day milestones, and ad creative mockups.
-- **Influencer**: Weekly content calendar blueprints, short-form filming checklists, sponsored post deadlines, and creator desk aesthetic references.
+- **Developer**: Microservices API specifications, SQL spatial migration scripts, sprint backlog with hotfix priorities, cluster cutover milestones, infrastructure topology diagrams, and SLA performance telemetry guardrails.
+- **Designer**: Design system token hierarchies with WCAG AA contrast standards, usability sprint protocols, user research feedback quotes, interactive mobile prototypes, component redlines, and engineering handoff reviews.
+- **Video Editor**: Raw camera ingest specs (RED 8K VV / ProRes 4444 XQ), rough-cut to picture-lock assembly checklists, DaVinci Resolve color grade node trees with Kodak 2383 LUT recipes, anamorphic framing moodboards, multi-format export checklists (16:9, 9:16, 1:1), and client screening milestones.
+- **Graphic Designer**: Luxury botanical brand identity manifests, Pantone & CMYK ink formulas, packaging tuck-end box die-line specifications, tactile paper and foil-stamp moodboards, vector export checklists, and offset printer press-check inspections.
+- **Marketing**: Full-funnel SaaS Q3 launch strategies, high-converting copywriting matrices with 3 hook angles, digital ad creative mockups, launch activation checklists, acquisition KPI trackers, and Product Hunt live war rooms.
+- **Influencer**: Sponsored campaign contract deliverables, 3-second viral hook script storyboards, overhead desk studio lighting setups, post-production captioning workflows, and prime social publishing windows.
 
 ---
 

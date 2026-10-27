@@ -293,8 +293,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       fromCardId: createdCards[conn.fromIndex].id,
       toCardId: createdCards[conn.toIndex].id,
       label: conn.label,
-      color: '#8C827A',
-      style: 'curved',
+      color: conn.color || '#8C827A',
+      style: conn.style || 'curved',
     }));
 
     soundFx.playDrop();
