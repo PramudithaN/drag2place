@@ -1,21 +1,5 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Oregon LDO';
-  src: url('/fonts/oregon-ldo/OregonLdoBold-gxe6.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Oregon LDO';
-  src: url('/fonts/oregon-ldo/OregonLdo-d9q7.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --background: #FAF8F5;
   --foreground: #262320;
@@ -27,11 +11,11 @@
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-serif: var(--font-serif), Georgia, serif;
   --font-mono: var(--font-mono), monospace;
-  --font-oregon: 'Oregon LDO', Georgia, serif;
+  --font-oregon: var(--font-oregon), Georgia, serif;
 }
 
 .font-oregon {
-  font-family: 'Oregon LDO', Georgia, serif;
+  font-family: var(--font-oregon), Georgia, serif;
 }
 
 body {
