@@ -1,12 +1,9 @@
 -- Drag2Place: Supabase Database Schema
 -- Run this script in the Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
-
 -- 1. BOARDS TABLE
 create table if not exists public.boards (
-  id uuid primary key default uuid_generate_v4(),
+  id text primary key,
   user_id uuid references auth.users(id) on delete cascade not null,
   title text not null default 'My Aesthetic Board',
   description text default '',
@@ -19,8 +16,8 @@ create table if not exists public.boards (
 
 -- 2. CARDS TABLE
 create table if not exists public.cards (
-  id uuid primary key default uuid_generate_v4(),
-  board_id uuid references public.boards(id) on delete cascade not null,
+  id text primary key,
+  board_id text references public.boards(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete cascade not null,
   type text not null check (type in ('todo', 'note', 'event', 'image')),
   x float not null default 100,
@@ -36,10 +33,10 @@ create table if not exists public.cards (
 
 -- 3. CONNECTIONS TABLE (Milanote-style connecting lines)
 create table if not exists public.connections (
-  id uuid primary key default uuid_generate_v4(),
-  board_id uuid references public.boards(id) on delete cascade not null,
-  from_card_id uuid references public.cards(id) on delete cascade not null,
-  to_card_id uuid references public.cards(id) on delete cascade not null,
+  id text primary key,
+  board_id text references public.boards(id) on delete cascade not null,
+  from_card_id text references public.cards(id) on delete cascade not null,
+  to_card_id text references public.cards(id) on delete cascade not null,
   color text default '#8C827A',
   label text default '',
   style text default 'curved',
@@ -86,7 +83,7 @@ create policy "Users can manage own connections" on public.connections
     )
   );
 
--- 5. REALTIME REPLICATION (Optional: enable in dashboard or here)
+-- 5. REALTIME REPLICATION
 alter publication supabase_realtime add table public.boards;
 alter publication supabase_realtime add table public.cards;
 alter publication supabase_realtime add table public.connections;
