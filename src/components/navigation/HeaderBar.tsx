@@ -12,7 +12,7 @@ import { ExportModal } from './ExportModal';
 import { CommandPalette } from './CommandPalette';
 
 export const HeaderBar: React.FC = () => {
-  const { activeTool, cancelConnecting, theme, toggleTheme } = useBoardStore();
+  const { activeTool, cancelConnecting, connectingFromCardId, theme, toggleTheme } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -60,11 +60,15 @@ export const HeaderBar: React.FC = () => {
 
         {/* Center mode status banner if connecting cards */}
         {activeTool === 'connect' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 text-stone-100 rounded-full text-xs font-medium shadow-lg animate-bounce pointer-events-auto">
-            <span>Click any target card to draw arrow connection</span>
+          <div className="flex items-center gap-2.5 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 rounded-full text-xs font-medium shadow-xl animate-bounce pointer-events-auto">
+            <span>
+              {connectingFromCardId
+                ? 'Step 2: Click destination card to link'
+                : 'Step 1: Click starting card'}
+            </span>
             <button
               onClick={cancelConnecting}
-              className="px-1.5 py-0.5 bg-stone-700 hover:bg-stone-600 rounded-full text-[10px]"
+              className="px-2 py-0.5 bg-stone-700 dark:bg-stone-300 hover:bg-stone-600 dark:hover:bg-stone-400 text-white dark:text-stone-900 rounded-full text-[10px] font-semibold"
             >
               Cancel
             </button>

@@ -21,7 +21,7 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, onClick, active }) => 
       onClick={onClick}
       className={`group relative flex flex-col items-center justify-center w-12 h-12 rounded-2xl transition-colors ${
         active
-          ? 'bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900 shadow-md'
+          ? 'bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900 shadow-md ring-2 ring-stone-900 dark:ring-stone-100'
           : 'bg-[#F2ECE2]/80 dark:bg-[#25221E]/80 hover:bg-[#EBE2D4] dark:hover:bg-[#2F2C27] text-stone-700 dark:text-stone-300 shadow-xs'
       }`}
     >
@@ -79,9 +79,9 @@ export const FloatingDock: React.FC = () => {
           active={activeTool === 'connect'}
         />
 
-        <div className="hidden sm:flex items-center pl-1 pr-2 text-[11px] font-serif italic text-stone-400 dark:text-stone-500">
+        <div className="hidden sm:flex items-center pl-1 pr-2 text-[11px] font-oregon text-stone-500 dark:text-stone-400 font-semibold tracking-wide select-none">
           <Sparkles size={12} className="mr-1 text-amber-500" />
-          Milanote space
+          Drag2Place space
         </div>
       </motion.div>
     </div>

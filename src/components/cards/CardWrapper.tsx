@@ -66,19 +66,24 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     selectCard,
     startConnecting,
     finishConnecting,
+    cancelConnecting,
     activeTool,
     connectingFromCardId,
   } = useBoardStore();
 
   const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
   const isSelected = selectedCardIds.includes(card.id);
-  const isConnectingTarget = activeTool === 'connect' && connectingFromCardId !== null && connectingFromCardId !== card.id;
   const isConnectingOrigin = connectingFromCardId === card.id;
+  const isConnectingTarget = activeTool === 'connect' && connectingFromCardId !== null && connectingFromCardId !== card.id;
+  const isAwaitingOrigin = activeTool === 'connect' && connectingFromCardId === null;
 
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Dragging logic
   const handleDragStart = (e: React.MouseEvent) => {
+    // If in connect mode, don't drag; let click handler process connection
+    if (activeTool === 'connect') return;
+
     e.stopPropagation();
     bringToFront(card.id);
     selectCard(card.id, e.shiftKey);
@@ -153,12 +158,24 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       ref={cardRef}
       onClick={(e) => {
         e.stopPropagation();
-        if (isConnectingTarget) {
-          finishConnecting(card.id);
-        } else {
-          bringToFront(card.id);
-          selectCard(card.id, e.shiftKey);
+
+        // Connect mode logic
+        if (activeTool === 'connect') {
+          if (connectingFromCardId === null) {
+            // First card clicked -> start connection from this card!
+            startConnecting(card.id);
+          } else if (connectingFromCardId === card.id) {
+            // Clicked origin card again -> cancel connection
+            cancelConnecting();
+          } else {
+            // Second card clicked -> finish connection!
+            finishConnecting(card.id);
+          }
+          return;
         }
+
+        bringToFront(card.id);
+        selectCard(card.id, e.shiftKey);
       }}
       style={{
         transform: `translate(${card.x}px, ${card.y}px)`,
@@ -166,16 +183,24 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         height: `${card.height}px`,
         zIndex: card.zIndex,
       }}
-      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm transition-[box-shadow,border-color] duration-150 ${
+      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm transition-[box-shadow,border-color,transform] duration-150 ${
         colorStyle.bg
       } ${colorStyle.border} ${
         isSelected
           ? 'ring-2 ring-stone-700/60 dark:ring-stone-300/60 shadow-lg'
           : 'hover:shadow-md hover:border-stone-400/50 dark:hover:border-stone-500/50'
       } ${
-        isConnectingTarget ? 'ring-2 ring-amber-500 ring-offset-2 animate-pulse cursor-crosshair' : ''
+        isAwaitingOrigin
+          ? 'hover:ring-2 hover:ring-amber-500/80 cursor-pointer'
+          : ''
       } ${
-        isConnectingOrigin ? 'ring-2 ring-stone-900 dark:ring-stone-100 ring-offset-2' : ''
+        isConnectingTarget
+          ? 'ring-2 ring-amber-500 ring-offset-2 animate-pulse cursor-pointer'
+          : ''
+      } ${
+        isConnectingOrigin
+          ? 'ring-2 ring-stone-900 dark:ring-stone-100 ring-offset-2 scale-[1.02]'
+          : ''
       }`}
     >
       {/* Card Header & Toolbar */}
@@ -197,17 +222,23 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
         {/* Card actions */}
         <div className="flex items-center gap-0.5 shrink-0" onMouseDown={(e) => e.stopPropagation()}>
-          {/* Milanote connect button */}
+          {/* Connect button */}
           <button
-            onClick={() => startConnecting(card.id)}
+            onClick={() => {
+              if (isConnectingOrigin) {
+                cancelConnecting();
+              } else {
+                startConnecting(card.id);
+              }
+            }}
             className={`p-1 rounded-md transition-colors ${
               isConnectingOrigin
-                ? 'bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900'
+                ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-500 shadow-sm'
                 : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10'
             }`}
-            title="Connect arrow to another card"
+            title={isConnectingOrigin ? 'Cancel connecting' : 'Connect arrow to another card'}
           >
-            <GitCommit size={13} />
+            <GitCommit size={14} />
           </button>
 
           {/* Color palette toggle */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { Bell, Trash2, Clock, X, Volume2 } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
@@ -13,6 +13,7 @@ interface NotificationCenterProps {
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [permission, setPermission] = useState<NotificationPermission>('default');
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPermission(notificationService.getPermissionStatus());
@@ -21,6 +22,26 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
     });
     return unsubscribe;
   }, []);
+
+  // Click outside to close notification center
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   const handleRequestPermission = async () => {
     const status = await notificationService.requestPermission();
@@ -33,7 +54,10 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3">
+    <div
+      ref={drawerRef}
+      className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3"
+    >
       {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-stone-200/60 dark:border-stone-800">
         <div className="flex items-center gap-2">
