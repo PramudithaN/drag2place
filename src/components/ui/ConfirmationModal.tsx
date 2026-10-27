@@ -65,7 +65,7 @@ export const ConfirmationModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={closeConfirmModal}
       onWheel={(e) => e.stopPropagation()}
     >

@@ -369,8 +369,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const { boards, activeBoardId } = get();
     if (boards.length <= 1) return; // Keep at least one board
 
+    const targetBoard = boards.find((b) => b.id === boardId);
+    const boardTitle = targetBoard?.title || 'workspace';
     const remainingBoards = boards.filter((b) => b.id !== boardId);
-    const nextActive = activeBoardId === boardId ? remainingBoards[0] : get().currentBoard;
+    const nextActive = (activeBoardId === boardId || get().currentBoard.id === boardId)
+      ? remainingBoards[0]
+      : get().currentBoard;
 
     soundFx.playDrop();
     set((state) => ({
@@ -379,15 +383,28 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       currentBoard: nextActive,
       allCards: state.allCards.filter((c) => c.boardId !== boardId),
       allConnections: state.allConnections.filter((conn) => conn.boardId !== boardId),
+      selectedCardIds: [],
     }));
     get().saveBoardLocally();
 
-    // Delete from Supabase if user is logged in (cascades to cards & connections)
+    notificationService.trigger('Workspace Deleted', `"${boardTitle}" was permanently removed.`);
+
+    // Cascade delete from Supabase in reverse dependency order:
+    // 1. connections -> 2. cards -> 3. boards
     const supabase = getSupabase();
     if (supabase) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
         if (user) {
-          supabase.from('boards').delete().eq('id', boardId).eq('user_id', user.id).then();
+          try {
+            await supabase.from('connections').delete().eq('board_id', boardId);
+            await supabase.from('cards').delete().eq('board_id', boardId).eq('user_id', user.id);
+            const { error } = await supabase.from('boards').delete().eq('id', boardId).eq('user_id', user.id);
+            if (error) {
+              console.error('Supabase board delete error:', error);
+            }
+          } catch (err) {
+            console.error('Failed to cascade delete board from Supabase:', err);
+          }
         }
       });
     }
@@ -659,6 +676,20 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       selectedCardIds: state.selectedCardIds.filter((cid) => cid !== id),
     }));
     get().saveBoardLocally();
+
+    const supabase = getSupabase();
+    if (supabase) {
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (user) {
+          try {
+            await supabase.from('connections').delete().or(`from_card_id.eq.${id},to_card_id.eq.${id}`);
+            await supabase.from('cards').delete().eq('id', id).eq('user_id', user.id);
+          } catch (err) {
+            console.error('Error deleting card from Supabase:', err);
+          }
+        }
+      });
+    }
   },
 
   startConnecting: (cardId) => {

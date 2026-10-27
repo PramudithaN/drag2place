@@ -151,8 +151,11 @@ export const BoardSwitcher: React.FC = () => {
                     </span>
                     {boards.length > 1 && (
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
+                          setIsOpen(false);
                           openConfirmModal({
                             title: 'Delete Workspace?',
                             message: `Are you sure you want to permanently delete workspace "${b.title}" and its cards?`,
@@ -162,8 +165,10 @@ export const BoardSwitcher: React.FC = () => {
                             onConfirm: () => deleteBoard(b.id),
                           });
                         }}
-                        className={`opacity-60 hover:opacity-100 p-1 rounded hover:bg-rose-500/10 hover:text-rose-500 transition-all cursor-pointer ${
-                          isActive ? 'text-stone-300' : 'text-stone-400'
+                        className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                          isActive
+                            ? 'text-stone-300 hover:text-white hover:bg-rose-500/30'
+                            : 'text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-100/60 dark:hover:bg-rose-950/40'
                         }`}
                         title="Delete workspace"
                       >
