@@ -102,7 +102,11 @@ export const CanvasCommentPin: React.FC<CanvasCommentPinProps> = ({ card, zoom }
         zIndex: isOpen ? 9999 : isDragging ? 9998 : card.zIndex + 100,
       }}
       className="absolute top-0 left-0 select-none pointer-events-auto"
-      onWheel={(e) => e.stopPropagation()}
+      onWheel={(e) => {
+        if (!e.ctrlKey && !e.metaKey) {
+          e.stopPropagation();
+        }
+      }}
     >
       {/* The Pin Marker (Click to toggle balloon, Drag to reposition) */}
       <div className="relative group">

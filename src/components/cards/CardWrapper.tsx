@@ -343,7 +343,15 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       </div>
 
       {/* Card Content Body */}
-      <div className="flex-1 p-3.5 overflow-hidden" onWheel={(e) => e.stopPropagation()}>
+      <div
+        className="flex-1 p-3.5 overflow-hidden"
+        data-scrollable="true"
+        onWheel={(e) => {
+          if (!e.ctrlKey && !e.metaKey) {
+            e.stopPropagation();
+          }
+        }}
+      >
         {card.type === 'todo' && (
           <TodoCard
             cardId={card.id}

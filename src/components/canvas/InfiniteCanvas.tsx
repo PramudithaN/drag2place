@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useBoardStore } from '@/lib/store';
 import { CanvasGrid } from './CanvasGrid';
 import { ConnectionLine } from './ConnectionLine';
@@ -121,37 +121,83 @@ export const InfiniteCanvas: React.FC = () => {
     };
   }, [addCard, deleteCard, selectedCardIds, openConfirmModal]);
 
-  // Zooming with mouse wheel anchored to cursor
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      e.preventDefault();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Wheel zoom (Ctrl + mouse wheel / trackpad pinch) and canvas trackpad pan
+  useEffect(() => {
+    const handleGlobalWheel = (e: WheelEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      // 1. If Ctrl or Meta is held: zoom the canvas anchored to cursor
       if (e.ctrlKey || e.metaKey) {
-        // Pinch-to-zoom
-        const zoomFactor = 1 - e.deltaY * 0.005;
-        const newZoom = Math.min(Math.max(currentBoard.zoom * zoomFactor, 0.25), 2.5);
+        // Prevent native browser page zoom completely
+        e.preventDefault();
 
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return;
+        // If hovering inside an open modal dialog, don't zoom the background canvas
+        const modalElement = document.querySelector('[role="dialog"]');
+        if (modalElement && modalElement.contains(e.target as Node)) {
+          return;
+        }
 
+        const state = useBoardStore.getState();
+        const currentZoom = state.currentBoard.zoom;
+        const currentPan = state.currentBoard.pan;
+
+        // Normalize delta across line, page, or pixel deltaMode
+        const rawDelta = e.deltaMode === 1 ? e.deltaY * 20 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
+        // Smooth exponential zoom factor for uniform feel in both directions
+        const zoomFactor = Math.exp(-rawDelta * 0.0015);
+        const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.25), 2.5);
+
+        const rect = container.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        const newPanX = mouseX - (mouseX - currentBoard.pan.x) * (newZoom / currentBoard.zoom);
-        const newPanY = mouseY - (mouseY - currentBoard.pan.y) * (newZoom / currentBoard.zoom);
+        const newPanX = mouseX - (mouseX - currentPan.x) * (newZoom / currentZoom);
+        const newPanY = mouseY - (mouseY - currentPan.y) * (newZoom / currentZoom);
 
         setZoom(newZoom);
         setPan({ x: newPanX, y: newPanY });
+
+        // Debounced local storage save
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => {
+          useBoardStore.getState().saveBoardLocally(true);
+        }, 600);
       } else {
-        // Normal trackpad pan
-        setPan({
-          x: currentBoard.pan.x - e.deltaX / currentBoard.zoom,
-          y: currentBoard.pan.y - e.deltaY / currentBoard.zoom,
-        });
+        // 2. Normal two-finger trackpad panning on the canvas viewport
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        // If target is inside scrollable card content or modal, allow native content scrolling
+        const isScrollable = target.closest('[data-scrollable="true"]') || target.closest('textarea') || target.closest('pre') || target.closest('[role="dialog"]');
+        if (!isScrollable && container.contains(target)) {
+          // Prevent browser back/forward swipe history navigation
+          e.preventDefault();
+          const state = useBoardStore.getState();
+          const currentZoom = state.currentBoard.zoom;
+          const currentPan = state.currentBoard.pan;
+
+          setPan({
+            x: currentPan.x - e.deltaX / currentZoom,
+            y: currentPan.y - e.deltaY / currentZoom,
+          });
+
+          if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = setTimeout(() => {
+            useBoardStore.getState().saveBoardLocally(true);
+          }, 600);
+        }
       }
-    },
-    [currentBoard.pan, currentBoard.zoom, setPan, setZoom]
-  );
+    };
+
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', handleGlobalWheel);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [setZoom, setPan]);
 
   // Pan start & dismiss context menu
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -223,7 +269,6 @@ export const InfiniteCanvas: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
       onMouseMove={handleMouseMove}
