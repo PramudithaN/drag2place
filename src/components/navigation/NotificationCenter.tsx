@@ -55,6 +55,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   return (
     <div
       ref={drawerRef}
+      onWheel={(e) => e.stopPropagation()}
       className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3"
     >
       {/* Header */}
@@ -87,7 +88,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
       )}
 
       {/* Notifications list */}
-      <div className="flex-1 max-h-72 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+      <div className="flex-1 max-h-72 overflow-y-auto space-y-2 pr-1 scrollbar-thin overscroll-contain">
         {notifications.length === 0 ? (
           <div className="py-8 text-center text-xs text-stone-400 dark:text-stone-500">
             <Clock size={20} className="mx-auto mb-1 stroke-1" />

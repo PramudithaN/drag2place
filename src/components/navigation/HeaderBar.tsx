@@ -217,7 +217,10 @@ export const HeaderBar: React.FC = () => {
 
               {/* Profile Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1">
+                <div
+                  onWheel={(e) => e.stopPropagation()}
+                  className="absolute right-0 top-full mt-2 w-56 p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1"
+                >
                   <div className="px-2.5 py-1.5 border-b border-stone-200/70 dark:border-stone-800/70">
                     <div className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500">
                       Account

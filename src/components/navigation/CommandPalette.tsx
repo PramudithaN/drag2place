@@ -78,10 +78,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-4"
       onClick={handleClose}
+      onWheel={(e) => e.stopPropagation()}
     >
       <div
         className="relative w-full max-w-lg bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-200 dark:border-stone-800">
