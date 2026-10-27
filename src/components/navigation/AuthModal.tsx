@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
-import { X, Mail, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -65,21 +65,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 backdrop-blur-xs p-4">
-      <div className="relative w-full max-w-md bg-[#FAF8F5] border border-[#E6E0D4] rounded-3xl p-6 shadow-2xl flex flex-col space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-4">
+      <div className="relative w-full max-w-md bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-3xl p-6 shadow-2xl flex flex-col space-y-4">
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1 text-stone-400 hover:text-stone-700 rounded-full"
+          className="absolute top-5 right-5 p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-full"
         >
           <X size={18} />
         </button>
 
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 text-amber-900 mb-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-2">
             <ShieldCheck size={13} /> Supabase Cloud Sync
           </div>
-          <h2 className="text-xl font-bold text-stone-900">
+          <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">
             {isSignUp ? (
               <span className="font-serif">Create your Account</span>
             ) : (
@@ -88,24 +88,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </span>
             )}
           </h2>
-          <p className="text-xs text-stone-600 mt-1">
+          <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
             Sync boards, tasks, moodboards, and reminders across all your devices.
           </p>
         </div>
 
         {!isSupabaseConfigured && (
-          <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-2xl text-xs text-amber-900 space-y-1">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs text-amber-900 dark:text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold">
               <AlertCircle size={14} className="shrink-0" /> Local Guest Mode Active
             </div>
-            <p className="text-[11px] text-amber-800 leading-relaxed">
+            <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
               Your boards are currently auto-saved locally in your browser. To enable live cloud sync and Google OAuth, add your <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in <code>.env.local</code>.
             </p>
           </div>
         )}
 
         {error && (
-          <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl">
+          <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs rounded-xl">
             {error}
           </div>
         )}
@@ -114,7 +114,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <button
           onClick={handleGoogleSignIn}
           disabled={!isSupabaseConfigured || loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-stone-50 border border-stone-300 rounded-2xl text-xs font-semibold text-stone-800 shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white dark:bg-[#25221E] hover:bg-stone-50 dark:hover:bg-[#2E2B26] border border-stone-300 dark:border-stone-700 rounded-2xl text-xs font-semibold text-stone-800 dark:text-stone-200 shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -138,41 +138,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </button>
 
         <div className="flex items-center gap-2 my-1">
-          <div className="flex-1 h-[1px] bg-stone-200" />
-          <span className="text-[10px] text-stone-400 font-mono uppercase tracking-wider">or with email</span>
-          <div className="flex-1 h-[1px] bg-stone-200" />
+          <div className="flex-1 h-[1px] bg-stone-200 dark:bg-stone-700" />
+          <span className="text-[10px] text-stone-400 dark:text-stone-500 font-mono uppercase tracking-wider">or with email</span>
+          <div className="flex-1 h-[1px] bg-stone-200 dark:bg-stone-700" />
         </div>
 
         {/* Email form */}
         <form onSubmit={handleEmailAuth} className="space-y-2.5">
           <div>
-            <label className="block text-[11px] font-medium text-stone-600 mb-1">Email</label>
+            <label className="block text-[11px] font-medium text-stone-600 dark:text-stone-400 mb-1">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@domain.com"
-              className="w-full text-xs p-2.5 bg-white border border-stone-200 rounded-xl outline-none focus:border-stone-400"
+              className="w-full text-xs p-2.5 bg-white dark:bg-[#25221E] border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-stone-600 mb-1">Password</label>
+            <label className="block text-[11px] font-medium text-stone-600 dark:text-stone-400 mb-1">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full text-xs p-2.5 bg-white border border-stone-200 rounded-xl outline-none focus:border-stone-400"
+              className="w-full text-xs p-2.5 bg-white dark:bg-[#25221E] border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 rounded-xl outline-none focus:border-stone-400 dark:focus:border-stone-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={!isSupabaseConfigured || loading}
-            className="w-full py-2.5 bg-stone-900 hover:bg-stone-800 text-stone-100 rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
+            className="w-full py-2.5 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-stone-100 dark:text-stone-900 rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
             {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
@@ -181,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <div className="text-center pt-1">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-xs text-stone-500 hover:text-stone-800 underline underline-offset-2"
+            className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 underline underline-offset-2"
           >
             {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
           </button>

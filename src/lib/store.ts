@@ -13,7 +13,12 @@ interface BoardState {
   connectingFromCardId: string | null;
   snapToGrid: boolean;
   soundEnabled: boolean;
+  theme: 'light' | 'dark';
   
+  // Theme actions
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
+
   // Viewport actions
   setPan: (pan: { x: number; y: number }) => void;
   setZoom: (zoom: number) => void;
@@ -65,9 +70,9 @@ const INITIAL_CARDS: Card[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
-      title: 'Welcome to your Workspace ☕',
-      body: 'A quiet, spatial space inspired by Milanote.\n\n• Drag cards freely anywhere on this infinite canvas.\n• Use the bottom dock to place new ideas, todos, events, and images.\n• Connect cards with visual arrows.\n• Set dates to receive native sound and push reminders.\n\nEnjoy the slow, intentional flow.',
-      fontFamily: 'serif',
+      title: 'Welcome to your Workspace',
+      body: 'A quiet, spatial space inspired by Milanote.\n\n- Drag cards freely anywhere on this infinite canvas.\n- Use the bottom dock to place new ideas, todos, events, and images.\n- Connect cards with visual arrows.\n- Set dates to receive native sound and push reminders.\n\nEnjoy the slow, intentional flow.',
+      fontFamily: 'oregon',
       fontSize: 'base',
     },
   },
@@ -84,7 +89,7 @@ const INITIAL_CARDS: Card[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
-      title: 'Today & Next Priorities ✨',
+      title: 'Today & Next Priorities',
       items: [
         { id: '1', text: 'Outline visual design ideas', completed: true, priority: 'high' },
         { id: '2', text: 'Curate warm minimalist palette', completed: true, priority: 'medium' },
@@ -108,11 +113,11 @@ const INITIAL_CARDS: Card[] = [
     updatedAt: new Date().toISOString(),
     content: {
       title: 'Studio Creative Retreat',
-      description: 'Deep work & board retrospective with coffee and ambient music.',
+      description: 'Deep work and board retrospective with ambient soundscapes.',
       date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
       startTime: '10:00',
       endTime: '13:00',
-      location: 'Local Artisan Cafe & Studio',
+      location: 'Local Artisan Studio',
       reminderMinutesBefore: 60,
     },
   },
@@ -151,6 +156,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     id: DEFAULT_BOARD_ID,
     title: 'Daily Canvas & Ideas',
     description: 'Personal aesthetic sanctuary for plans, tasks, and notes.',
+    theme: 'light',
     pan: { x: 0, y: 0 },
     zoom: 1,
     createdAt: new Date().toISOString(),
@@ -163,6 +169,23 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   connectingFromCardId: null,
   snapToGrid: false,
   soundEnabled: true,
+  theme: 'light',
+
+  toggleTheme: () => {
+    const nextTheme = get().theme === 'light' ? 'dark' : 'light';
+    get().setTheme(nextTheme);
+  },
+
+  setTheme: (theme) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }
+    set((state) => ({
+      theme,
+      currentBoard: { ...state.currentBoard, theme },
+    }));
+    get().saveBoardLocally();
+  },
 
   setPan: (pan) =>
     set((state) => {
@@ -216,7 +239,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const { currentBoard, cards } = get();
     const highestZ = cards.reduce((max, c) => Math.max(max, c.zIndex), 0);
 
-    // Default placement around center of viewport if not provided
     const posX = position ? position.x : -currentBoard.pan.x + 250;
     const posY = position ? position.y : -currentBoard.pan.y + 150;
 
@@ -251,8 +273,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     } else {
       initialContent = {
         title: 'Fresh Thought',
-        body: 'Click here to write your thoughts, inspirations, or journal entry...',
-        fontFamily: 'serif',
+        body: 'Write thoughts, inspirations, or notes...',
+        fontFamily: 'oregon',
         fontSize: 'base',
       };
     }
@@ -410,6 +432,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const savedCards = localStorage.getItem('drag2place_cards');
       const savedConnections = localStorage.getItem('drag2place_connections');
       const savedBoard = localStorage.getItem('drag2place_board');
+      const savedTheme = localStorage.getItem('drag2place_theme') as 'light' | 'dark' | null;
 
       if (savedCards) {
         set({ cards: JSON.parse(savedCards) });
@@ -420,6 +443,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       if (savedBoard) {
         set({ currentBoard: JSON.parse(savedBoard) });
       }
+      if (savedTheme) {
+        set({ theme: savedTheme });
+        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      }
     } catch {
       // Keep defaults
     }
@@ -428,10 +455,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   saveBoardLocally: () => {
     if (typeof window === 'undefined') return;
     try {
-      const { cards, connections, currentBoard } = get();
+      const { cards, connections, currentBoard, theme } = get();
       localStorage.setItem('drag2place_cards', JSON.stringify(cards));
       localStorage.setItem('drag2place_connections', JSON.stringify(connections));
       localStorage.setItem('drag2place_board', JSON.stringify(currentBoard));
+      localStorage.setItem('drag2place_theme', theme);
     } catch {
       // Storage error handle
     }
@@ -447,7 +475,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       const { currentBoard, cards, connections } = get();
 
-      // Upsert board
       await supabase.from('boards').upsert({
         id: currentBoard.id,
         user_id: user.id,
@@ -458,7 +485,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         updated_at: new Date().toISOString(),
       });
 
-      // Upsert cards
       for (const card of cards) {
         await supabase.from('cards').upsert({
           id: card.id,
@@ -476,7 +502,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         });
       }
 
-      // Upsert connections
       for (const conn of connections) {
         await supabase.from('connections').upsert({
           id: conn.id,
@@ -511,16 +536,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             `Scheduled for ${ev.startTime ? `${ev.startTime} on ` : ''}${ev.date}. ${ev.location ? `Location: ${ev.location}` : ''}`,
             card.id
           );
-          // Mark notified
           get().updateCardContent(card.id, { notified: true });
-        }
-      }
-
-      if (card.type === 'todo') {
-        const todo = card.content as TodoCardData;
-        const pendingCount = todo.items.filter((i) => !i.completed).length;
-        if (pendingCount > 0 && Math.random() < 0.05) {
-          // Subtle nudge for pending todos if needed
         }
       }
     });

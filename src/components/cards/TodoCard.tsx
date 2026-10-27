@@ -33,7 +33,6 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
 
     onChange({ items: nextItems });
 
-    // Confetti if all tasks are completed
     const allDone = nextItems.length > 0 && nextItems.every((i) => i.completed);
     if (allDone) {
       soundFx.playChime();
@@ -75,13 +74,13 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
     <div className="flex flex-col h-full space-y-3">
       {/* Progress header */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-stone-500 font-mono">
+        <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 font-mono">
           <span>{completedCount} of {items.length} completed</span>
           <span>{progressPercent}%</span>
         </div>
-        <div className="w-full h-1.5 bg-stone-200/70 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-stone-200/70 dark:bg-stone-700/70 rounded-full overflow-hidden">
           <div
-            className="h-full bg-stone-700 rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-stone-700 dark:bg-stone-200 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -92,14 +91,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
         {items.map((item) => (
           <div
             key={item.id}
-            className="group flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-stone-500/5 transition-colors"
+            className="group flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-stone-500/5 dark:hover:bg-stone-400/10 transition-colors"
           >
             <button
               onClick={() => toggleItem(item.id)}
-              className="flex-shrink-0 text-stone-400 hover:text-stone-700 transition-colors"
+              className="flex-shrink-0 text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 transition-colors"
             >
               {item.completed ? (
-                <CheckCircle2 size={17} className="text-stone-700 fill-stone-200" />
+                <CheckCircle2 size={17} className="text-stone-700 dark:text-stone-200 fill-stone-200 dark:fill-stone-700" />
               ) : (
                 <Circle size={17} />
               )}
@@ -111,14 +110,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
               onChange={(e) => updateItemText(item.id, e.target.value)}
               className={`flex-1 text-sm bg-transparent outline-none transition-all ${
                 item.completed
-                  ? 'line-through text-stone-400 italic'
-                  : 'text-stone-800'
+                  ? 'line-through text-stone-400 dark:text-stone-500 italic'
+                  : 'text-stone-800 dark:text-stone-200'
               }`}
             />
 
             <button
               onClick={() => removeItem(item.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-rose-600 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition-opacity"
               title="Delete item"
             >
               <Trash2 size={13} />
@@ -128,14 +127,14 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
       </div>
 
       {/* Add new task input */}
-      <form onSubmit={addItem} className="flex items-center gap-1.5 pt-2 border-t border-stone-200/60">
+      <form onSubmit={addItem} className="flex items-center gap-1.5 pt-2 border-t border-stone-200/60 dark:border-stone-700/60">
         <Plus size={15} className="text-stone-400 ml-1" />
         <input
           type="text"
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           placeholder="Add a task (press enter)..."
-          className="flex-1 text-xs bg-transparent py-1 text-stone-800 placeholder-stone-400 outline-none"
+          className="flex-1 text-xs bg-transparent py-1 text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500 outline-none"
         />
       </form>
     </div>

@@ -78,6 +78,7 @@ export interface Board {
   id: string;
   title: string;
   description?: string;
+  theme: 'light' | 'dark';
   pan: { x: number; y: number };
   zoom: number;
   createdAt: string;

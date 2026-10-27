@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Card, Connection } from '@/types/board';
 import { X } from 'lucide-react';
+import { useBoardStore } from '@/lib/store';
 
 interface ConnectionLineProps {
   connection: Connection;
@@ -19,14 +20,13 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
   onDelete,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { theme } = useBoardStore();
 
-  // Calculate center coordinates
   const fromCenterX = fromCard.x + fromCard.width / 2;
   const fromCenterY = fromCard.y + fromCard.height / 2;
   const toCenterX = toCard.x + toCard.width / 2;
   const toCenterY = toCard.y + toCard.height / 2;
 
-  // Determine which edges to connect based on relative position
   const dx = toCenterX - fromCenterX;
   const dy = toCenterY - fromCenterY;
 
@@ -36,7 +36,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
   let endY = toCenterY;
 
   if (Math.abs(dx) > Math.abs(dy)) {
-    // Connect left/right edges
     if (dx > 0) {
       startX = fromCard.x + fromCard.width;
       endX = toCard.x;
@@ -45,7 +44,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
       endX = toCard.x + toCard.width;
     }
   } else {
-    // Connect top/bottom edges
     if (dy > 0) {
       startY = fromCard.y + fromCard.height;
       endY = toCard.y;
@@ -55,7 +53,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
     }
   }
 
-  // Smooth cubic bezier control points
   const curvature = 0.45;
   const distance = Math.hypot(endX - startX, endY - startY);
   const cpOffset = Math.max(distance * curvature, 40);
@@ -74,10 +71,16 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
   }
 
   const pathData = `M ${startX} ${startY} C ${cp1X} ${cp1Y}, ${cp2X} ${cp2Y}, ${endX} ${endY}`;
-
-  // Midpoint for label and delete icon
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
+
+  const strokeColor = isHovered
+    ? theme === 'dark'
+      ? '#EAE5DC'
+      : '#8C7E72'
+    : theme === 'dark'
+    ? '#4A453F'
+    : '#B8AFA6';
 
   return (
     <g
@@ -85,7 +88,6 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Invisible thicker stroke for easier hover & click */}
       <path
         d={pathData}
         fill="none"
@@ -94,18 +96,16 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
         className="pointer-events-stroke"
       />
 
-      {/* Visible aesthetic connection path */}
       <path
         d={pathData}
         fill="none"
-        stroke={isHovered ? '#8C7E72' : '#B8AFA6'}
+        stroke={strokeColor}
         strokeWidth={isHovered ? 2.5 : 2}
         strokeDasharray={connection.style === 'dashed' ? '6,5' : undefined}
         markerEnd="url(#arrowhead)"
         className="transition-all duration-200"
       />
 
-      {/* Connection label or delete button */}
       <foreignObject
         x={midX - 35}
         y={midY - 14}
@@ -120,13 +120,13 @@ export const ConnectionLine: React.FC<ConnectionLineProps> = ({
                 e.stopPropagation();
                 onDelete(connection.id);
               }}
-              className="flex items-center justify-center w-6 h-6 rounded-full bg-[#EAE4DC] hover:bg-rose-100 text-stone-600 hover:text-rose-600 shadow-sm border border-stone-300 transition-all transform hover:scale-110"
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-[#EAE4DC] dark:bg-[#25221E] hover:bg-rose-100 dark:hover:bg-rose-950/40 text-stone-600 dark:text-stone-300 hover:text-rose-600 dark:hover:text-rose-400 shadow-sm border border-stone-300 dark:border-stone-700 transition-all transform hover:scale-110"
               title="Remove connection"
             >
               <X size={12} />
             </button>
           ) : connection.label ? (
-            <span className="px-2 py-0.5 text-[11px] font-sans font-medium text-stone-600 bg-[#F4EFEA] border border-[#E0D8CE] rounded-full shadow-xs backdrop-blur-xs select-none">
+            <span className="px-2 py-0.5 text-[11px] font-sans font-medium text-stone-600 dark:text-stone-300 bg-[#F4EFEA] dark:bg-[#25221E] border border-[#E0D8CE] dark:border-[#38342E] rounded-full shadow-xs backdrop-blur-xs select-none">
               {connection.label}
             </span>
           ) : null}

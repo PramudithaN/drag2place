@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Card, CardColor, CardContent, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
+import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
 import { useBoardStore } from '@/lib/store';
 import { TodoCard } from './TodoCard';
 import { NoteCard } from './NoteCard';
@@ -15,13 +15,41 @@ interface CardWrapperProps {
 }
 
 const COLOR_CLASSES: Record<CardColor, { bg: string; border: string; accent: string }> = {
-  paper: { bg: 'bg-[#FFFFFF]', border: 'border-[#EBE6DE]', accent: 'text-stone-700' },
-  cream: { bg: 'bg-[#FBF8F2]', border: 'border-[#EAE3D5]', accent: 'text-stone-800' },
-  sage: { bg: 'bg-[#F2F6F1]', border: 'border-[#DEE7DD]', accent: 'text-emerald-900' },
-  terracotta: { bg: 'bg-[#FDF3F0]', border: 'border-[#EFE1DC]', accent: 'text-orange-950' },
-  amber: { bg: 'bg-[#FDF6E9]', border: 'border-[#EFE5D0]', accent: 'text-amber-950' },
-  lavender: { bg: 'bg-[#F6F3FA]', border: 'border-[#E7E0F1]', accent: 'text-purple-950' },
-  sky: { bg: 'bg-[#F1F6FA]', border: 'border-[#D9E6EF]', accent: 'text-sky-950' },
+  paper: {
+    bg: 'bg-[#FFFFFF] dark:bg-[#1D1B18]',
+    border: 'border-[#EBE6DE] dark:border-[#2F2C27]',
+    accent: 'text-stone-700 dark:text-stone-300',
+  },
+  cream: {
+    bg: 'bg-[#FBF8F2] dark:bg-[#23201C]',
+    border: 'border-[#EAE3D5] dark:border-[#332E27]',
+    accent: 'text-stone-800 dark:text-stone-200',
+  },
+  sage: {
+    bg: 'bg-[#F2F6F1] dark:bg-[#1C241D]',
+    border: 'border-[#DEE7DD] dark:border-[#29362B]',
+    accent: 'text-emerald-900 dark:text-emerald-200',
+  },
+  terracotta: {
+    bg: 'bg-[#FDF3F0] dark:bg-[#281E1C]',
+    border: 'border-[#EFE1DC] dark:border-[#3B2925]',
+    accent: 'text-orange-950 dark:text-orange-200',
+  },
+  amber: {
+    bg: 'bg-[#FDF6E9] dark:bg-[#28231A]',
+    border: 'border-[#EFE5D0] dark:border-[#3C3322]',
+    accent: 'text-amber-950 dark:text-amber-200',
+  },
+  lavender: {
+    bg: 'bg-[#F6F3FA] dark:bg-[#241E2B]',
+    border: 'border-[#E7E0F1] dark:border-[#382B45]',
+    accent: 'text-purple-950 dark:text-purple-200',
+  },
+  sky: {
+    bg: 'bg-[#F1F6FA] dark:bg-[#1B232A]',
+    border: 'border-[#D9E6EF] dark:border-[#283745]',
+    accent: 'text-sky-950 dark:text-sky-200',
+  },
 };
 
 const COLOR_PALETTE: CardColor[] = ['paper', 'cream', 'sage', 'terracotta', 'amber', 'lavender', 'sky'];
@@ -105,7 +133,6 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
   const colorStyle = COLOR_CLASSES[card.color] || COLOR_CLASSES.paper;
 
-  // Title extraction & update helper
   const getCardTitle = () => {
     if ('title' in card.content) {
       return (card.content as NoteCardData | TodoCardData | EventCardData).title;
@@ -143,18 +170,18 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         colorStyle.bg
       } ${colorStyle.border} ${
         isSelected
-          ? 'ring-2 ring-stone-700/60 shadow-lg'
-          : 'hover:shadow-md hover:border-stone-400/50'
+          ? 'ring-2 ring-stone-700/60 dark:ring-stone-300/60 shadow-lg'
+          : 'hover:shadow-md hover:border-stone-400/50 dark:hover:border-stone-500/50'
       } ${
         isConnectingTarget ? 'ring-2 ring-amber-500 ring-offset-2 animate-pulse cursor-crosshair' : ''
       } ${
-        isConnectingOrigin ? 'ring-2 ring-stone-900 ring-offset-2' : ''
+        isConnectingOrigin ? 'ring-2 ring-stone-900 dark:ring-stone-100 ring-offset-2' : ''
       }`}
     >
       {/* Card Header & Toolbar */}
       <div
         onMouseDown={handleDragStart}
-        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 rounded-t-2xl"
+        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl"
       >
         <div className="flex items-center gap-1.5 flex-1 mr-2">
           <GripVertical size={14} className="text-stone-400 shrink-0" />
@@ -163,7 +190,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             value={getCardTitle()}
             onChange={(e) => handleTitleChange(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
-            style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }} className="w-full text-sm font-bold tracking-wide bg-transparent text-stone-800 outline-none truncate"
+            className="w-full text-sm font-oregon font-bold tracking-wide bg-transparent text-stone-800 dark:text-stone-100 outline-none truncate"
             placeholder="Card title..."
           />
         </div>
@@ -175,8 +202,8 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             onClick={() => startConnecting(card.id)}
             className={`p-1 rounded-md transition-colors ${
               isConnectingOrigin
-                ? 'bg-stone-800 text-stone-100'
-                : 'text-stone-400 hover:text-stone-700 hover:bg-stone-500/10'
+                ? 'bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900'
+                : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10'
             }`}
             title="Connect arrow to another card"
           >
@@ -187,7 +214,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <div className="relative">
             <button
               onClick={() => setIsColorMenuOpen(!isColorMenuOpen)}
-              className="p-1 text-stone-400 hover:text-stone-700 hover:bg-stone-500/10 rounded-md transition-colors"
+              className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 rounded-md transition-colors"
               title="Change card color"
             >
               <Palette size={13} />
@@ -195,7 +222,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
             {isColorMenuOpen && (
               <div
-                className="absolute right-0 top-full mt-1 z-50 flex gap-1 p-1.5 bg-[#FAF7F2] border border-stone-300 rounded-xl shadow-lg"
+                className="absolute right-0 top-full mt-1 z-50 flex gap-1 p-1.5 bg-[#FAF7F2] dark:bg-[#25221E] border border-stone-300 dark:border-stone-700 rounded-xl shadow-lg"
                 onClick={(e) => e.stopPropagation()}
               >
                 {COLOR_PALETTE.map((col) => (
@@ -205,9 +232,9 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
                       updateCardColor(card.id, col);
                       setIsColorMenuOpen(false);
                     }}
-                    className={`w-4 h-4 rounded-full border border-stone-300 transition-transform hover:scale-125 ${
+                    className={`w-4 h-4 rounded-full border border-stone-300 dark:border-stone-600 transition-transform hover:scale-125 ${
                       COLOR_CLASSES[col].bg
-                    } ${card.color === col ? 'ring-2 ring-stone-700' : ''}`}
+                    } ${card.color === col ? 'ring-2 ring-stone-700 dark:ring-stone-200' : ''}`}
                     title={col}
                   />
                 ))}
@@ -218,7 +245,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           {/* Delete card */}
           <button
             onClick={() => deleteCard(card.id)}
-            className="p-1 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+            className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
             title="Delete card"
           >
             <Trash2 size={13} />

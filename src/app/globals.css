@@ -1,8 +1,22 @@
 @import "tailwindcss";
+@import "./oregon-font.css";
 
 :root {
   --background: #FAF8F5;
   --foreground: #262320;
+  --grid-dot: #D8D2C5;
+  --card-bg: #FFFFFF;
+  --card-border: #EAE5DC;
+  --toolbar-bg: rgba(250, 248, 245, 0.92);
+}
+
+.dark {
+  --background: #141311;
+  --foreground: #EDE9E3;
+  --grid-dot: #2E2B27;
+  --card-bg: #1D1B18;
+  --card-border: #2F2C27;
+  --toolbar-bg: rgba(26, 24, 22, 0.92);
 }
 
 @theme inline {
@@ -11,11 +25,7 @@
   --font-sans: var(--font-sans), system-ui, sans-serif;
   --font-serif: var(--font-serif), Georgia, serif;
   --font-mono: var(--font-mono), monospace;
-  --font-oregon: var(--font-oregon), Georgia, serif;
-}
-
-.font-oregon {
-  font-family: var(--font-oregon), Georgia, serif;
+  --font-oregon: 'OregonLDO', sans-serif;
 }
 
 body {
@@ -38,6 +48,10 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #D8D2C5;
   border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3E3A34;
 }
 
 ::-webkit-scrollbar-thumb:hover {

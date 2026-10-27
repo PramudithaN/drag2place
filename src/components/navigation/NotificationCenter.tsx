@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { notificationService, AppNotification } from '@/lib/notifications';
-import { Bell, CheckCheck, Trash2, Clock, X, Volume2 } from 'lucide-react';
+import { Bell, Trash2, Clock, X, Volume2 } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
 interface NotificationCenterProps {
@@ -33,16 +33,16 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] border border-[#E8E2D6] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3">
+    <div className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-stone-200/60">
+      <div className="flex items-center justify-between pb-2 border-b border-stone-200/60 dark:border-stone-800">
         <div className="flex items-center gap-2">
-          <Bell size={16} className="text-stone-700" />
-          <h3 className="text-sm font-semibold text-stone-800">Notifications & Alerts</h3>
+          <Bell size={16} className="text-stone-700 dark:text-stone-300" />
+          <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Notifications & Alerts</h3>
         </div>
         <button
           onClick={onClose}
-          className="p-1 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+          className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800"
         >
           <X size={15} />
         </button>
@@ -50,8 +50,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
 
       {/* Permission banner */}
       {permission !== 'granted' && (
-        <div className="p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center justify-between">
-          <div className="text-[11px] text-amber-900 leading-tight">
+        <div className="p-2.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-xl flex items-center justify-between">
+          <div className="text-[11px] text-amber-900 dark:text-amber-200 leading-tight">
             Enable browser push alerts to get notified even when this tab is backgrounded.
           </div>
           <button
@@ -66,7 +66,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
       {/* Notifications list */}
       <div className="flex-1 max-h-72 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
         {notifications.length === 0 ? (
-          <div className="py-8 text-center text-xs text-stone-400">
+          <div className="py-8 text-center text-xs text-stone-400 dark:text-stone-500">
             <Clock size={20} className="mx-auto mb-1 stroke-1" />
             No active alerts or reminders
           </div>
@@ -76,18 +76,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
               key={item.id}
               className={`p-2.5 rounded-xl border text-xs transition-colors ${
                 item.read
-                  ? 'bg-stone-50/50 border-stone-200/60 text-stone-500'
-                  : 'bg-white border-stone-200 text-stone-800 shadow-xs'
+                  ? 'bg-stone-50/50 dark:bg-stone-900/40 border-stone-200/60 dark:border-stone-800 text-stone-500 dark:text-stone-400'
+                  : 'bg-white dark:bg-[#25221E] border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-100 shadow-xs'
               }`}
             >
-              <div className="font-semibold text-stone-900">{item.title}</div>
-              <div className="text-[11px] text-stone-600 mt-0.5 leading-snug">{item.message}</div>
-              <div className="flex items-center justify-between mt-2 pt-1 text-[10px] text-stone-400 font-mono">
+              <div className="font-semibold text-stone-900 dark:text-stone-100">{item.title}</div>
+              <div className="text-[11px] text-stone-600 dark:text-stone-300 mt-0.5 leading-snug">{item.message}</div>
+              <div className="flex items-center justify-between mt-2 pt-1 text-[10px] text-stone-400 dark:text-stone-500 font-mono">
                 <span>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 {!item.read && (
                   <button
                     onClick={() => notificationService.markAsRead(item.id)}
-                    className="hover:text-stone-800"
+                    className="hover:text-stone-800 dark:hover:text-stone-200 font-medium"
                   >
                     Mark read
                   </button>
@@ -99,12 +99,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
       </div>
 
       {/* Footer controls */}
-      <div className="flex items-center justify-between pt-2 border-t border-stone-200/60 text-xs text-stone-500">
+      <div className="flex items-center justify-between pt-2 border-t border-stone-200/60 dark:border-stone-800 text-xs text-stone-500 dark:text-stone-400">
         <button
           onClick={() => {
             soundFx.playChime();
           }}
-          className="flex items-center gap-1 hover:text-stone-800"
+          className="flex items-center gap-1 hover:text-stone-800 dark:hover:text-stone-200"
         >
           <Volume2 size={13} /> Test sound
         </button>
@@ -113,7 +113,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
           {notifications.length > 0 && (
             <button
               onClick={() => notificationService.clearAll()}
-              className="flex items-center gap-1 hover:text-rose-600"
+              className="flex items-center gap-1 hover:text-rose-600 dark:hover:text-rose-400"
             >
               <Trash2 size={13} /> Clear
             </button>
