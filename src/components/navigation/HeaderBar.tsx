@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
-import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown } from 'lucide-react';
+import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown, Compass } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -11,6 +11,7 @@ import { AuthModal } from './AuthModal';
 import { BoardSwitcher } from './BoardSwitcher';
 import { ExportModal } from './ExportModal';
 import { CommandPalette } from './CommandPalette';
+import { ModeSelectorModal } from './ModeSelectorModal';
 import { soundFx } from '@/lib/sound';
 
 export const HeaderBar: React.FC = () => {
@@ -19,6 +20,7 @@ export const HeaderBar: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isModeOpen, setIsModeOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState<{ email?: string; id?: string } | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -160,6 +162,16 @@ export const HeaderBar: React.FC = () => {
             </kbd>
           </button>
 
+          {/* Workspace Modes & Headstarters */}
+          <button
+            onClick={() => setIsModeOpen(true)}
+            className="flex items-center gap-1.5 p-2 px-3 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors text-xs font-medium"
+            title="Choose a workspace mode (Developer, Designer, Video Editor, Graphic Designer, Marketing, Influencer)"
+          >
+            <Compass size={14} className="text-amber-600 dark:text-amber-400" />
+            <span className="hidden sm:inline font-sans text-[11px] font-semibold text-stone-700 dark:text-stone-200">Modes</span>
+          </button>
+
           {/* Export & Backup */}
           <button
             onClick={() => setIsExportOpen(true)}
@@ -267,6 +279,7 @@ export const HeaderBar: React.FC = () => {
       />
       <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
+      <ModeSelectorModal isOpen={isModeOpen} onClose={() => setIsModeOpen(false)} />
     </>
   );
 };

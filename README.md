@@ -96,6 +96,15 @@ flowchart TD
 - **Obsidian Velvet Dark Mode**: Low-fatigue dark environment (`#141311`) designed for sustained focus.
 - **Strict Visual Cohesion**: Standardized Lucide SVG iconography with zero emoji usage.
 
+### 11. Role-Based Workspace Modes and Headstarters
+Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, moodboards, and vector connection paths:
+- **Developer**: System architecture specifications, sprint backlog with priority tags, production release milestones, and architecture diagram moodboards.
+- **Designer**: UI/UX design token foundations, design sprint checklists, critique session milestones, and minimalist spatial inspiration.
+- **Video Editor**: Director edit treatments, 4K post-production pipeline checklists, client delivery milestones, and cinematic lighting storyboards.
+- **Graphic Designer**: Brand identity guidelines, asset package checklists, client presentation milestones, and tactile material moodboards.
+- **Marketing**: Go-to-market campaign strategy, launch activation checklists, Product Hunt launch day milestones, and ad creative mockups.
+- **Influencer**: Weekly content calendar blueprints, short-form filming checklists, sponsored post deadlines, and creator desk aesthetic references.
+
 ---
 
 ## Technology Stack

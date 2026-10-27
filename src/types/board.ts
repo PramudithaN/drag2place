@@ -74,11 +74,20 @@ export interface Connection {
   style?: 'solid' | 'dashed' | 'curved';
 }
 
+export type WorkspaceMode = 
+  | 'developer'
+  | 'designer'
+  | 'video_editor'
+  | 'graphic_designer'
+  | 'marketing'
+  | 'influencer';
+
 export interface Board {
   id: string;
   title: string;
   description?: string;
   theme: 'light' | 'dark';
+  mode?: WorkspaceMode;
   pan: { x: number; y: number };
   zoom: number;
   createdAt: string;

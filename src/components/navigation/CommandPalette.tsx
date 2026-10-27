@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
-import { Search, StickyNote, CheckSquare, Calendar, Image as ImageIcon, Sun, Moon, ArrowRight, X } from 'lucide-react';
+import { Search, StickyNote, CheckSquare, Calendar, Image as ImageIcon, Sun, Moon, ArrowRight, X, Compass } from 'lucide-react';
 import { CardContent, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
+import { ModeSelectorModal } from './ModeSelectorModal';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface CommandPaletteProps {
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
+  const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   const { allCards, boards, jumpToCard, addCard, toggleTheme, theme } = useBoardStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -189,6 +191,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             {theme === 'dark' ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-stone-600" />}
             <span>Toggle {theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
           </button>
+
+          <button
+            onClick={() => {
+              handleClose();
+              setIsModeModalOpen(true);
+            }}
+            className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-amber-800 dark:text-amber-300 transition-colors"
+          >
+            <Compass size={14} className="text-amber-600 dark:text-amber-400" />
+            <span>Launch Workspace Mode / Headstarter...</span>
+          </button>
         </div>
 
         {/* Footer with logo */}
@@ -209,6 +222,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           </div>
         </div>
       </div>
+
+      <ModeSelectorModal isOpen={isModeModalOpen} onClose={() => setIsModeModalOpen(false)} />
     </div>
   );
 };

@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useBoardStore } from '@/lib/store';
-import { ChevronDown, Plus, Trash2, Check, Layout, Edit2 } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Check, Layout, Edit2, Compass } from 'lucide-react';
+import { ModeSelectorModal } from './ModeSelectorModal';
 
 export const BoardSwitcher: React.FC = () => {
   const {
@@ -19,6 +20,7 @@ export const BoardSwitcher: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState(currentBoard.title);
   const [newBoardName, setNewBoardName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -195,16 +197,31 @@ export const BoardSwitcher: React.FC = () => {
               </div>
             </form>
           ) : (
-            <button
-              onClick={() => setIsCreating(true)}
-              className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-xl transition-colors border-t border-stone-200 dark:border-stone-800"
-            >
-              <Plus size={13} />
-              <span>Create New Board</span>
-            </button>
+            <div className="pt-1 border-t border-stone-200 dark:border-stone-800 space-y-0.5">
+              <button
+                onClick={() => setIsCreating(true)}
+                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-xl transition-colors"
+              >
+                <Plus size={13} />
+                <span>Create Blank Board</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsModeModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors"
+              >
+                <Compass size={13} />
+                <span>Start from Mode Template...</span>
+              </button>
+            </div>
           )}
         </div>
       )}
+
+      <ModeSelectorModal isOpen={isModeModalOpen} onClose={() => setIsModeModalOpen(false)} />
     </div>
   );
 };

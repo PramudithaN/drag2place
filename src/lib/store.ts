@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig } from '@/types/board';
+import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig, WorkspaceMode } from '@/types/board';
+import { WORKSPACE_MODES } from './templates';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
@@ -24,6 +25,7 @@ interface BoardState {
   // Board operations
   switchBoard: (boardId: string) => void;
   createBoard: (title: string, description?: string) => Board;
+  createBoardFromTemplate: (mode: WorkspaceMode) => Board;
   updateBoardTitle: (boardId: string, title: string) => void;
   deleteBoard: (boardId: string) => void;
 
@@ -259,6 +261,54 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }));
 
     get().saveBoardLocally();
+    return newBoard;
+  },
+
+  createBoardFromTemplate: (mode: WorkspaceMode) => {
+    const template = WORKSPACE_MODES[mode];
+    const newBoardId = `board-${mode}-${Date.now().toString(36)}`;
+    const newBoard: Board = {
+      id: newBoardId,
+      title: template.boardTitle,
+      description: template.boardDescription,
+      theme: get().theme,
+      mode,
+      pan: { x: 0, y: 0 },
+      zoom: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const createdCards: Card[] = template.cards.map((c, idx) => ({
+      ...c,
+      id: `card-${mode}-${Date.now()}-${idx}`,
+      boardId: newBoardId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
+    const createdConnections: Connection[] = template.connections.map((conn, idx) => ({
+      id: `conn-${mode}-${Date.now()}-${idx}`,
+      boardId: newBoardId,
+      fromCardId: createdCards[conn.fromIndex].id,
+      toCardId: createdCards[conn.toIndex].id,
+      label: conn.label,
+      color: '#8C827A',
+      style: 'curved',
+    }));
+
+    soundFx.playDrop();
+    set((state) => ({
+      boards: [...state.boards, newBoard],
+      activeBoardId: newBoard.id,
+      currentBoard: newBoard,
+      allCards: [...state.allCards, ...createdCards],
+      allConnections: [...state.allConnections, ...createdConnections],
+      selectedCardIds: [createdCards[0]?.id || ''],
+    }));
+
+    get().saveBoardLocally();
+    get().syncWithSupabase();
     return newBoard;
   },
 
