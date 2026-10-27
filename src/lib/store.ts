@@ -290,7 +290,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   setTheme: (theme) => {
     if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', theme === 'dark');
+      if (theme === "dark") { document.documentElement.classList.add("dark"); } else { document.documentElement.classList.remove("dark"); }
     }
     set((state) => ({
       theme,
@@ -595,8 +595,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       if (savedTheme) {
         set({ theme: savedTheme });
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-      }
+        if (savedTheme === "dark") { document.documentElement.classList.add("dark"); } else { document.documentElement.classList.remove("dark"); } } else { set({ theme: "light" }); document.documentElement.classList.remove("dark"); }
     } catch {
       // Keep defaults
     }

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "./oregon-font.css";
 
+/* Force Tailwind v4 dark: variants to strictly follow the .dark class on <html>, not system OS media query */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #FAF8F5;
   --foreground: #262320;
