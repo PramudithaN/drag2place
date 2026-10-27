@@ -12,11 +12,10 @@ interface NotificationCenterProps {
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [permission, setPermission] = useState<NotificationPermission>(() => notificationService.getPermissionStatus());
   const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setPermission(notificationService.getPermissionStatus());
     const unsubscribe = notificationService.subscribe((items) => {
       setNotifications(items);
     });

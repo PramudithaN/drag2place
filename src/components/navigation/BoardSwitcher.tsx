@@ -24,10 +24,6 @@ export const BoardSwitcher: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setEditingTitle(currentBoard.title);
-  }, [currentBoard.title]);
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -103,6 +99,7 @@ export const BoardSwitcher: React.FC = () => {
             <span>Workspaces</span>
             <button
               onClick={() => {
+                setEditingTitle(currentBoard.title);
                 setIsEditing(true);
                 setIsOpen(false);
               }}

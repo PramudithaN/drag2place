@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { ImageCardData } from '@/types/board';
-import { Upload, Maximize2, X, Link as LinkIcon } from 'lucide-react';
+import { Upload, Maximize2, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface ImageCardProps {

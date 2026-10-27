@@ -18,7 +18,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Drag2Place — Aesthetic Spatial Workspace",
+  title: "Drag2Place | Aesthetic Spatial Workspace",
   description: "A Milanote-inspired spatial workspace for your tasks, events, ideas, and moodboards.",
 };
 

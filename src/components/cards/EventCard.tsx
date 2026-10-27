@@ -12,24 +12,19 @@ interface EventCardProps {
 }
 
 export const EventCard: React.FC<EventCardProps> = ({ data, onChange }) => {
-  const [countdown, setCountdown] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!data.date) {
-      setCountdown(null);
-      return;
-    }
+  const countdown = React.useMemo(() => {
+    if (!data.date) return null;
     try {
       const targetDate = parseISO(data.date);
       const diff = differenceInCalendarDays(targetDate, new Date());
 
-      if (diff === 0) setCountdown('Today');
-      else if (diff === 1) setCountdown('Tomorrow');
-      else if (diff > 1) setCountdown(`In ${diff} days`);
-      else if (isPast(targetDate)) setCountdown('Past event');
-      else setCountdown(null);
+      if (diff === 0) return 'Today';
+      if (diff === 1) return 'Tomorrow';
+      if (diff > 1) return `In ${diff} days`;
+      if (isPast(targetDate)) return 'Past event';
+      return null;
     } catch {
-      setCountdown(null);
+      return null;
     }
   }, [data.date]);
 

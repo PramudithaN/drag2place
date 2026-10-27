@@ -18,10 +18,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
-    } else {
-      setQuery('');
     }
   }, [isOpen]);
+
+  const handleClose = () => {
+    setQuery('');
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -43,7 +46,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
   const handleSelectCard = (cardId: string) => {
     jumpToCard(cardId);
-    onClose();
+    handleClose();
   };
 
   const getCardIcon = (type: string) => {
@@ -73,7 +76,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="relative w-full max-w-lg bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
@@ -91,7 +94,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             className="flex-1 bg-transparent text-sm text-stone-800 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 outline-none"
           />
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg"
           >
             <X size={16} />
@@ -107,7 +110,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               </div>
               {matchingCards.length === 0 ? (
                 <div className="py-6 text-center text-xs text-stone-400">
-                  No cards match "{query}"
+                  No cards match &quot;{query}&quot;
                 </div>
               ) : (
                 matchingCards.map((card) => (
@@ -140,7 +143,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             onClick={() => {
               addCard('note');
-              onClose();
+              handleClose();
             }}
             className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-stone-700 dark:text-stone-300 transition-colors"
           >
@@ -152,7 +155,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             onClick={() => {
               addCard('todo');
-              onClose();
+              handleClose();
             }}
             className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-stone-700 dark:text-stone-300 transition-colors"
           >
@@ -164,7 +167,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             onClick={() => {
               addCard('event');
-              onClose();
+              handleClose();
             }}
             className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-stone-700 dark:text-stone-300 transition-colors"
           >
@@ -176,7 +179,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             onClick={() => {
               toggleTheme();
-              onClose();
+              handleClose();
             }}
             className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-stone-700 dark:text-stone-300 transition-colors"
           >

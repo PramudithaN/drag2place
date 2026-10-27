@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBoardStore } from '@/lib/store';
-import { Bell, Cloud, CloudOff, Sun, Moon, Search, Download } from 'lucide-react';
+import { Bell, Cloud, CloudOff, Sun, Moon, Search, Download, LogOut, User } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
 import { AuthModal } from './AuthModal';
 import { BoardSwitcher } from './BoardSwitcher';
 import { ExportModal } from './ExportModal';
 import { CommandPalette } from './CommandPalette';
+import { soundFx } from '@/lib/sound';
 
 export const HeaderBar: React.FC = () => {
   const { activeTool, cancelConnecting, connectingFromCardId, theme, toggleTheme } = useBoardStore();
@@ -18,6 +19,7 @@ export const HeaderBar: React.FC = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; id?: string } | null>(null);
 
   useEffect(() => {
     const unsub = notificationService.subscribe((items: AppNotification[]) => {
@@ -37,6 +39,41 @@ export const HeaderBar: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Listen to live Supabase login / logout state
+  useEffect(() => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setCurrentUser({ email: user.email, id: user.id });
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUser({ email: session.user.email, id: session.user.id });
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+    try {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      soundFx.playDrop();
+      notificationService.trigger('Signed Out', 'You are now working in local offline mode.');
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
+  };
 
   return (
     <>
@@ -122,23 +159,54 @@ export const HeaderBar: React.FC = () => {
             )}
           </button>
 
-          {/* Supabase Cloud Auth Button */}
-          <button
-            onClick={() => setIsAuthOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs font-medium text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
-          >
-            {isSupabaseConfigured ? (
-              <>
-                <Cloud size={14} className="text-emerald-700 dark:text-emerald-400" />
-                <span className="hidden sm:inline">Supabase Ready</span>
-              </>
-            ) : (
-              <>
-                <CloudOff size={14} className="text-stone-400 dark:text-stone-500" />
-                <span className="hidden sm:inline">Sync</span>
-              </>
-            )}
-          </button>
+          {/* Cloud Sync & User Profile / Sign In */}
+          {currentUser ? (
+            <div className="flex items-center gap-1.5 p-1 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-sm">
+              {/* Cloud Synced pill */}
+              <div
+                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl text-[11px] font-medium text-emerald-800 dark:text-emerald-200"
+                title="All changes are automatically backed up to the cloud"
+              >
+                <Cloud size={13} className="text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden md:inline">Cloud Synced</span>
+              </div>
+
+              {/* User avatar and email */}
+              <div
+                className="flex items-center gap-1.5 px-2 py-1 text-xs text-stone-700 dark:text-stone-300"
+                title={`Signed in as ${currentUser.email}`}
+              >
+                <div className="w-5 h-5 rounded-lg bg-stone-800 dark:bg-stone-200 text-stone-100 dark:text-stone-900 flex items-center justify-center font-bold text-[10px] shrink-0 uppercase">
+                  {currentUser.email ? currentUser.email[0] : <User size={11} />}
+                </div>
+                <span className="hidden lg:inline max-w-[110px] truncate text-[11px] font-medium font-sans">
+                  {currentUser.email}
+                </span>
+              </div>
+
+              {/* Sign Out Button */}
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-stone-500 hover:text-rose-600 dark:text-stone-400 dark:hover:text-rose-400 hover:bg-rose-50/60 dark:hover:bg-rose-950/30 rounded-xl transition-colors"
+                title="Sign Out of Cloud Account"
+              >
+                <LogOut size={12} />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-xs font-medium text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
+              title="Work is currently saved on this computer only. Click to back up your boards to the cloud."
+            >
+              <CloudOff size={14} className="text-stone-400 dark:text-stone-500" />
+              <span>Save to Cloud</span>
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 rounded-md text-stone-800 dark:text-stone-200 ml-0.5">
+                Sign In
+              </span>
+            </button>
+          )}
         </div>
       </header>
 

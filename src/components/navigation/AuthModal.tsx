@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
-import { X, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Cloud } from 'lucide-react';
+import { useBoardStore } from '@/lib/store';
+import { soundFx } from '@/lib/sound';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -31,7 +33,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           redirectTo: window.location.origin,
         },
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('not enabled')) {
+          throw new Error('Google sign-in is not turned on in your Supabase dashboard yet. Use Email & Password below, or enable Google in Supabase -> Authentication -> Providers.');
+        }
+        throw error;
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Google sign-in error');
     } finally {
@@ -48,15 +55,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       setLoading(true);
       setError(null);
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Verification email sent! Please check your inbox.');
+        if (data.session) {
+          soundFx.playChime();
+          await useBoardStore.getState().syncWithSupabase();
+          onSuccess();
+          onClose();
+        } else {
+          alert('Account created! If email confirmation is enabled, please check your inbox to confirm.');
+          onSuccess();
+          onClose();
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        soundFx.playChime();
+        await useBoardStore.getState().syncWithSupabase();
+        onSuccess();
+        onClose();
       }
-      onSuccess();
-      onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
@@ -77,7 +95,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-2">
-            <ShieldCheck size={13} /> Supabase Cloud Sync
+            <Cloud size={13} /> Cloud Backup & Sync
           </div>
           <h2 className="text-xl font-bold text-stone-900 dark:text-stone-100">
             {isSignUp ? (
@@ -89,23 +107,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             )}
           </h2>
           <p className="text-xs text-stone-600 dark:text-stone-400 mt-1">
-            Sync boards, tasks, moodboards, and reminders across all your devices.
+            Back up your tasks, moodboards, and ideas securely in the cloud and access them from any device.
           </p>
         </div>
 
         {!isSupabaseConfigured && (
           <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl text-xs text-amber-900 dark:text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold">
-              <AlertCircle size={14} className="shrink-0" /> Local Guest Mode Active
+              <AlertCircle size={14} className="shrink-0" /> Currently in Offline Mode
             </div>
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-              Your boards are currently auto-saved locally in your browser. To enable live cloud sync and Google OAuth, add your <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in <code>.env.local</code>.
+              Your boards are currently saved on this computer only. To enable cloud backup across devices, add your database keys to <code>.env.local</code>.
             </p>
           </div>
         )}
 
         {error && (
-          <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs rounded-xl">
+          <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs rounded-xl leading-relaxed">
             {error}
           </div>
         )}
@@ -134,7 +152,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          Continue with Google One-Click
+          Continue with Google
         </button>
 
         <div className="flex items-center gap-2 my-1">
@@ -174,7 +192,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             disabled={!isSupabaseConfigured || loading}
             className="w-full py-2.5 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-white text-stone-100 dark:text-stone-900 rounded-xl text-xs font-semibold shadow-sm transition-colors disabled:opacity-50"
           >
-            {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            {loading ? 'Connecting...' : isSignUp ? 'Sign Up (Free Cloud Backup)' : 'Sign In'}
           </button>
         </form>
 
@@ -183,7 +201,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-xs text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 underline underline-offset-2"
           >
-            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up free"}
           </button>
         </div>
       </div>

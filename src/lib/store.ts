@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, TodoCardData } from '@/types/board';
+import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData } from '@/types/board';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
@@ -623,7 +623,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { currentBoard, allCards, allConnections, boards } = get();
+      const { allCards, allConnections, boards } = get();
 
       for (const b of boards) {
         await supabase.from('boards').upsert({
