@@ -1,114 +1,299 @@
-# Drag2Place | Aesthetic Spatial Workspace
+# Drag2Place
 
-A Milanote-inspired personal dashboard and spatial workspace designed for organizing tasks, events, ideas, and visual moodboards on an infinite freeform canvas.
+Drag2Place is an open-source, spatial personal workspace and dashboard inspired by Milanote. Designed for organizing thoughts, planning projects, tracking deadlines, and assembling visual moodboards on an infinite, hardware-accelerated freeform canvas.
 
----
-
-## ✨ Features Across All 5 Phases
-
-### 1. **Infinite Freeform Spatial Canvas**
-
-- Pan freely (`Space + Left Click` or middle-click) and Zoom (`Ctrl + Scroll` from 25% to 250%).
-- Warm minimalist aesthetic with dot matrix grid.
-- Coordinate-based drag-and-drop placement with z-index elevation and card resizing.
-- Optional snap-to-grid mode.
-
-### 2. **Multi-Board Workspace Management**
-
-- Create multiple independent boards (e.g., _"Daily Canvas & Ideas"_, _"Product Roadmap & Vision"_, _"Life Goals"_).
-- Switch between boards seamlessly from the top navigation dropdown.
-- Inline board rename and board deletion.
-- Each board maintains its own independent pan, zoom, cards, and connection arrows.
-
-### 3. **Search & Command Palette (`Ctrl + K`)**
-
-- Press `Ctrl + K` or click **Search** in the header to search across all cards, notes, tasks, and image captions.
-- Click any search result to automatically fly/pan the viewport directly to that card and highlight it.
-- Keyboard quick actions to create cards and toggle themes.
-
-### 4. **Export to PNG Image & JSON Backup**
-
-- **Export to Image (PNG)**: Capture and download high-resolution 2x snapshots of your visible canvas.
-- **Export JSON Backup**: One-click download of all boards, cards, and connections into a `.json` backup file.
-- **Restore Backup**: Upload a previous `.json` backup to restore your workspace anytime.
-
-### 5. **Visual Card Suite**
-
-- **Checklists & To-Do Lists**: Interactive check items, progress bars, strike-through animations, and celebratory confetti upon 100% completion.
-- **Notes & Ideas**: Custom typography switcher (**Oregon LDO**, **Editorial Serif**, **Modern Sans**, **Clean Mono**), font sizing, and warm stationery styling.
-- **Events & Deadlines**: Calendar date pickers, times, location tags, dynamic countdown badges (_"Today"_, _"Tomorrow"_, _"In 3 days"_), and reminder alert windows.
-- **Media & Moodboards**: Local image uploads and URL embeds with captions and full-screen lightbox zoom.
-- **Curated Color Palette**: 7 warm tones (_Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky_).
-
-### 6. **Milanote-Style Connecting Arrows**
-
-- Interactive bezier curved arrows connecting related cards.
-- Quick deletion and hover controls.
-
-### 7. **macOS Floating Bottom Dock**
-
-- Spring-magnified bottom dock with quick shortcuts (`N` for Note, `T` for Todo, `E` for Event, `I` for Image, `C` for Connect).
-
-### 8. **Audio & Notifications**
-
-- Procedural Web Audio API sound effects (tactile woodblock pops, mellow chimes).
-- Web Notifications API for native browser push alerts.
-- In-app notification drawer for overdue and upcoming events.
-
-### 9. **Dark & Light Mode**
-
-- Instant toggle between **Warm Minimalist Light** and **Obsidian Velvet Dark** themes.
-- Preferences automatically persisted in `localStorage`.
-
-### 10. **Typography**
-
-- Authentic **Oregon LDO** by Luke Owens embedded directly for titles, headers, and branding.
-
-### 11. **Supabase Cloud Sync & Local-First Resilience**
-
-- **Zero-Setup Local-First Storage**: Instant offline persistence with local fallback when not signed in.
-- **Plain-English Cloud Sync**: Clear, human-friendly status badges ("Cloud Synced", "Save to Cloud / Sign In") without technical database jargon.
-- **User Accounts & Profiles**: Live user profile badge, email indicator, and one-click **Sign Out** button in the header bar.
-- **Database & Security**: Complete PostgreSQL migration schema in `src/lib/supabase/schema.sql` with Row Level Security (RLS) policies.
-- **Authentication**: Email/Password signup & login plus optional Google One-Click OAuth configured via `.env.local`.
+Built with a local-first architecture, Drag2Place ensures instantaneous interactions with zero latency, offline resilience, and automatic cloud backup via Supabase PostgreSQL.
 
 ---
 
-## 🛠️ Tech Stack
+## Architectural Overview
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript (Strict)
-- **Styling**: Tailwind CSS 4
-- **Animation**: Framer Motion
-- **Icons**: Lucide React (no emojis)
-- **Image Export**: `html-to-image`
-- **Sound**: Web Audio API
-- **Backend / Auth**: Supabase (`@supabase/supabase-js`)
-- **State**: Zustand
+Drag2Place couples client-side state responsiveness with cloud synchronization and strict Row-Level Security (RLS).
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Browser Runtime"]
+        Canvas["Infinite Canvas (Pan, Zoom, Snap-to-Grid)"]
+        Cards["Draggable Cards (Notes, Tasks, Events, Media)"]
+        Lines["Bezier Connection Engine"]
+        Zustand["Zustand State Store (Instant In-Memory Mutex)"]
+        LocalStorage[("Browser LocalStorage (Local-First Offline Fallback)")]
+
+        Canvas --> Zustand
+        Cards --> Zustand
+        Lines --> Zustand
+        Zustand <--> LocalStorage
+    end
+
+    subgraph Backend ["Supabase Cloud Infrastructure"]
+        AuthService["Supabase Auth (JWT & Session Token Handler)"]
+        PostgresDB[("PostgreSQL Database (Tables: boards, cards, connections)")]
+        RLS["Row Level Security Policies (auth.uid() isolation)"]
+
+        AuthService --> RLS
+        RLS --> PostgresDB
+    end
+
+    Zustand -.->|"Background Sync (Debounced Upserts)"| AuthService
+    AuthService -.->|"Initial Hydration on Login"| Zustand
+```
 
 ---
 
-## 🚀 Getting Started
+## Core Capabilities
 
-### 1. Install Dependencies
+### 1. Spatial Infinite Canvas
+- **Freeform Viewport**: Navigate across unlimited spatial coordinates using `Space + Drag`, middle-mouse panning, or trackpad gestures.
+- **Precision Zooming**: Zoom from 25% to 250% anchored dynamically to cursor coordinates via `Ctrl + Wheel` or trackpad pinch.
+- **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
+- **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.
+
+### 2. Multi-Board Workspaces
+- **Isolated Boards**: Create independent spatial contexts (e.g., Daily Scratchpad, Engineering Roadmap, Creative Moodboard).
+- **Workspace Switcher**: Top navigation menu for instantaneous board transitions.
+- **Board Management**: Inline workspace renaming and safe deletion with confirmation modals.
+- **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
+
+### 3. Visual Card Suite
+- **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**.
+- **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, strikethrough transitions, and particle confetti upon task completion.
+- **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (*Today*, *Tomorrow*, *In X days*), and customizable reminder intervals.
+- **Media and Moodboards**: Image integration via URL or local file upload, accompanied by customizable captions and a full-screen lightbox modal.
+- **Color Palettes**: Curated warm minimalist palettes across seven tactile tones (*Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky*).
+
+### 4. Curved Bezier Connectors
+- **Milanote-Style Vector Connections**: Connect cards with interactive cubic bezier curves and directional arrowheads.
+- **Two-Step Connection Workflow**: Activate the connect tool from the dock, select an origin card, and click any destination card to complete the vector path.
+- **Connection Customization**: Interactive deletion triggers and label badges anchored along curve tangents.
+
+### 5. Floating Bottom Dock
+- **macOS-Style Magnification**: Spring-physics magnification on hover powered by Framer Motion.
+- **Quick Spawn Actions**: Keyboard triggers (`N` for Note, `T` for Todo, `E` for Event, `I` for Image, `C` for Connect mode).
+- **Embedded Brand Identity**: Clean typography and brand mark integration.
+
+### 6. Command Palette and Global Search
+- **Fuzzy Search Modal (`Ctrl + K`)**: Instantly index and search across note contents, task items, event locations, image captions, and workspace titles.
+- **Viewport Auto-Fly**: Selecting a search match smoothly navigates and centers the infinite canvas viewport directly onto the targeted card.
+- **Quick Commands**: Trigger card creation, board exports, and theme toggles directly from the keyboard interface.
+
+### 7. Audio and Notification Engine
+- **Procedural Audio Synthesizer**: Tactile soundscapes (woodblock clicks, marimba drops, mellow chimes) generated via the Web Audio API without external audio files.
+- **Dual Notification System**: Native browser Push Notifications paired with an in-app slide-out alert drawer tracking active, overdue, and upcoming milestone reminders.
+
+### 8. Cloud Synchronization and Local-First Resilience
+- **Offline-First Persistence**: Workspaces are saved to browser `localStorage` on every stroke, permitting complete offline functionality.
+- **Supabase Cloud Synchronization**: Seamless background push to PostgreSQL when authenticated.
+- **Human-Friendly Status**: Plain-language sync indicators avoiding database jargon.
+- **Profile Popover**: User avatar, email badge, and confirmation-guarded sign-out controls.
+
+### 9. High-Resolution Export and Backups
+- **2x Canvas PNG Capture**: Generate publication-ready PNG snapshots of visible canvas regions using `html-to-image`.
+- **Portable JSON Backups**: One-click download of all workspaces, cards, and connection graphs into a single structured JSON file.
+- **Complete Workspace Restore**: File picker to import and hydrate historical JSON backups.
+
+### 10. Design System and Dual Themes
+- **Warm Minimalist Light Mode**: Linen and paper backgrounds (`#FAF8F5`) paired with warm stone borders.
+- **Obsidian Velvet Dark Mode**: Low-fatigue dark environment (`#141311`) designed for sustained focus.
+- **Strict Visual Cohesion**: Standardized Lucide SVG iconography with zero emoji usage.
+
+---
+
+## Technology Stack
+
+| Layer | Technology | Version | Purpose |
+|---|---|---|---|
+| Framework | Next.js (App Router) | 16.4.3 | Server components, routing, optimized asset pipeline |
+| Language | TypeScript | 5.x | Strict type safety, explicit unions, zero `any` types |
+| Styling | Tailwind CSS | 4.x | Utility-first CSS engine with custom `@custom-variant dark` |
+| State Management | Zustand | 5.0.16 | Global reactive state with decoupled persistence drivers |
+| Backend & Auth | Supabase | 2.118.0 | PostgreSQL database, JWT authentication, RLS |
+| Animations | Framer Motion | 14.6.0 | Physics-based spring docks and modal micro-interactions |
+| Audio Engine | Web Audio API | Native | Procedural real-time acoustic waveform synthesis |
+| Canvas Export | html-to-image | 1.11.13 | High-DPI canvas DOM rasterization |
+| Iconography | Lucide React | 1.61.0 | Vector SVG icons conforming to WCAG AA contrast |
+| Package Manager | pnpm | 11.x | Fast, disk-efficient package management |
+
+---
+
+## Directory Structure
+
+```text
+drag2place/
+├── public/                      # Static assets, branding, and fonts
+│   ├── fonts/                   # Luke Owens Oregon LDO TrueType binaries
+│   ├── drag2placeLogo.png       # Primary 1080x1080 brand logo
+│   └── favicon.ico              # Root favicon
+├── src/
+│   ├── app/                     # Next.js App Router root
+│   │   ├── apple-icon.png       # Dynamic iOS touch icon endpoint
+│   │   ├── icon.png             # Dynamic standard icon endpoint
+│   │   ├── favicon.ico          # Dynamic browser tab favicon
+│   │   ├── globals.css          # Tailwind CSS v4 variables & theme overrides
+│   │   ├── layout.tsx           # Root layout, metadata, and font declarations
+│   │   ├── oregon-font.css      # Base64 embedded Oregon LDO font definitions
+│   │   └── page.tsx             # Canvas entry point
+│   ├── components/
+│   │   ├── canvas/              # Spatial engine
+│   │   │   ├── CanvasControls.tsx   # Zoom, pan, snap, theme, sound toggles
+│   │   │   ├── CanvasGrid.tsx       # Dot matrix canvas grid
+│   │   │   ├── ConnectionLine.tsx   # Cubic bezier vector connections
+│   │   │   └── InfiniteCanvas.tsx   # Canvas event coordinator
+│   │   ├── cards/               #Draggable card suite
+│   │   │   ├── CardWrapper.tsx      # Coordinates, drag mechanics, resizing, color menu
+│   │   │   ├── EventCard.tsx        # Milestone and deadline card
+│   │   │   ├── ImageCard.tsx        # Image and lightbox card
+│   │   │   ├── NoteCard.tsx         # Rich typography stationery note
+│   │   │   └── TodoCard.tsx         # Checklists with progress meter
+│   │   ├── dock/                # Bottom navigation dock
+│   │   │   └── FloatingDock.tsx     # Spring-physics floating dock
+│   │   ├── navigation/          # Modals and header chrome
+│   │   │   ├── AuthModal.tsx        # Authentication modal
+│   │   │   ├── BoardSwitcher.tsx    # Multi-board dropdown switcher
+│   │   │   ├── CommandPalette.tsx   # Global search and command modal (Ctrl + K)
+│   │   │   ├── ExportModal.tsx      # PNG capture and JSON backup modal
+│   │   │   ├── HeaderBar.tsx        # Top status bar, brand logo, profile dropdown
+│   │   │   └── NotificationCenter.tsx # In-app notification drawer
+│   │   └── ui/                  # Reusable presentation components
+│   │       └── ConfirmationModal.tsx # Universal destructive action confirmation dialog
+│   ├── lib/                     # Domain services and infrastructure
+│   │   ├── supabase/
+│   │   │   ├── client.ts        # Supabase client factory with offline fallback
+│   │   │   └── schema.sql       # PostgreSQL migration schema with RLS policies
+│   │   ├── notifications.ts     # Browser notification service
+│   │   ├── sound.ts             # Web Audio API acoustic synthesizer
+│   │   └── store.ts             # Primary Zustand store with sync drivers
+│   └── types/
+│       └── board.ts             # Strict TypeScript domain interfaces
+├── .env.example                 # Template for environment credentials
+├── .npmrc                       # Dependency hoisting configuration
+├── eslint.config.mjs            # ESLint 9 flat configuration
+├── next.config.ts               # Next.js configuration
+├── package.json                 # Dependency manifest
+└── tsconfig.json                # Strict TypeScript configuration
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js**: Version `20.x` or `22.x`
+- **pnpm**: Version `10.x` or `11.x` (Recommended)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/PramudithaN/drag2place.git
+cd drag2place
+```
+
+### 2. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 2. Run the Development Server
+### 3. Configure Environment Variables
+
+Duplicate `.env.example` to create your local environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Populate the configuration values:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+```
+
+*Note: If you do not configure Supabase credentials, Drag2Place automatically boots in full offline mode, persisting all data to your browser's local storage.*
+
+### 4. Initialize Database Schema (When using Supabase)
+
+1. Open your **Supabase Dashboard** and navigate to the **SQL Editor**.
+2. Paste the contents of `src/lib/supabase/schema.sql`.
+3. Execute the script to initialize tables (`boards`, `cards`, `connections`) and Row-Level Security policies.
+4. Under **Authentication** -> **URL Configuration**, set your **Site URL** (e.g., `http://localhost:3000` for local or `https://your-domain.com` for production).
+
+### 5. Launch the Development Server
 
 ```bash
 pnpm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Connect Supabase (Optional)
+---
 
-1. Copy `.env.example` to `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-2. Fill in your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Run `src/lib/supabase/schema.sql` in your Supabase SQL editor.
+## Verification and Quality Runbook
+
+Before committing any modifications, ensure the project adheres to all quality gates:
+
+```bash
+# 1. Lint and code style check
+pnpm run lint
+
+# 2. Strict TypeScript compilation check
+npx tsc --noEmit
+
+# 3. Production build verification
+pnpm run build
+```
+
+---
+
+## Keyboard Shortcuts Reference
+
+| Shortcut | Context | Action |
+|---|---|---|
+| `Space + Click + Drag` | Canvas | Pan across the infinite canvas |
+| `Ctrl + Scroll` | Canvas | Zoom viewport anchored to mouse cursor (25% - 250%) |
+| `Ctrl + K` or `Cmd + K` | Global | Toggle Global Command Palette & Search |
+| `N` | Canvas | Create a new Note Card at viewport center |
+| `T` | Canvas | Create a new Checklist Card at viewport center |
+| `E` | Canvas | Create a new Event Card at viewport center |
+| `I` | Canvas | Create a new Media Card at viewport center |
+| `C` | Canvas | Toggle Card Connection Mode |
+| `Delete` or `Backspace` | Card Selected | Open deletion confirmation dialog for selected cards |
+| `Escape` | Modals / Dialogs | Close active dialog or cancel active connection |
+| `Enter` | Confirmation Dialog | Confirm dialog action |
+
+---
+
+## Deployment Guide
+
+### Vercel Deployment (Recommended)
+
+1. Push your repository to GitHub.
+2. Visit [Vercel](https://vercel.com/new) and import `drag2place`.
+3. In **Environment Variables**, define:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Click **Deploy**.
+5. Update your Supabase **Site URL** and **Redirect URLs** to match the generated Vercel domain (`https://<project-name>.vercel.app/**`).
+
+---
+
+## Contributing
+
+Contributions are welcome. Please adhere to the following workflow:
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feat/your-feature-name`.
+3. Verify changes with the quality runbook (`lint`, `tsc`, `build`).
+4. Commit your changes following **Conventional Commits**:
+   - `feat(scope): add new capability`
+   - `fix(scope): resolve bug or regression`
+   - `perf(scope): improve rendering performance`
+   - `refactor(scope): restructure module without behavioral change`
+   - `docs(scope): update documentation`
+5. Push to your branch and submit a Pull Request.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
