@@ -19,7 +19,7 @@ create table if not exists public.cards (
   id text primary key,
   board_id text references public.boards(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete cascade not null,
-  type text not null check (type in ('todo', 'note', 'event', 'image', 'code', 'palette', 'metric')),
+  type text not null check (type in ('todo', 'note', 'event', 'image', 'code', 'palette', 'metric', 'comment', 'link')),
   x float not null default 100,
   y float not null default 100,
   width float not null default 280,

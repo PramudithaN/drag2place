@@ -1,4 +1,4 @@
-export type CardType = 'todo' | 'note' | 'event' | 'image' | 'code' | 'palette' | 'metric';
+export type CardType = 'todo' | 'note' | 'event' | 'image' | 'code' | 'palette' | 'metric' | 'comment' | 'link';
 
 export type CardColor = 
   | 'cream'
@@ -74,6 +74,23 @@ export interface MetricCardData {
   subtitle?: string;
 }
 
+export interface CommentCardData {
+  author: string;
+  avatarUrl?: string;
+  text: string;
+  resolved?: boolean;
+  createdAt?: string;
+}
+
+export interface LinkCardData {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  siteName?: string;
+}
+
 export type CardContent = 
   | TodoCardData 
   | NoteCardData 
@@ -81,7 +98,9 @@ export type CardContent =
   | ImageCardData 
   | CodeCardData 
   | PaletteCardData 
-  | MetricCardData;
+  | MetricCardData
+  | CommentCardData
+  | LinkCardData;
 
 export interface Card {
   id: string;

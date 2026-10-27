@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData } from '@/types/board';
+import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData, CommentCardData, LinkCardData } from '@/types/board';
 import { useBoardStore } from '@/lib/store';
 import { TodoCard } from './TodoCard';
 import { NoteCard } from './NoteCard';
@@ -10,6 +10,8 @@ import { ImageCard } from './ImageCard';
 import { CodeCard } from './CodeCard';
 import { PaletteCard } from './PaletteCard';
 import { MetricCard } from './MetricCard';
+import { CommentCard } from './CommentCard';
+import { LinkCard } from './LinkCard';
 import { GripVertical, Trash2, GitCommit, Palette } from 'lucide-react';
 
 interface CardWrapperProps {
@@ -376,6 +378,20 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <MetricCard
             cardId={card.id}
             data={card.content as MetricCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'comment' && (
+          <CommentCard
+            cardId={card.id}
+            data={card.content as CommentCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'link' && (
+          <LinkCard
+            cardId={card.id}
+            data={card.content as LinkCardData}
             onChange={(newData) => updateCardContent(card.id, newData)}
           />
         )}

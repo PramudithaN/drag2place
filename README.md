@@ -56,10 +56,15 @@ flowchart TD
 
 ### 3. Visual Card Suite
 - **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**.
-- **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, strikethrough transitions, and particle confetti upon task completion.
+- **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, priority badges, strikethrough transitions, and particle confetti upon task completion.
+- **Code Snippet & Terminal**: Dark obsidian terminal window with line numbers, syntax formatting, copy button, and built-in JSON prettifier and validator.
+- **Interactive Color Palettes**: Swatch cards with click-to-copy Hex/Pantone codes, real-time WCAG contrast ratio compliance badges (AA/AAA), and custom color addition.
+- **KPI Goal Metrics**: Numeric target trackers with animated progress bars, percentage completion indicators, and quick adjustment buttons (+1, +10, -1, -10).
+- **Canvas Comments**: Spatial review cards with author badge, timestamp, textarea, and active/resolved status toggles.
+- **Rich Web Link Previews**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons.
 - **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (*Today*, *Tomorrow*, *In X days*), and customizable reminder intervals.
 - **Media and Moodboards**: Image integration via URL or local file upload, accompanied by customizable captions and a full-screen lightbox modal.
-- **Color Palettes**: Curated warm minimalist palettes across seven tactile tones (*Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky*).
+- **Tactile Color System**: Curated warm minimalist palettes across seven tactile tones (*Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky*).
 
 ### 4. Curved Bezier Connectors
 - **Milanote-Style Vector Connections**: Connect cards with interactive cubic bezier curves and directional arrowheads.

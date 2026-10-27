@@ -436,6 +436,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       code: 'paper',
       palette: 'cream',
       metric: 'sky',
+      comment: 'amber',
+      link: 'paper',
     };
 
     let initialContent: CardContent;
@@ -483,6 +485,19 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         unit: 'users',
         subtitle: 'Target for Q4 Launch',
       };
+    } else if (type === 'comment') {
+      initialContent = {
+        author: 'Reviewer',
+        text: 'Add your review note or spatial comment here...',
+        resolved: false,
+        createdAt: new Date().toISOString(),
+      };
+    } else if (type === 'link') {
+      initialContent = {
+        url: '',
+        title: '',
+        description: '',
+      };
     } else {
       initialContent = {
         title: 'Fresh Thought',
@@ -498,8 +513,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       type,
       x: posX,
       y: posY,
-      width: type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' ? 340 : 300,
-      height: type === 'event' ? 280 : type === 'metric' ? 260 : 340,
+      width: type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300,
+      height: type === 'event' || type === 'comment' ? 240 : type === 'metric' ? 260 : 340,
       zIndex: highestZ + 1,
       color: defaultColors[type],
       content: initialContent,
