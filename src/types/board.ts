@@ -25,7 +25,7 @@ export interface TodoCardData {
 export interface NoteCardData {
   title: string;
   body: string;
-  fontFamily: 'serif' | 'sans' | 'mono';
+  fontFamily: 'serif' | 'sans' | 'mono' | 'oregon';
   fontSize: 'sm' | 'base' | 'lg';
 }
 

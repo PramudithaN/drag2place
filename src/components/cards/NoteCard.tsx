@@ -11,11 +11,18 @@ interface NoteCardProps {
 
 export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
   const fontFamilyClass =
-    data.fontFamily === 'serif'
+    data.fontFamily === 'oregon'
+      ? 'font-oregon'
+      : data.fontFamily === 'serif'
       ? 'font-serif'
       : data.fontFamily === 'mono'
       ? 'font-mono'
       : 'font-sans';
+
+  const fontFamilyStyle =
+    data.fontFamily === 'oregon'
+      ? { fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }
+      : undefined;
 
   const fontSizeClass =
     data.fontSize === 'sm'
@@ -29,6 +36,17 @@ export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
       {/* Mini typography options */}
       <div className="flex items-center justify-between pb-1.5 border-b border-stone-200/50">
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => onChange({ fontFamily: 'oregon' })}
+            style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }}
+            className={`px-1.5 py-0.5 text-[11px] rounded transition-colors ${
+              data.fontFamily === 'oregon'
+                ? 'bg-stone-800 text-stone-100 font-bold'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            Oregon
+          </button>
           <button
             onClick={() => onChange({ fontFamily: 'serif' })}
             className={`px-1.5 py-0.5 text-[10px] font-serif rounded transition-colors ${
@@ -87,6 +105,7 @@ export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
       <textarea
         value={data.body || ''}
         onChange={(e) => onChange({ body: e.target.value })}
+        style={fontFamilyStyle}
         placeholder="Type note, ideas, journal, or thoughts..."
         className={`flex-1 w-full bg-transparent resize-none outline-none text-stone-800 placeholder-stone-400 ${fontFamilyClass} ${fontSizeClass} scrollbar-thin`}
       />

@@ -163,7 +163,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             value={getCardTitle()}
             onChange={(e) => handleTitleChange(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
-            className="w-full text-xs font-semibold tracking-tight bg-transparent text-stone-800 outline-none truncate"
+            style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }} className="w-full text-sm font-bold tracking-wide bg-transparent text-stone-800 outline-none truncate"
             placeholder="Card title..."
           />
         </div>

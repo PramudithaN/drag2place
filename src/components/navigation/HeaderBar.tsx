@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBoardStore } from '@/lib/store';
-import { Bell, Cloud, CloudOff, Layers, CheckCircle2 } from 'lucide-react';
+import { Bell, Cloud, CloudOff } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -25,12 +25,18 @@ export const HeaderBar: React.FC = () => {
     <>
       <header className="fixed top-4 left-6 right-6 z-40 flex items-center justify-between pointer-events-none">
         {/* Brand & Board title */}
-        <div className="flex items-center gap-3 p-2 px-3.5 bg-[#FAF8F5]/90 backdrop-blur-md border border-[#E7E0D4] rounded-2xl shadow-sm pointer-events-auto">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-stone-900 text-stone-100 flex items-center justify-center font-oregon font-bold text-xs shadow-xs">
+        <div className="flex items-center gap-3.5 p-2 px-4 bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E7E0D4] rounded-2xl shadow-sm pointer-events-auto">
+          <div className="flex items-center gap-2.5">
+            <div
+              style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }}
+              className="w-6 h-6 rounded-lg bg-stone-900 text-stone-100 flex items-center justify-center font-bold text-sm shadow-xs"
+            >
               D
             </div>
-            <span className="font-oregon font-bold text-base tracking-normal text-stone-900 select-none">
+            <span
+              style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }}
+              className="font-bold text-lg tracking-wide text-stone-900 select-none"
+            >
               Drag2Place
             </span>
           </div>
@@ -38,7 +44,12 @@ export const HeaderBar: React.FC = () => {
           <div className="w-[1px] h-4 bg-stone-300" />
 
           <div className="flex items-center gap-1.5 text-xs text-stone-600">
-            <span className="font-medium text-stone-800">{currentBoard.title}</span>
+            <span
+              style={{ fontFamily: 'var(--font-oregon), "Oregon LDO", Georgia, serif' }}
+              className="font-semibold text-stone-800 text-sm"
+            >
+              {currentBoard.title}
+            </span>
             <span className="text-[11px] font-mono text-stone-400">({cards.length} cards)</span>
           </div>
         </div>
