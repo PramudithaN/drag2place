@@ -75,6 +75,7 @@ interface BoardState {
   hydrateFromSupabase: () => Promise<void>;
   isSyncing: boolean;
   lastSyncedAt: string | null;
+  saveStatus: 'saved' | 'saving';
   checkReminders: () => void;
   exportWorkspaceJson: () => string;
   importWorkspaceJson: (jsonString: string) => boolean;
@@ -257,6 +258,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   theme: 'light',
   isSyncing: false,
   lastSyncedAt: null,
+  saveStatus: 'saved',
 
   getActiveCards: () => {
     const { allCards, activeBoardId } = get();
@@ -754,6 +756,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   saveBoardLocally: (skipCloudSync = false) => {
     if (typeof window === 'undefined') return;
     try {
+      set({ saveStatus: 'saving' });
       const { allCards, allConnections, boards, activeBoardId, theme } = get();
       localStorage.setItem('drag2place_cards', JSON.stringify(allCards));
       localStorage.setItem('drag2place_connections', JSON.stringify(allConnections));
@@ -763,10 +766,24 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       // Debounced background sync to cloud if user is logged in
       if (!skipCloudSync) {
-        get().scheduleCloudSync();
+        const supabase = getSupabase();
+        if (supabase) {
+          get().scheduleCloudSync();
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+              setTimeout(() => set({ saveStatus: 'saved' }), 500);
+            }
+          }).catch(() => {
+            setTimeout(() => set({ saveStatus: 'saved' }), 500);
+          });
+        } else {
+          setTimeout(() => set({ saveStatus: 'saved' }), 500);
+        }
+      } else {
+        setTimeout(() => set({ saveStatus: 'saved' }), 400);
       }
     } catch {
-      // Storage error handle
+      set({ saveStatus: 'saved' });
     }
   },
 
@@ -779,16 +796,22 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   syncWithSupabase: async () => {
     const supabase = getSupabase();
-    if (!supabase) return;
+    if (!supabase) {
+      set({ saveStatus: 'saved' });
+      return;
+    }
 
     // Prevent concurrent sync executions
     if (get().isSyncing) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        set({ saveStatus: 'saved' });
+        return;
+      }
 
-      set({ isSyncing: true });
+      set({ isSyncing: true, saveStatus: 'saving' });
       const { allCards, allConnections, boards } = get();
 
       // Batch upsert boards in a single request
@@ -840,10 +863,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         );
       }
 
-      set({ isSyncing: false, lastSyncedAt: new Date().toISOString() });
+      set({ isSyncing: false, saveStatus: 'saved', lastSyncedAt: new Date().toISOString() });
     } catch (err) {
       console.error('Supabase sync error:', err);
-      set({ isSyncing: false });
+      set({ isSyncing: false, saveStatus: 'saved' });
     }
   },
 

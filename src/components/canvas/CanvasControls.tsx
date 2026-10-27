@@ -24,7 +24,7 @@ export const CanvasControls: React.FC = () => {
       <button
         onClick={() => setZoom(currentBoard.zoom - 0.15)}
         className="p-2 rounded-xl hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] transition-colors text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100"
-        title="Zoom Out"
+        title="Zoom Out (Ctrl + Scroll Down)"
       >
         <ZoomOut size={16} />
       </button>
@@ -40,7 +40,7 @@ export const CanvasControls: React.FC = () => {
       <button
         onClick={() => setZoom(currentBoard.zoom + 0.15)}
         className="p-2 rounded-xl hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] transition-colors text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100"
-        title="Zoom In"
+        title="Zoom In (Ctrl + Scroll Up)"
       >
         <ZoomIn size={16} />
       </button>

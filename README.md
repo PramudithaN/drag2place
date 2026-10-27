@@ -1,4 +1,4 @@
-# Drag2Place
+# :: Drag2Place
 
 Drag2Place is an open-source, spatial personal workspace and dashboard inspired by Milanote. Designed for organizing thoughts, planning projects, tracking deadlines, and assembling visual moodboards on an infinite, hardware-accelerated freeform canvas.
 
@@ -43,6 +43,7 @@ flowchart TD
 ## Core Capabilities
 
 ### 1. Spatial Infinite Canvas
+
 - **Freeform Viewport**: Navigate across unlimited spatial coordinates using `Space + Drag`, middle-mouse panning, or trackpad gestures.
 - **Precision Zooming**: Zoom from 25% to 250% anchored dynamically to cursor coordinates via `Ctrl + Wheel` or trackpad pinch.
 - **Right-Click Spatial Context Menu**: Contextual right-click menu anywhere on the canvas viewport to drop spatial comment pins at exact coordinates, spawn cards directly under the cursor, or reset the viewport.
@@ -50,12 +51,14 @@ flowchart TD
 - **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.
 
 ### 2. Multi-Board Workspaces
+
 - **Isolated Boards**: Create independent spatial contexts (e.g., Daily Scratchpad, Engineering Roadmap, Creative Moodboard).
 - **Workspace Switcher**: Top navigation menu for instantaneous board transitions.
 - **Board Management**: Inline workspace renaming and safe deletion with confirmation modals.
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
 
 ### 3. Visual Card Suite
+
 - **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**. Features clean, uncluttered placeholders and auto-focus so users can immediately begin writing without deleting sample text.
 - **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, priority badges, strikethrough transitions, and particle confetti upon task completion.
 - **Code Snippet & Terminal**: Dark obsidian terminal window with line numbers, syntax formatting, copy button, and built-in JSON prettifier and validator.
@@ -63,49 +66,65 @@ flowchart TD
 - **KPI Goal Metrics**: Numeric target trackers with animated progress bars, percentage completion indicators, and quick adjustment buttons (+1, +10, -1, -10).
 - **Canvas Comments & Spatial Pins**: Collaborative review pins placed at exact canvas coordinates via right-click. Designed as tactile circular avatar pins with expandable discussion balloons, drag repositioning, timestamps, and active/resolved status toggles.
 - **Rich Web Link Previews**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons.
-- **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (*Today*, *Tomorrow*, *In X days*), and customizable reminder intervals.
+- **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (_Today_, _Tomorrow_, _In X days_), and customizable reminder intervals.
 - **Media and Moodboards**: Image integration via URL or local file upload, accompanied by customizable captions and a full-screen lightbox modal.
-- **Tactile Color System**: Curated warm minimalist palettes across seven tactile tones (*Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky*).
+- **Tactile Color System**: Curated warm minimalist palettes across seven tactile tones (_Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky_).
 
 ### 4. Curved Bezier Connectors
+
 - **Milanote-Style Vector Connections**: Connect cards with interactive cubic bezier curves and directional arrowheads.
 - **Two-Step Connection Workflow**: Activate the connect tool from the dock, select an origin card, and click any destination card to complete the vector path.
 - **Connection Customization**: Interactive deletion triggers and label badges anchored along curve tangents.
 
 ### 5. Floating Bottom Dock
+
 - **macOS-Style Magnification**: Spring-physics magnification on hover powered by Framer Motion.
 - **Quick Spawn Actions**: Keyboard triggers (`N` for Note, `T` for Todo, `E` for Event, `I` for Image, `C` for Connect mode).
 - **Embedded Brand Identity**: Clean typography and brand mark integration.
 
 ### 6. Command Palette and Global Search
+
 - **Fuzzy Search Modal (`Ctrl + K`)**: Instantly index and search across note contents, task items, event locations, image captions, and workspace titles.
 - **Viewport Auto-Fly**: Selecting a search match smoothly navigates and centers the infinite canvas viewport directly onto the targeted card.
 - **Quick Commands**: Trigger card creation, board exports, and theme toggles directly from the keyboard interface.
 
 ### 7. Audio and Notification Engine
+
 - **Procedural Audio Synthesizer**: Tactile soundscapes (woodblock clicks, marimba drops, mellow chimes) generated via the Web Audio API without external audio files.
 - **Dual Notification System**: Native browser Push Notifications paired with an in-app slide-out alert drawer tracking active, overdue, and upcoming milestone reminders.
 
 ### 8. Cloud Synchronization and Local-First Resilience
+
 - **Offline-First Persistence**: Workspaces are saved instantly to browser `localStorage` on every stroke, permitting complete offline functionality with zero UI latency.
-- **Offline Draft Indicator**: Amber pulsing badge in the header whenever logged out, alerting the user that edits are currently stored on the device only with a one-click *"Sign in to Sync"* action.
+- **Persistent Save Status Indicator**: A calm, persistent `"Saved"` / `"Saving…"` status indicator always visible in the header pill beside the active board switcher, providing immediate real-time reassurance across both local offline edits and cloud sync states.
+- **Offline Draft Indicator**: Amber pulsing badge in the header whenever logged out, alerting the user that edits are currently stored on the device only with a one-click _"Sign in to Sync"_ action.
 - **Smart Re-Login Reconciliation**: When signing in, any offline edits or cards created while logged out are automatically merged and pushed to Supabase PostgreSQL without overwriting or losing work.
 - **Batched Cloud Sync**: Debounced 3-second background batch upserts (`supabase.from(...).upsert([...])`) that bundle entire workspace updates into single requests, preventing infinite loops, server strain, and unnecessary network traffic.
-- **Human-Friendly Status**: Plain-language sync indicators avoiding database jargon (live spinning sync indicator, serene emerald dot when synced).
+- **Human-Friendly Status**: Plain-language sync indicators avoiding database jargon (live spinning sync indicator, serene emerald check when saved).
 - **Profile Popover**: User avatar, email badge, cloud sync status, and confirmation-guarded sign-out controls.
 
-### 9. High-Resolution Export and Backups
+### 9. First-Load Onboarding & Keyboard Shortcuts Guide
+
+- **First-Visit Onboarding Hint**: A floating, non-intrusive guidance pill (`"Press N to add a note, drag to move, Ctrl+K to search"`) automatically presented to newcomers, dismissible with one click and remembered across sessions.
+- **Dedicated Shortcuts Modal (`?`)**: Full-screen modal triggered by pressing `?` or clicking the `(?)` header button, indexing gestures, canvas navigation keys, card placement triggers, and global commands.
+- **Contextual Shortcut Tooltips**: Helpful keyboard shortcut badges directly embedded in UI tooltips throughout the bottom dock, header controls, canvas zoom toggles, and card delete actions.
+
+### 10. High-Resolution Export and Backups
+
 - **2x Canvas PNG Capture**: Generate publication-ready PNG snapshots of visible canvas regions using `html-to-image`.
 - **Portable JSON Backups**: One-click download of all workspaces, cards, and connection graphs into a single structured JSON file.
 - **Complete Workspace Restore**: File picker to import and hydrate historical JSON backups.
 
-### 10. Design System and Dual Themes
+### 11. Design System and Dual Themes
+
 - **Warm Minimalist Light Mode**: Linen and paper backgrounds (`#FAF8F5`) paired with warm stone borders.
 - **Obsidian Velvet Dark Mode**: Low-fatigue dark environment (`#141311`) designed for sustained focus.
 - **Strict Visual Cohesion**: Standardized Lucide SVG iconography with zero emoji usage.
 
-### 11. Role-Based Workspace Modes and Headstarters
+### 12. Role-Based Workspace Modes and Headstarters
+
 Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, and moodboards:
+
 - **Developer**: Microservices API specifications, SQL spatial migration scripts, sprint backlog with hotfix priorities, cluster cutover milestones, infrastructure topology diagrams, and SLA performance telemetry guardrails. Includes an alternative Open Source & Bug Triage scenario.
 - **Designer**: Design system token hierarchies with WCAG AA contrast standards, usability sprint protocols, user research feedback quotes, interactive mobile prototypes, component redlines, and engineering handoff reviews. Includes an alternative Web Wireframing & IA scenario.
 - **Video Editor**: Raw camera ingest specs (RED 8K VV / ProRes 4444 XQ), rough-cut to picture-lock assembly checklists, DaVinci Resolve color grade node trees with Kodak 2383 LUT recipes, anamorphic framing moodboards, multi-format export checklists (16:9, 9:16, 1:1), and client screening milestones.
@@ -121,18 +140,18 @@ Curated professional workspace presets featuring domain-tailored card content, c
 
 ## Technology Stack
 
-| Layer | Technology | Version | Purpose |
-|---|---|---|---|
-| Framework | Next.js (App Router) | 16.4.3 | Server components, routing, optimized asset pipeline |
-| Language | TypeScript | 5.x | Strict type safety, explicit unions, zero `any` types |
-| Styling | Tailwind CSS | 4.x | Utility-first CSS engine with custom `@custom-variant dark` |
-| State Management | Zustand | 5.0.16 | Global reactive state with decoupled persistence drivers |
-| Backend & Auth | Supabase | 2.118.0 | PostgreSQL database, JWT authentication, RLS |
-| Animations | Framer Motion | 14.6.0 | Physics-based spring docks and modal micro-interactions |
-| Audio Engine | Web Audio API | Native | Procedural real-time acoustic waveform synthesis |
-| Canvas Export | html-to-image | 1.11.13 | High-DPI canvas DOM rasterization |
-| Iconography | Lucide React | 1.61.0 | Vector SVG icons conforming to WCAG AA contrast |
-| Package Manager | pnpm | 11.x | Fast, disk-efficient package management |
+| Layer            | Technology           | Version | Purpose                                                     |
+| ---------------- | -------------------- | ------- | ----------------------------------------------------------- |
+| Framework        | Next.js (App Router) | 16.4.3  | Server components, routing, optimized asset pipeline        |
+| Language         | TypeScript           | 5.x     | Strict type safety, explicit unions, zero `any` types       |
+| Styling          | Tailwind CSS         | 4.x     | Utility-first CSS engine with custom `@custom-variant dark` |
+| State Management | Zustand              | 5.0.16  | Global reactive state with decoupled persistence drivers    |
+| Backend & Auth   | Supabase             | 2.118.0 | PostgreSQL database, JWT authentication, RLS                |
+| Animations       | Framer Motion        | 14.6.0  | Physics-based spring docks and modal micro-interactions     |
+| Audio Engine     | Web Audio API        | Native  | Procedural real-time acoustic waveform synthesis            |
+| Canvas Export    | html-to-image        | 1.11.13 | High-DPI canvas DOM rasterization                           |
+| Iconography      | Lucide React         | 1.61.0  | Vector SVG icons conforming to WCAG AA contrast             |
+| Package Manager  | pnpm                 | 11.x    | Fast, disk-efficient package management                     |
 
 ---
 
@@ -173,7 +192,10 @@ drag2place/
 │   │   │   ├── CommandPalette.tsx   # Global search and command modal (Ctrl + K)
 │   │   │   ├── ExportModal.tsx      # PNG capture and JSON backup modal
 │   │   │   ├── HeaderBar.tsx        # Top status bar, brand logo, profile dropdown
-│   │   │   └── NotificationCenter.tsx # In-app notification drawer
+│   │   │   ├── ModeSelectorModal.tsx # Role-based workspace mode selector
+│   │   │   ├── NotificationCenter.tsx # In-app notification drawer
+│   │   │   ├── OnboardingHint.tsx   # First-visit quick gesture & shortcut guidance
+│   │   │   └── ShortcutsModal.tsx   # Keyboard shortcuts & controls guide (?)
 │   │   └── ui/                  # Reusable presentation components
 │   │       └── ConfirmationModal.tsx # Universal destructive action confirmation dialog
 │   ├── lib/                     # Domain services and infrastructure
@@ -230,7 +252,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
-*Note: If you do not configure Supabase credentials, Drag2Place automatically boots in full offline mode, persisting all data to your browser's local storage.*
+_Note: If you do not configure Supabase credentials, Drag2Place automatically boots in full offline mode, persisting all data to your browser's local storage._
 
 ### 4. Initialize Database Schema (When using Supabase)
 
@@ -268,21 +290,21 @@ pnpm run build
 
 ## Keyboard Shortcuts Reference
 
-| Shortcut | Context | Action |
-|---|---|---|
-| `Space + Click + Drag` | Canvas | Pan across the infinite canvas |
-| `Ctrl + Scroll` | Canvas | Zoom viewport anchored to mouse cursor (25% - 250%) |
-| `Ctrl + K` or `Cmd + K` | Global | Toggle Global Command Palette & Search |
-| `N` | Canvas | Create a new Note Card at viewport center |
-| `T` | Canvas | Create a new Checklist Card at viewport center |
-| `C` | Canvas | Create a new Code Snippet & Terminal Card |
-| `P` | Canvas | Create a new Color Palette Card |
-| `M` | Canvas | Create a new KPI Metric Goal Card |
-| `E` | Canvas | Create a new Event Card at viewport center |
-| `I` | Canvas | Create a new Media Card at viewport center |
-| `Delete` or `Backspace` | Card Selected | Open deletion confirmation dialog for selected cards |
-| `Escape` | Modals / Dialogs | Close active dialog or cancel active connection |
-| `Enter` | Confirmation Dialog | Confirm dialog action |
+| Shortcut                | Context             | Action                                               |
+| ----------------------- | ------------------- | ---------------------------------------------------- |
+| `Space + Click + Drag`  | Canvas              | Pan across the infinite canvas                       |
+| `Ctrl + Scroll`         | Canvas              | Zoom viewport anchored to mouse cursor (25% - 250%)  |
+| `Ctrl + K` or `Cmd + K` | Global              | Toggle Global Command Palette & Search               |
+| `N`                     | Canvas              | Create a new Note Card at viewport center            |
+| `T`                     | Canvas              | Create a new Checklist Card at viewport center       |
+| `C`                     | Canvas              | Create a new Code Snippet & Terminal Card            |
+| `P`                     | Canvas              | Create a new Color Palette Card                      |
+| `M`                     | Canvas              | Create a new KPI Metric Goal Card                    |
+| `E`                     | Canvas              | Create a new Event Card at viewport center           |
+| `I`                     | Canvas              | Create a new Media Card at viewport center           |
+| `Delete` or `Backspace` | Card Selected       | Open deletion confirmation dialog for selected cards |
+| `Escape`                | Modals / Dialogs    | Close active dialog or cancel active connection      |
+| `Enter`                 | Confirmation Dialog | Confirm dialog action                                |
 
 ---
 

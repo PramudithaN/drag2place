@@ -335,7 +335,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <button
             onClick={handleDeleteCard}
             className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
-            title="Delete card"
+            title="Delete card (Del or Backspace)"
           >
             <Trash2 size={13} />
           </button>

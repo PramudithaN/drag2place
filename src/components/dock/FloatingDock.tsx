@@ -95,7 +95,7 @@ export const FloatingDock: React.FC = () => {
 
         <DockItem
           icon={<GitFork size={19} />}
-          label="Connect Cards (C)"
+          label="Connect Cards"
           onClick={() => setActiveTool(activeTool === 'connect' ? 'select' : 'connect')}
           active={activeTool === 'connect'}
         />

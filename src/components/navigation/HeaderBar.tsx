@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
-import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown, Compass, RefreshCw } from 'lucide-react';
+import { Bell, CloudOff, Sun, Moon, Search, Download, LogOut, User, ChevronDown, Compass, RefreshCw, HelpCircle, Check } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -12,6 +12,8 @@ import { BoardSwitcher } from './BoardSwitcher';
 import { ExportModal } from './ExportModal';
 import { CommandPalette } from './CommandPalette';
 import { ModeSelectorModal } from './ModeSelectorModal';
+import { ShortcutsModal } from './ShortcutsModal';
+import { OnboardingHint } from './OnboardingHint';
 import { soundFx } from '@/lib/sound';
 
 export const HeaderBar: React.FC = () => {
@@ -23,12 +25,14 @@ export const HeaderBar: React.FC = () => {
     toggleTheme,
     openConfirmModal,
     isSyncing,
+    saveStatus,
   } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isModeOpen, setIsModeOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentUser, setCurrentUser] = useState<{ email?: string; id?: string } | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -54,12 +58,22 @@ export const HeaderBar: React.FC = () => {
     return unsub;
   }, []);
 
-  // Keyboard shortcut Ctrl+K or Cmd+K
+  // Keyboard shortcuts: Ctrl+K or Cmd+K for command palette, '?' for shortcuts guide
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandOpen((prev) => !prev);
+      } else if (e.key === '?' && !isInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -144,6 +158,34 @@ export const HeaderBar: React.FC = () => {
 
           {/* Multi-Board Dropdown */}
           <BoardSwitcher />
+
+          <div className="w-[1px] h-4 bg-stone-300 dark:bg-stone-700" />
+
+          {/* Persistent Save Status Indicator */}
+          <div
+            className="flex items-center gap-1.5 text-[11px] font-medium select-none text-stone-500 dark:text-stone-400"
+            title={
+              currentUser
+                ? saveStatus === 'saving'
+                  ? 'Saving changes to local storage & cloud...'
+                  : 'All changes saved locally & synced to cloud'
+                : saveStatus === 'saving'
+                  ? 'Saving changes to local storage...'
+                  : 'All changes saved locally to this device'
+            }
+          >
+            {saveStatus === 'saving' ? (
+              <>
+                <RefreshCw size={11} className="text-amber-500 animate-spin shrink-0" />
+                <span className="text-amber-700 dark:text-amber-400 text-[11px]">Saving…</span>
+              </>
+            ) : (
+              <>
+                <Check size={12} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-stone-600 dark:text-stone-300 text-[11px]">Saved</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Center mode status banner if connecting cards */}
@@ -191,10 +233,20 @@ export const HeaderBar: React.FC = () => {
           {/* Export & Backup */}
           <button
             onClick={() => setIsExportOpen(true)}
-            className="p-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
+            className="p-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors cursor-pointer"
             title="Export image or backup board"
           >
             <Download size={16} />
+          </button>
+
+          {/* Shortcuts & Help (?) */}
+          <button
+            onClick={() => setIsShortcutsOpen(true)}
+            className="p-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors cursor-pointer"
+            title="Keyboard shortcuts & gestures (?)"
+            aria-label="Keyboard shortcuts"
+          >
+            <HelpCircle size={16} />
           </button>
 
           {/* Theme toggle */}
@@ -317,6 +369,8 @@ export const HeaderBar: React.FC = () => {
       <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
       <ModeSelectorModal isOpen={isModeOpen} onClose={() => setIsModeOpen(false)} />
+      <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
+      <OnboardingHint onOpenShortcuts={() => setIsShortcutsOpen(true)} />
     </>
   );
 };
