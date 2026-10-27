@@ -14,6 +14,7 @@ export const BoardSwitcher: React.FC = () => {
     updateBoardTitle,
     deleteBoard,
     allCards,
+    openConfirmModal,
   } = useBoardStore();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -140,9 +141,14 @@ export const BoardSwitcher: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm(`Delete board "${b.title}"?`)) {
-                            deleteBoard(b.id);
-                          }
+                          openConfirmModal({
+                            title: 'Delete Workspace?',
+                            message: `Are you sure you want to permanently delete workspace "${b.title}" and its cards?`,
+                            confirmText: 'Delete Workspace',
+                            isDestructive: true,
+                            icon: 'trash',
+                            onConfirm: () => deleteBoard(b.id),
+                          });
                         }}
                         className={`opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-rose-500 transition-opacity ${
                           isActive ? 'text-stone-300' : 'text-stone-400'

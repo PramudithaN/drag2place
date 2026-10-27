@@ -69,6 +69,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     cancelConnecting,
     activeTool,
     connectingFromCardId,
+    openConfirmModal,
   } = useBoardStore();
 
   const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
@@ -173,6 +174,19 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     } else {
       updateCardContent(card.id, { title: newTitle });
     }
+  };
+
+  const handleDeleteCard = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const title = getCardTitle() || 'Untitled Card';
+    openConfirmModal({
+      title: 'Delete Card?',
+      message: `Are you sure you want to permanently delete "${title}"? Any connecting arrows to this card will also be removed.`,
+      confirmText: 'Delete Card',
+      isDestructive: true,
+      icon: 'trash',
+      onConfirm: () => deleteCard(card.id),
+    });
   };
 
   return (
@@ -302,7 +316,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
           {/* Delete card */}
           <button
-            onClick={() => deleteCard(card.id)}
+            onClick={handleDeleteCard}
             className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
             title="Delete card"
           >

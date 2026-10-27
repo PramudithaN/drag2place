@@ -8,6 +8,7 @@ import { CardWrapper } from '../cards/CardWrapper';
 import { FloatingDock } from '../dock/FloatingDock';
 import { CanvasControls } from './CanvasControls';
 import { HeaderBar } from '../navigation/HeaderBar';
+import { ConfirmationModal } from '../ui/ConfirmationModal';
 
 export const InfiniteCanvas: React.FC = () => {
   const {
@@ -24,6 +25,7 @@ export const InfiniteCanvas: React.FC = () => {
     selectedCardIds,
     checkReminders,
     loadBoard,
+    openConfirmModal,
   } = useBoardStore();
 
   const cards = getActiveCards() || [];
@@ -72,7 +74,20 @@ export const InfiniteCanvas: React.FC = () => {
       } else if (e.key === 'i' || e.key === 'I') {
         addCard('image');
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        selectedCardIds.forEach((id) => deleteCard(id));
+        if (selectedCardIds.length === 0) return;
+        const count = selectedCardIds.length;
+        openConfirmModal({
+          title: count > 1 ? `Delete ${count} Cards?` : 'Delete Card?',
+          message: count > 1
+            ? `Are you sure you want to permanently delete these ${count} selected cards? Any connecting arrows will also be removed.`
+            : 'Are you sure you want to permanently delete this card and its connecting arrows?',
+          confirmText: count > 1 ? `Delete ${count} Cards` : 'Delete Card',
+          isDestructive: true,
+          icon: 'trash',
+          onConfirm: () => {
+            selectedCardIds.forEach((id) => deleteCard(id));
+          },
+        });
       }
     };
 
@@ -89,7 +104,7 @@ export const InfiniteCanvas: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [addCard, deleteCard, selectedCardIds]);
+  }, [addCard, deleteCard, selectedCardIds, openConfirmModal]);
 
   // Zooming with mouse wheel anchored to cursor
   const handleWheel = useCallback(
@@ -237,6 +252,9 @@ export const InfiniteCanvas: React.FC = () => {
 
       {/* Canvas Viewport Controls */}
       <CanvasControls />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData } from '@/types/board';
+import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig } from '@/types/board';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
@@ -59,6 +59,11 @@ interface BoardState {
   finishConnecting: (toCardId: string) => void;
   cancelConnecting: () => void;
   deleteConnection: (id: string) => void;
+
+  // Confirmation modal
+  confirmModal: ConfirmModalConfig | null;
+  openConfirmModal: (config: ConfirmModalConfig) => void;
+  closeConfirmModal: () => void;
   
   // Sync, Export & Import
   loadBoard: () => void;
@@ -200,6 +205,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   connectingFromCardId: null,
   snapToGrid: false,
   soundEnabled: true,
+  confirmModal: null,
+  openConfirmModal: (config: ConfirmModalConfig) => set({ confirmModal: config }),
+  closeConfirmModal: () => set({ confirmModal: null }),
   theme: 'light',
 
   getActiveCards: () => {

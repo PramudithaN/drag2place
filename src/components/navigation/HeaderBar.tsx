@@ -13,7 +13,7 @@ import { CommandPalette } from './CommandPalette';
 import { soundFx } from '@/lib/sound';
 
 export const HeaderBar: React.FC = () => {
-  const { activeTool, cancelConnecting, connectingFromCardId, theme, toggleTheme } = useBoardStore();
+  const { activeTool, cancelConnecting, connectingFromCardId, theme, toggleTheme, openConfirmModal } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -73,6 +73,18 @@ export const HeaderBar: React.FC = () => {
     } catch (err) {
       console.error('Sign out error:', err);
     }
+  };
+
+  const handleSignOutClick = () => {
+    openConfirmModal({
+      title: 'Sign Out of Account?',
+      message: 'Your boards and cards will remain saved on this computer, but automatic cloud backup will pause until you sign in again.',
+      confirmText: 'Sign Out',
+      cancelText: 'Stay Signed In',
+      isDestructive: true,
+      icon: 'logout',
+      onConfirm: handleSignOut,
+    });
   };
 
   return (
@@ -186,7 +198,7 @@ export const HeaderBar: React.FC = () => {
 
               {/* Sign Out Button */}
               <button
-                onClick={handleSignOut}
+                onClick={handleSignOutClick}
                 className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-stone-500 hover:text-rose-600 dark:text-stone-400 dark:hover:text-rose-400 hover:bg-rose-50/60 dark:hover:bg-rose-950/30 rounded-xl transition-colors"
                 title="Sign Out of Cloud Account"
               >

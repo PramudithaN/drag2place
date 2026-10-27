@@ -90,3 +90,13 @@ export interface ViewportTransform {
   y: number;
   zoom: number;
 }
+
+export interface ConfirmModalConfig {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  isDestructive?: boolean;
+  icon?: 'trash' | 'logout' | 'alert';
+  onConfirm: () => void;
+}
