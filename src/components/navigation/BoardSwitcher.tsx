@@ -162,12 +162,12 @@ export const BoardSwitcher: React.FC = () => {
                             onConfirm: () => deleteBoard(b.id),
                           });
                         }}
-                        className={`opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-rose-500 transition-opacity ${
+                        className={`opacity-60 hover:opacity-100 p-1 rounded hover:bg-rose-500/10 hover:text-rose-500 transition-all cursor-pointer ${
                           isActive ? 'text-stone-300' : 'text-stone-400'
                         }`}
-                        title="Delete board"
+                        title="Delete workspace"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={13} />
                       </button>
                     )}
                   </div>

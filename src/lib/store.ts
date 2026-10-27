@@ -379,6 +379,16 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       allConnections: state.allConnections.filter((conn) => conn.boardId !== boardId),
     }));
     get().saveBoardLocally();
+
+    // Delete from Supabase if user is logged in (cascades to cards & connections)
+    const supabase = getSupabase();
+    if (supabase) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from('boards').delete().eq('id', boardId).eq('user_id', user.id).then();
+        }
+      });
+    }
   },
 
   toggleTheme: () => {
