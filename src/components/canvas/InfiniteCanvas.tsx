@@ -69,6 +69,12 @@ export const InfiniteCanvas: React.FC = () => {
         addCard('note');
       } else if (e.key === 't' || e.key === 'T') {
         addCard('todo');
+      } else if (e.key === 'c' || e.key === 'C') {
+        addCard('code');
+      } else if (e.key === 'p' || e.key === 'P') {
+        addCard('palette');
+      } else if (e.key === 'm' || e.key === 'M') {
+        addCard('metric');
       } else if (e.key === 'e' || e.key === 'E') {
         addCard('event');
       } else if (e.key === 'i' || e.key === 'I') {

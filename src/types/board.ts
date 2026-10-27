@@ -1,4 +1,4 @@
-export type CardType = 'todo' | 'note' | 'event' | 'image';
+export type CardType = 'todo' | 'note' | 'event' | 'image' | 'code' | 'palette' | 'metric';
 
 export type CardColor = 
   | 'cream'
@@ -47,7 +47,41 @@ export interface ImageCardData {
   originalName?: string;
 }
 
-export type CardContent = TodoCardData | NoteCardData | EventCardData | ImageCardData;
+export interface CodeCardData {
+  title: string;
+  code: string;
+  language: string;
+}
+
+export interface SwatchItem {
+  id: string;
+  name: string;
+  hex: string;
+  cmyk?: string;
+  pantone?: string;
+}
+
+export interface PaletteCardData {
+  title: string;
+  swatches: SwatchItem[];
+}
+
+export interface MetricCardData {
+  title: string;
+  currentValue: number;
+  targetValue: number;
+  unit?: string;
+  subtitle?: string;
+}
+
+export type CardContent = 
+  | TodoCardData 
+  | NoteCardData 
+  | EventCardData 
+  | ImageCardData 
+  | CodeCardData 
+  | PaletteCardData 
+  | MetricCardData;
 
 export interface Card {
   id: string;

@@ -45,7 +45,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     boardDescription: 'API contract specifications, SQL spatial migration scripts, sprint backlog, and production cutover telemetry.',
     cards: [
       {
-        type: 'note',
+        type: 'code',
         x: 60,
         y: 80,
         width: 380,
@@ -53,14 +53,13 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         zIndex: 1,
         color: 'paper',
         content: {
-          title: 'API Gateway & Contract Spec',
-          body: 'Service: /api/v2/telemetry/events\nProtocol: HTTP/2 + WebSocket multiplex\nRate Limit: 2,500 req/min per tenant\n\nHeaders:\n  Authorization: Bearer <JWT_HMAC_SHA256>\n  X-Workspace-Scope: read:boards, write:cards\n\nPayload Contract:\n  {\n    boardId: UUID,\n    event: "card_drop" | "pan",\n    delta: { x: i32, y: i32 },\n    ts: u64\n  }\n\nError Thresholds: 429 Throttled, 401 Expired Token',
-          fontFamily: 'mono',
-          fontSize: 'sm',
+          title: 'API Gateway Contract',
+          language: 'json',
+          code: '{\n  "service": "/api/v2/telemetry/events",\n  "protocol": "HTTP/2 + WebSocket multiplex",\n  "rateLimitPerMin": 2500,\n  "headers": {\n    "Authorization": "Bearer <JWT_HMAC_SHA256>",\n    "X-Workspace-Scope": "read:boards, write:cards"\n  },\n  "payloadContract": {\n    "boardId": "UUID",\n    "event": "card_drop",\n    "delta": { "x": 120, "y": 80 },\n    "timestamp": 1730030000\n  }\n}',
         },
       },
       {
-        type: 'note',
+        type: 'code',
         x: 60,
         y: 460,
         width: 380,
@@ -68,10 +67,9 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         zIndex: 2,
         color: 'sage',
         content: {
-          title: 'SQL Migration: Spatial RLS Policies',
-          body: '-- Migration: 20261027_spatial_indexes.sql\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_cards_board_spatial\nON public.cards (board_id, x, y);\n\nALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY "Allow workspace member read"\nON public.cards FOR SELECT\nUSING (auth.uid() IN (\n  SELECT user_id FROM workspace_members\n  WHERE workspace_members.board_id = cards.board_id\n));\n\n-- Notify replication channel on card transform\nNOTIFY card_spatial_mutation;',
-          fontFamily: 'mono',
-          fontSize: 'sm',
+          title: 'SQL Spatial Migration',
+          language: 'sql',
+          code: '-- Migration: 20261027_spatial_indexes.sql\nCREATE INDEX CONCURRENTLY IF NOT EXISTS idx_cards_board_spatial\nON public.cards (board_id, x, y);\n\nALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY "Allow workspace member read"\nON public.cards FOR SELECT\nUSING (auth.uid() IN (\n  SELECT user_id FROM workspace_members\n  WHERE workspace_members.board_id = cards.board_id\n));',
         },
       },
       {
@@ -539,7 +537,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
       {
-        type: 'note',
+        type: 'palette',
         x: 470,
         y: 80,
         width: 360,
@@ -548,9 +546,12 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         color: 'paper',
         content: {
           title: 'Color System: Pantone & CMYK Inks',
-          body: 'Core Inks & Finishes:\n- Forest Pine: Pantone 5535 C | C80 M35 Y70 K75 | #183028\n- Warm Linen: Pantone 7527 C | C5 M5 Y12 K0 | #FAF8F5\n- Deep Obsidian: Rich Black (C60 M40 Y40 K100) | #141311\n- Foil Stamping: Kurz Luxor 428 Metallic Gold Foil\n\nPaper Stock Specifications:\n- G.F Smith Colorplan 350gsm Pristine White (Embossed Linen)\n- Soy-based non-toxic inks with waterless offset print',
-          fontFamily: 'mono',
-          fontSize: 'sm',
+          swatches: [
+            { id: 'gd-sw-1', name: 'Forest Pine', hex: '#183028', pantone: 'Pantone 5535 C', cmyk: 'C80 M35 Y70 K75' },
+            { id: 'gd-sw-2', name: 'Warm Linen', hex: '#FAF8F5', pantone: 'Pantone 7527 C', cmyk: 'C5 M5 Y12 K0' },
+            { id: 'gd-sw-3', name: 'Deep Obsidian', hex: '#141311', pantone: 'Rich Black', cmyk: 'C60 M40 Y40 K100' },
+            { id: 'gd-sw-4', name: 'Kurz Luxor Gold', hex: '#D4AF37', pantone: 'Metallic 428', cmyk: 'Foil Stamp' },
+          ],
         },
       },
       {
@@ -698,7 +699,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
       {
-        type: 'todo',
+        type: 'metric',
         x: 470,
         y: 460,
         width: 360,
@@ -706,14 +707,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         zIndex: 5,
         color: 'sage',
         content: {
-          title: 'Q3 Acquisition & Funnel Targets',
-          items: [
-            { id: 'kpi-1', text: 'Product Hunt: #1 Product of the Day (Target: 800+ upvotes)', completed: false, priority: 'high' },
-            { id: 'kpi-2', text: 'Day 1 Unique Visitors: 15,000+ across all channels', completed: false, priority: 'high' },
-            { id: 'kpi-3', text: 'Interactive Canvas Activation: >40% of visitors drop a card', completed: false, priority: 'medium' },
-            { id: 'kpi-4', text: 'Customer Acquisition Cost (CAC): Maintain < $12.50 on paid channels', completed: false, priority: 'medium' },
-            { id: 'kpi-5', text: 'Newsletter Subscribers: 2,500 new creator signups', completed: false, priority: 'low' },
-          ],
+          title: 'Product Hunt Launch Upvotes',
+          currentValue: 520,
+          targetValue: 800,
+          unit: 'upvotes',
+          subtitle: 'Goal: #1 Product of the Day',
         },
       },
       {
@@ -901,7 +899,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
       {
-        type: 'note',
+        type: 'metric',
         x: 860,
         y: 80,
         width: 360,
@@ -909,10 +907,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         zIndex: 3,
         color: 'paper',
         content: {
-          title: 'North Star Metric & OKRs',
-          body: 'North Star Metric:\n- Weekly Active Workspaces with >= 3 distinct cards created\n\nQ4 Key Objectives:\n1. Increase Day-7 User Retention from 18% -> 34%\n2. Decrease average board load latency to < 180ms\n3. Reach 10,000 public board shares via read-only URLs\n4. Maintain 0 data loss incidents across offline reconnects',
-          fontFamily: 'mono',
-          fontSize: 'sm',
+          title: 'Weekly Active Workspaces',
+          currentValue: 1840,
+          targetValue: 3500,
+          unit: 'spaces',
+          subtitle: 'North Star User Retention Metric',
         },
       },
       {

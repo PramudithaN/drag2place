@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
+import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData } from '@/types/board';
 import { useBoardStore } from '@/lib/store';
 import { TodoCard } from './TodoCard';
 import { NoteCard } from './NoteCard';
 import { EventCard } from './EventCard';
 import { ImageCard } from './ImageCard';
+import { CodeCard } from './CodeCard';
+import { PaletteCard } from './PaletteCard';
+import { MetricCard } from './MetricCard';
 import { GripVertical, Trash2, GitCommit, Palette } from 'lucide-react';
 
 interface CardWrapperProps {
@@ -352,6 +355,27 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <ImageCard
             cardId={card.id}
             data={card.content as ImageCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'code' && (
+          <CodeCard
+            cardId={card.id}
+            data={card.content as CodeCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'palette' && (
+          <PaletteCard
+            cardId={card.id}
+            data={card.content as PaletteCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'metric' && (
+          <MetricCard
+            cardId={card.id}
+            data={card.content as MetricCardData}
             onChange={(newData) => updateCardContent(card.id, newData)}
           />
         )}

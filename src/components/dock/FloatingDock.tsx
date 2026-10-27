@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork } from 'lucide-react';
+import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 import { CardType } from '@/types/board';
 
@@ -51,23 +51,38 @@ export const FloatingDock: React.FC = () => {
         className="flex items-center gap-2 p-2 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-3xl shadow-xl shadow-stone-900/5 dark:shadow-black/20"
       >
         <DockItem
-          icon={<StickyNote size={19} />}
+          icon={<StickyNote size={18} />}
           label="Note / Idea (N)"
           onClick={() => handleAdd('note')}
         />
         <DockItem
-          icon={<CheckSquare size={19} />}
-          label="To-Do List (T)"
+          icon={<CheckSquare size={18} />}
+          label="Checklist (T)"
           onClick={() => handleAdd('todo')}
         />
         <DockItem
-          icon={<Calendar size={19} />}
-          label="Event / Plan (E)"
+          icon={<Code2 size={18} />}
+          label="Code / JSON (C)"
+          onClick={() => handleAdd('code')}
+        />
+        <DockItem
+          icon={<Palette size={18} />}
+          label="Color Palette (P)"
+          onClick={() => handleAdd('palette')}
+        />
+        <DockItem
+          icon={<TrendingUp size={18} />}
+          label="KPI Metric (M)"
+          onClick={() => handleAdd('metric')}
+        />
+        <DockItem
+          icon={<Calendar size={18} />}
+          label="Milestone (E)"
           onClick={() => handleAdd('event')}
         />
         <DockItem
-          icon={<ImageIcon size={19} />}
-          label="Image / Moodboard (I)"
+          icon={<ImageIcon size={18} />}
+          label="Media (I)"
           onClick={() => handleAdd('image')}
         />
 

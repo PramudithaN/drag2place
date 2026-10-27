@@ -267,9 +267,11 @@ pnpm run build
 | `Ctrl + K` or `Cmd + K` | Global | Toggle Global Command Palette & Search |
 | `N` | Canvas | Create a new Note Card at viewport center |
 | `T` | Canvas | Create a new Checklist Card at viewport center |
+| `C` | Canvas | Create a new Code Snippet & Terminal Card |
+| `P` | Canvas | Create a new Color Palette Card |
+| `M` | Canvas | Create a new KPI Metric Goal Card |
 | `E` | Canvas | Create a new Event Card at viewport center |
 | `I` | Canvas | Create a new Media Card at viewport center |
-| `C` | Canvas | Toggle Card Connection Mode |
 | `Delete` or `Backspace` | Card Selected | Open deletion confirmation dialog for selected cards |
 | `Escape` | Modals / Dialogs | Close active dialog or cancel active connection |
 | `Enter` | Confirmation Dialog | Confirm dialog action |

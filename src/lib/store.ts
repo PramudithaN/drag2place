@@ -433,6 +433,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       note: 'cream',
       event: 'amber',
       image: 'sage',
+      code: 'paper',
+      palette: 'cream',
+      metric: 'sky',
     };
 
     let initialContent: CardContent;
@@ -456,6 +459,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         url: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=1000&auto=format&fit=crop',
         caption: 'Aesthetic moodboard item',
       };
+    } else if (type === 'code') {
+      initialContent = {
+        title: 'Code Snippet',
+        code: '// Paste or write code snippet here\nfunction calculateScore(x: number) {\n  return x * 1.5;\n}',
+        language: 'typescript',
+      };
+    } else if (type === 'palette') {
+      initialContent = {
+        title: 'Color Palette',
+        swatches: [
+          { id: 'sw-1', name: 'Obsidian Velvet', hex: '#1C1A17', pantone: 'Black 6 C' },
+          { id: 'sw-2', name: 'Paper Linen', hex: '#FAF8F5', pantone: '7527 C' },
+          { id: 'sw-3', name: 'Warm Terracotta', hex: '#E07A5F', pantone: '7592 C' },
+          { id: 'sw-4', name: 'Deep Slate', hex: '#3D405B', pantone: '534 C' },
+        ],
+      };
+    } else if (type === 'metric') {
+      initialContent = {
+        title: 'Key Metric Goal',
+        currentValue: 120,
+        targetValue: 500,
+        unit: 'users',
+        subtitle: 'Target for Q4 Launch',
+      };
     } else {
       initialContent = {
         title: 'Fresh Thought',
@@ -471,8 +498,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       type,
       x: posX,
       y: posY,
-      width: type === 'image' ? 340 : 300,
-      height: type === 'event' ? 280 : 320,
+      width: type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' ? 340 : 300,
+      height: type === 'event' ? 280 : type === 'metric' ? 260 : 340,
       zIndex: highestZ + 1,
       color: defaultColors[type],
       content: initialContent,
