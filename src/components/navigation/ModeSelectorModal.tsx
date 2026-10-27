@@ -87,7 +87,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
               Select Your Workspace Mode
             </h2>
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-xl leading-relaxed">
-              Launch a tailored canvas with pre-configured cards, checklists, moodboard images, and connection arrows tailored to your profession.
+              Launch a tailored canvas with pre-configured cards, checklists, and moodboard images tailored to your profession.
             </p>
           </div>
 
@@ -134,7 +134,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
 
                 <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-800/60 flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300 group-hover:text-stone-900 dark:group-hover:text-stone-100">
                   <span className="text-[11px] font-mono text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
-                    {template.cards.length} cards + arrows
+                    {template.cards.length} cards
                   </span>
                   <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 font-sans group-hover:translate-x-0.5 transition-transform">
                     <span>Launch</span>

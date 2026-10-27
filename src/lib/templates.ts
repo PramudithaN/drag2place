@@ -9,7 +9,7 @@ export interface ModeHeadstarter {
   boardTitle: string;
   boardDescription: string;
   cards: Omit<Card, 'id' | 'boardId' | 'createdAt' | 'updatedAt'>[];
-  connections: {
+  connections?: {
     fromIndex: number;
     toIndex: number;
     label: string;
@@ -128,14 +128,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
     ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'defines schema', style: 'solid', color: '#2A6F97' },
-      { fromIndex: 0, toIndex: 2, label: 'tasks backlog', style: 'curved', color: '#2A6F97' },
-      { fromIndex: 1, toIndex: 2, label: 'migration test', style: 'dashed', color: '#4A7C59' },
-      { fromIndex: 2, toIndex: 3, label: 'triggers deploy', style: 'solid', color: '#C86D51' },
-      { fromIndex: 3, toIndex: 5, label: 'monitors telemetry', style: 'dashed', color: '#C86D51' },
-      { fromIndex: 0, toIndex: 4, label: 'system topology', style: 'curved', color: '#8C827A' },
-    ],
   },
 
   // =========================================================================
@@ -250,13 +242,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
           reminderMinutesBefore: 30,
         },
       },
-    ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'protocol standards', style: 'curved', color: '#7E57C2' },
-      { fromIndex: 1, toIndex: 2, label: 'user feedback', style: 'solid', color: '#7E57C2' },
-      { fromIndex: 0, toIndex: 4, label: 'token mappings', style: 'solid', color: '#4A7C59' },
-      { fromIndex: 3, toIndex: 1, label: 'tested prototype', style: 'dashed', color: '#C86D51' },
-      { fromIndex: 4, toIndex: 5, label: 'redline walkthrough', style: 'curved', color: '#D97706' },
     ],
   },
 
@@ -373,13 +358,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
     ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'timeline ingest', style: 'solid', color: '#2A6F97' },
-      { fromIndex: 3, toIndex: 2, label: 'lighting & tone reference', style: 'dashed', color: '#C86D51' },
-      { fromIndex: 1, toIndex: 2, label: 'picture lock to grade', style: 'solid', color: '#D97706' },
-      { fromIndex: 2, toIndex: 4, label: 'color-graded masters', style: 'solid', color: '#4A7C59' },
-      { fromIndex: 1, toIndex: 5, label: 'client screening review', style: 'curved', color: '#7E57C2' },
-    ],
   },
 
   // =========================================================================
@@ -489,13 +467,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
           reminderMinutesBefore: 45,
         },
       },
-    ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'defines palette', style: 'solid', color: '#7E57C2' },
-      { fromIndex: 1, toIndex: 2, label: 'material swatch proof', style: 'dashed', color: '#C86D51' },
-      { fromIndex: 0, toIndex: 3, label: 'die-line dimensions', style: 'solid', color: '#D97706' },
-      { fromIndex: 3, toIndex: 4, label: 'exports packaging', style: 'solid', color: '#4A7C59' },
-      { fromIndex: 3, toIndex: 5, label: 'press-check approval', style: 'curved', color: '#7E57C2' },
     ],
   },
 
@@ -612,13 +583,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
     ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'informs copy', style: 'solid', color: '#2A6F97' },
-      { fromIndex: 0, toIndex: 2, label: 'visual assets', style: 'dashed', color: '#2A6F97' },
-      { fromIndex: 1, toIndex: 3, label: 'channel distribution', style: 'solid', color: '#2A6F97' },
-      { fromIndex: 3, toIndex: 5, label: 'war room go-live', style: 'solid', color: '#C86D51' },
-      { fromIndex: 5, toIndex: 4, label: 'tracks KPIs', style: 'curved', color: '#4A7C59' },
-    ],
   },
 
   // =========================================================================
@@ -733,13 +697,6 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
           reminderMinutesBefore: 60,
         },
       },
-    ],
-    connections: [
-      { fromIndex: 0, toIndex: 1, label: 'script requirements', style: 'solid', color: '#7E57C2' },
-      { fromIndex: 2, toIndex: 3, label: 'studio lighting setup', style: 'dashed', color: '#C86D51' },
-      { fromIndex: 1, toIndex: 3, label: 'filming script', style: 'solid', color: '#7E57C2' },
-      { fromIndex: 3, toIndex: 4, label: 'rough cut footage', style: 'solid', color: '#2A6F97' },
-      { fromIndex: 4, toIndex: 5, label: 'publish live video', style: 'curved', color: '#C86D51' },
     ],
   },
 };

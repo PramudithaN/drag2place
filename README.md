@@ -97,7 +97,7 @@ flowchart TD
 - **Strict Visual Cohesion**: Standardized Lucide SVG iconography with zero emoji usage.
 
 ### 11. Role-Based Workspace Modes and Headstarters
-Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, moodboards, and vector connection paths:
+Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, and moodboards:
 - **Developer**: Microservices API specifications, SQL spatial migration scripts, sprint backlog with hotfix priorities, cluster cutover milestones, infrastructure topology diagrams, and SLA performance telemetry guardrails.
 - **Designer**: Design system token hierarchies with WCAG AA contrast standards, usability sprint protocols, user research feedback quotes, interactive mobile prototypes, component redlines, and engineering handoff reviews.
 - **Video Editor**: Raw camera ingest specs (RED 8K VV / ProRes 4444 XQ), rough-cut to picture-lock assembly checklists, DaVinci Resolve color grade node trees with Kodak 2383 LUT recipes, anamorphic framing moodboards, multi-format export checklists (16:9, 9:16, 1:1), and client screening milestones.

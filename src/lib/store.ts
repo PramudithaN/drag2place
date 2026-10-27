@@ -287,15 +287,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       updatedAt: new Date().toISOString(),
     }));
 
-    const createdConnections: Connection[] = template.connections.map((conn, idx) => ({
-      id: `conn-${mode}-${Date.now()}-${idx}`,
-      boardId: newBoardId,
-      fromCardId: createdCards[conn.fromIndex].id,
-      toCardId: createdCards[conn.toIndex].id,
-      label: conn.label,
-      color: conn.color || '#8C827A',
-      style: conn.style || 'curved',
-    }));
+    const createdConnections: Connection[] = template.connections?.length
+      ? template.connections.map((conn, idx) => ({
+          id: `conn-${mode}-${Date.now()}-${idx}`,
+          boardId: newBoardId,
+          fromCardId: createdCards[conn.fromIndex].id,
+          toCardId: createdCards[conn.toIndex].id,
+          label: conn.label,
+          color: conn.color || '#8C827A',
+          style: conn.style || 'curved',
+        }))
+      : [];
 
     soundFx.playDrop();
     set((state) => ({
