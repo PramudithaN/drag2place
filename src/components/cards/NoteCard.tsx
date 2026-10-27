@@ -97,9 +97,10 @@ export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
 
       {/* Note body textarea */}
       <textarea
+        autoFocus={!data.body && !data.title}
         value={data.body || ''}
         onChange={(e) => onChange({ body: e.target.value })}
-        placeholder="Type note, ideas, journal, or thoughts..."
+        placeholder="Write your note, thoughts, ideas, or journal here..."
         className={`flex-1 w-full bg-transparent resize-none outline-none text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500 ${fontFamilyClass} ${fontSizeClass} scrollbar-thin`}
       />
     </div>

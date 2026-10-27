@@ -546,8 +546,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       };
     } else {
       initialContent = {
-        title: 'Fresh Thought',
-        body: 'Write thoughts, inspirations, or notes...',
+        title: '',
+        body: '',
         fontFamily: 'oregon',
         fontSize: 'base',
       };

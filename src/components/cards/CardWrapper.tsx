@@ -168,9 +168,9 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
   const getCardTitle = () => {
     if ('title' in card.content) {
-      return (card.content as NoteCardData | TodoCardData | EventCardData).title;
+      return (card.content as NoteCardData | TodoCardData | EventCardData).title ?? '';
     }
-    return (card.content as ImageCardData).caption || 'Media';
+    return (card.content as ImageCardData).caption || '';
   };
 
   const handleTitleChange = (newTitle: string) => {
@@ -183,7 +183,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
   const handleDeleteCard = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const title = getCardTitle() || 'Untitled Card';
+    const title = getCardTitle() || (card.type === 'note' ? 'Untitled Note' : 'Untitled Card');
     openConfirmModal({
       title: 'Delete Card?',
       message: `Are you sure you want to permanently delete "${title}"? Any connecting arrows to this card will also be removed.`,
@@ -262,7 +262,19 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             onChange={(e) => handleTitleChange(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-full text-sm font-oregon font-bold tracking-wide bg-transparent text-stone-800 dark:text-stone-100 outline-none truncate"
-            placeholder="Card title..."
+            placeholder={
+              card.type === 'note'
+                ? 'Untitled Note...'
+                : card.type === 'todo'
+                ? 'Checklist title...'
+                : card.type === 'code'
+                ? 'Code title...'
+                : card.type === 'palette'
+                ? 'Palette title...'
+                : card.type === 'event'
+                ? 'Event title...'
+                : 'Card title...'
+            }
           />
         </div>
 
