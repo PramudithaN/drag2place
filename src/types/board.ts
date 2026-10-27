@@ -80,7 +80,11 @@ export type WorkspaceMode =
   | 'video_editor'
   | 'graphic_designer'
   | 'marketing'
-  | 'influencer';
+  | 'influencer'
+  | 'product_manager'
+  | 'architect'
+  | 'music_producer'
+  | 'author';
 
 export interface Board {
   id: string;

@@ -25,7 +25,7 @@ interface BoardState {
   // Board operations
   switchBoard: (boardId: string) => void;
   createBoard: (title: string, description?: string) => Board;
-  createBoardFromTemplate: (mode: WorkspaceMode) => Board;
+  createBoardFromTemplate: (mode: WorkspaceMode, scenarioId?: string) => Board;
   updateBoardTitle: (boardId: string, title: string) => void;
   deleteBoard: (boardId: string) => void;
 
@@ -264,8 +264,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     return newBoard;
   },
 
-  createBoardFromTemplate: (mode: WorkspaceMode) => {
-    const template = WORKSPACE_MODES[mode];
+  createBoardFromTemplate: (mode: WorkspaceMode, scenarioId?: string) => {
+    const baseTemplate = WORKSPACE_MODES[mode];
+    const template = (scenarioId && baseTemplate?.subScenarios?.find((s) => s.id === scenarioId)) || baseTemplate;
+    if (!template) return get().currentBoard;
     const newBoardId = `board-${mode}-${Date.now().toString(36)}`;
     const newBoard: Board = {
       id: newBoardId,
@@ -287,17 +289,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       updatedAt: new Date().toISOString(),
     }));
 
-    const createdConnections: Connection[] = template.connections?.length
-      ? template.connections.map((conn, idx) => ({
-          id: `conn-${mode}-${Date.now()}-${idx}`,
-          boardId: newBoardId,
-          fromCardId: createdCards[conn.fromIndex].id,
-          toCardId: createdCards[conn.toIndex].id,
-          label: conn.label,
-          color: conn.color || '#8C827A',
-          style: conn.style || 'curved',
-        }))
-      : [];
+    const createdConnections: Connection[] = [];
 
     soundFx.playDrop();
     set((state) => ({

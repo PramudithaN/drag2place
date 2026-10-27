@@ -4,7 +4,21 @@ import React, { useEffect } from 'react';
 import { useBoardStore } from '@/lib/store';
 import { WORKSPACE_MODES } from '@/lib/templates';
 import { WorkspaceMode } from '@/types/board';
-import { X, Terminal, Layout, Video, PenTool, Megaphone, Camera, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  X,
+  Terminal,
+  Layout,
+  Video,
+  PenTool,
+  Megaphone,
+  Camera,
+  Target,
+  Building2,
+  Music,
+  BookOpen,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
 interface ModeSelectorModalProps {
@@ -26,9 +40,9 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const handleSelectMode = (mode: WorkspaceMode) => {
+  const handleSelectMode = (mode: WorkspaceMode, scenarioId?: string) => {
     soundFx.playDrop();
-    createBoardFromTemplate(mode);
+    createBoardFromTemplate(mode, scenarioId);
     onClose();
   };
 
@@ -46,6 +60,14 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         return <Megaphone size={22} className="text-orange-600 dark:text-orange-400" />;
       case 'influencer':
         return <Camera size={22} className="text-rose-600 dark:text-rose-400" />;
+      case 'product_manager':
+        return <Target size={22} className="text-indigo-600 dark:text-indigo-400" />;
+      case 'architect':
+        return <Building2 size={22} className="text-teal-600 dark:text-teal-400" />;
+      case 'music_producer':
+        return <Music size={22} className="text-violet-600 dark:text-violet-400" />;
+      case 'author':
+        return <BookOpen size={22} className="text-stone-700 dark:text-stone-300" />;
     }
   };
 
@@ -63,6 +85,14 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         return 'bg-orange-50 dark:bg-orange-950/40 border-orange-200/80 dark:border-orange-800/60';
       case 'influencer':
         return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/60';
+      case 'product_manager':
+        return 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/80 dark:border-indigo-800/60';
+      case 'architect':
+        return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200/80 dark:border-teal-800/60';
+      case 'music_producer':
+        return 'bg-violet-50 dark:bg-violet-950/40 border-violet-200/80 dark:border-violet-800/60';
+      case 'author':
+        return 'bg-stone-100 dark:bg-stone-900/60 border-stone-200 dark:border-stone-700';
     }
   };
 
@@ -73,7 +103,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-4xl max-h-[88vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-5xl max-h-[90vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -86,8 +116,8 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
             <h2 className="text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
               Select Your Workspace Mode
             </h2>
-            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-xl leading-relaxed">
-              Launch a tailored canvas with pre-configured cards, checklists, and moodboard images tailored to your profession.
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
+              Launch a tailored canvas with domain-specific cards, task checklists, and aesthetic moodboards structured for your profession.
             </p>
           </div>
 
@@ -101,9 +131,11 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         </div>
 
         {/* Modes Grid */}
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5 scrollbar-thin">
           {(Object.keys(WORKSPACE_MODES) as WorkspaceMode[]).map((modeKey) => {
             const template = WORKSPACE_MODES[modeKey];
+            const hasSubScenarios = template.subScenarios && template.subScenarios.length > 0;
+
             return (
               <div
                 key={modeKey}
@@ -130,6 +162,28 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
                   <p className="text-xs text-stone-600 dark:text-stone-400 mt-2.5 leading-relaxed line-clamp-3">
                     {template.description}
                   </p>
+
+                  {/* Optional Alternative Scenarios */}
+                  {hasSubScenarios && (
+                    <div className="mt-3 pt-2.5 border-t border-stone-100 dark:border-stone-800/60 flex flex-col gap-1.5">
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                        Alternative Scenario:
+                      </div>
+                      {template.subScenarios?.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectMode(modeKey, sub.id);
+                          }}
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-stone-700 dark:text-stone-300 bg-stone-100/70 hover:bg-stone-200/80 dark:bg-stone-800/60 dark:hover:bg-stone-700/80 transition-colors text-left"
+                        >
+                          <span className="truncate mr-1.5">{sub.name}</span>
+                          <ArrowRight size={11} className="shrink-0 text-stone-400" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-800/60 flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300 group-hover:text-stone-900 dark:group-hover:text-stone-100">

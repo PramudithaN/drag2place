@@ -98,12 +98,16 @@ flowchart TD
 
 ### 11. Role-Based Workspace Modes and Headstarters
 Curated professional workspace presets featuring domain-tailored card content, checklists, milestone events, and moodboards:
-- **Developer**: Microservices API specifications, SQL spatial migration scripts, sprint backlog with hotfix priorities, cluster cutover milestones, infrastructure topology diagrams, and SLA performance telemetry guardrails.
-- **Designer**: Design system token hierarchies with WCAG AA contrast standards, usability sprint protocols, user research feedback quotes, interactive mobile prototypes, component redlines, and engineering handoff reviews.
+- **Developer**: Microservices API specifications, SQL spatial migration scripts, sprint backlog with hotfix priorities, cluster cutover milestones, infrastructure topology diagrams, and SLA performance telemetry guardrails. Includes an alternative Open Source & Bug Triage scenario.
+- **Designer**: Design system token hierarchies with WCAG AA contrast standards, usability sprint protocols, user research feedback quotes, interactive mobile prototypes, component redlines, and engineering handoff reviews. Includes an alternative Web Wireframing & IA scenario.
 - **Video Editor**: Raw camera ingest specs (RED 8K VV / ProRes 4444 XQ), rough-cut to picture-lock assembly checklists, DaVinci Resolve color grade node trees with Kodak 2383 LUT recipes, anamorphic framing moodboards, multi-format export checklists (16:9, 9:16, 1:1), and client screening milestones.
 - **Graphic Designer**: Luxury botanical brand identity manifests, Pantone & CMYK ink formulas, packaging tuck-end box die-line specifications, tactile paper and foil-stamp moodboards, vector export checklists, and offset printer press-check inspections.
 - **Marketing**: Full-funnel SaaS Q3 launch strategies, high-converting copywriting matrices with 3 hook angles, digital ad creative mockups, launch activation checklists, acquisition KPI trackers, and Product Hunt live war rooms.
 - **Influencer**: Sponsored campaign contract deliverables, 3-second viral hook script storyboards, overhead desk studio lighting setups, post-production captioning workflows, and prime social publishing windows.
+- **Product Manager**: Lean Canvas hypotheses, customer pain point discovery, RICE feature scoring backlogs, user journey analytics dashboards, sprint OKRs, and executive product council reviews.
+- **Architect & Interior Designer**: Biophilic architectural spatial concepts, Carrara marble and European white oak material schedules, municipal zoning & permit compliance checklists, and client schematic walkthrough milestones.
+- **Music Producer & Audio Engineer**: Harmonic song arrangement sequences (BPM, key, meter), UAD Neve & Pultec vocal mixing signal chains, tracking passes, multi-track stems, and Apple Digital Master deliverables (-14 LUFS).
+- **Author & Screenwriter**: 3-Act narrative conflict structures, psychological protagonist flaw dossiers, chapter word count trackers, subplot weaving checklists, and literary agent submission milestones.
 
 ---
 

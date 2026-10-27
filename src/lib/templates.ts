@@ -1,6 +1,17 @@
 import { WorkspaceMode, Card } from '@/types/board';
 
+export interface ScenarioTemplate {
+  id: string;
+  name: string;
+  headline: string;
+  description: string;
+  boardTitle: string;
+  boardDescription: string;
+  cards: Omit<Card, 'id' | 'boardId' | 'createdAt' | 'updatedAt'>[];
+}
+
 export interface ModeHeadstarter {
+  id?: string;
   mode: WorkspaceMode;
   name: string;
   badge: string;
@@ -16,13 +27,15 @@ export interface ModeHeadstarter {
     style?: 'solid' | 'dashed' | 'curved';
     color?: string;
   }[];
+  subScenarios?: ScenarioTemplate[];
 }
 
 export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
   // =========================================================================
-  // 1. DEVELOPER: Microservices API, SQL Schema Migration & Incident Pipeline
+  // 1. DEVELOPER
   // =========================================================================
   developer: {
+    id: 'dev-microservices',
     mode: 'developer',
     name: 'Developer',
     badge: 'API & Incident Architecture',
@@ -128,12 +141,90 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
     ],
+    subScenarios: [
+      {
+        id: 'dev-oss-triage',
+        name: 'Open Source Library & Bug Triage',
+        headline: 'Repository Maintenance & SemVer Release',
+        description: 'Triage incoming community issues, benchmark vector algorithms, and prepare semantic version release tags.',
+        boardTitle: 'OSS Maintenance & Bug Triage Workspace',
+        boardDescription: 'Issue triage queue, reproduction scripts, benchmark criteria, and npm release checklists.',
+        cards: [
+          {
+            type: 'note',
+            x: 60,
+            y: 80,
+            width: 380,
+            height: 340,
+            zIndex: 1,
+            color: 'paper',
+            content: {
+              title: 'v2.4.0 Release Changelog Draft',
+              body: 'Highlights:\n- feat(canvas): add bezier curve smoothing to connection paths\n- fix(store): prevent duplicate key errors during local storage rehydration\n- perf(render): avoid unnecessary React re-renders on pointer pan\n- breaking: rename CardType "todo" -> "checklist" deprecation notice\n\nContributors: 14 external community PRs merged',
+              fontFamily: 'mono',
+              fontSize: 'sm',
+            },
+          },
+          {
+            type: 'todo',
+            x: 480,
+            y: 80,
+            width: 360,
+            height: 390,
+            zIndex: 2,
+            color: 'sky',
+            content: {
+              title: 'Community Issue Triage Queue',
+              items: [
+                { id: 'oss-1', text: 'Reproduce Issue #142 (Touch screen pinch zoom freeze)', completed: true, priority: 'high' },
+                { id: 'oss-2', text: 'Merge dependabot security patch for ws vulnerability', completed: true, priority: 'high' },
+                { id: 'oss-3', text: 'Add TypeScript strict null checks to vector transform module', completed: false, priority: 'medium' },
+                { id: 'oss-4', text: 'Update README with pnpm installation guidelines', completed: false, priority: 'low' },
+                { id: 'oss-5', text: 'Verify bundle size < 42kB gzipped using bundle-analyzer', completed: false, priority: 'high' },
+              ],
+            },
+          },
+          {
+            type: 'event',
+            x: 880,
+            y: 80,
+            width: 340,
+            height: 260,
+            zIndex: 3,
+            color: 'amber',
+            content: {
+              title: 'npm Package Publish Window',
+              description: 'Publish v2.4.0 tag to npm registry and publish GitHub release notes.',
+              date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+              startTime: '17:00',
+              endTime: '18:00',
+              location: 'GitHub Actions / npm Registry',
+              reminderMinutesBefore: 30,
+            },
+          },
+          {
+            type: 'image',
+            x: 880,
+            y: 370,
+            width: 340,
+            height: 260,
+            zIndex: 4,
+            color: 'cream',
+            content: {
+              url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop',
+              caption: 'Terminal build pipeline and test runner logs',
+            },
+          },
+        ],
+      },
+    ],
   },
 
   // =========================================================================
-  // 2. DESIGNER: Design System Tokens, Usability Sprint & Engineering Handoff
+  // 2. DESIGNER
   // =========================================================================
   designer: {
+    id: 'des-design-system',
     mode: 'designer',
     name: 'Designer',
     badge: 'Design System & UX Sprint',
@@ -243,12 +334,71 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         },
       },
     ],
+    subScenarios: [
+      {
+        id: 'des-web-ia',
+        name: 'Web Landing Page Wireframing & IA',
+        headline: 'Information Architecture & Conversion Layout',
+        description: 'Structure site navigation, content hierarchy, hero value statements, and social proof sections.',
+        boardTitle: 'Web Information Architecture & Wireframe Board',
+        boardDescription: 'Site map tree, wireframe notes, copywriting placeholders, and conversion checklist.',
+        cards: [
+          {
+            type: 'note',
+            x: 60,
+            y: 80,
+            width: 380,
+            height: 350,
+            zIndex: 1,
+            color: 'cream',
+            content: {
+              title: 'Page Architecture & Visual Hierarchy',
+              body: 'Section Breakdown:\n1. Hero: Problem headline + live interactive canvas demo widget + primary CTA\n2. Social Proof: Logos of 8 creator studios + "Featured on Product Hunt"\n3. Feature Cluster 1: Zero drag latency & local-first performance\n4. Feature Cluster 2: Oregon LDO aesthetics & warm linen tactile surfaces\n5. Pricing Matrix: Free local-first plan vs Pro cloud sync ($8/mo)\n6. Footer: Clean sitemap, security disclosures, open-source repository link',
+              fontFamily: 'oregon',
+              fontSize: 'sm',
+            },
+          },
+          {
+            type: 'todo',
+            x: 480,
+            y: 80,
+            width: 360,
+            height: 380,
+            zIndex: 2,
+            color: 'sage',
+            content: {
+              title: 'Conversion UX Checklist',
+              items: [
+                { id: 'ia-1', text: 'Ensure primary CTA button is visible above fold on all viewports', completed: true, priority: 'high' },
+                { id: 'ia-2', text: 'Conduct 5-second squint test for visual hierarchy', completed: true, priority: 'high' },
+                { id: 'ia-3', text: 'Add interactive hover states to feature comparison cards', completed: false, priority: 'medium' },
+                { id: 'ia-4', text: 'Verify mobile hamburger menu opens without layout shift', completed: false, priority: 'high' },
+              ],
+            },
+          },
+          {
+            type: 'image',
+            x: 880,
+            y: 80,
+            width: 340,
+            height: 270,
+            zIndex: 3,
+            color: 'paper',
+            content: {
+              url: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=1000&auto=format&fit=crop',
+              caption: 'Minimalist spatial grid and typography wireframe',
+            },
+          },
+        ],
+      },
+    ],
   },
 
   // =========================================================================
-  // 3. VIDEO EDITOR: 4K Commercial Post-Production & DaVinci Resolve Master
+  // 3. VIDEO EDITOR
   // =========================================================================
   video_editor: {
+    id: 'vid-commercial',
     mode: 'video_editor',
     name: 'Video Editor',
     badge: 'Post-Production & Grading',
@@ -361,9 +511,10 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
   },
 
   // =========================================================================
-  // 4. GRAPHIC DESIGNER: Luxury Botanical Identity, Packaging Die-Line & Print
+  // 4. GRAPHIC DESIGNER
   // =========================================================================
   graphic_designer: {
+    id: 'gd-packaging',
     mode: 'graphic_designer',
     name: 'Graphic Designer',
     badge: 'Brand Identity & Packaging',
@@ -471,9 +622,10 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
   },
 
   // =========================================================================
-  // 5. MARKETING: Full-Funnel SaaS Launch, Growth Experiments & War Room
+  // 5. MARKETING
   // =========================================================================
   marketing: {
+    id: 'mkt-gtm',
     mode: 'marketing',
     name: 'Marketing',
     badge: 'Growth, Funnel & War Room',
@@ -586,9 +738,10 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
   },
 
   // =========================================================================
-  // 6. INFLUENCER: Multi-Platform Sponsorship, Script Storyboard & Viral Video
+  // 6. INFLUENCER
   // =========================================================================
   influencer: {
+    id: 'inf-sponsorship',
     mode: 'influencer',
     name: 'Influencer',
     badge: 'Creator Sponsorship & Studio',
@@ -695,6 +848,463 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
           endTime: '19:30',
           location: 'TikTok, Instagram Reels & YouTube Shorts',
           reminderMinutesBefore: 60,
+        },
+      },
+    ],
+  },
+
+  // =========================================================================
+  // 7. PRODUCT MANAGER
+  // =========================================================================
+  product_manager: {
+    id: 'pm-lean-canvas',
+    mode: 'product_manager',
+    name: 'Product Manager',
+    badge: 'Strategy & Agile Sprints',
+    headline: 'Product Discovery & Prioritization',
+    description: 'Designed for product managers, founders, and agile leads balancing Lean Canvas hypotheses, RICE scoring matrices, sprint releases, and North Star metrics.',
+    boardTitle: 'Product Strategy & Discovery Workspace',
+    boardDescription: 'Lean Canvas assumptions, RICE feature scoring backlog, user cohort retention curves, and product council milestones.',
+    cards: [
+      {
+        type: 'note',
+        x: 60,
+        y: 80,
+        width: 380,
+        height: 350,
+        zIndex: 1,
+        color: 'cream',
+        content: {
+          title: 'Lean Canvas: Problem & Value Hypothesis',
+          body: 'Top 3 Customer Problems:\n1. Knowledge workers lose 40 mins/day switching between docs\n2. Linear kanban boards restrict creative spatial mind-mapping\n3. Clunky cloud software fails during flights and offline deep work\n\nUnique Value Proposition:\n"A tactile local-first spatial board that feels like an infinite warm linen desk with zero input latency."\n\nEarly Adopters: Design engineers, technical founders, and creative directors.',
+          fontFamily: 'oregon',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'todo',
+        x: 470,
+        y: 80,
+        width: 360,
+        height: 420,
+        zIndex: 2,
+        color: 'sky',
+        content: {
+          title: 'RICE Feature Scoring & Backlog',
+          items: [
+            { id: 'pm-1', text: 'Realtime multi-player cursor broadcast [RICE: 480]', completed: true, priority: 'high' },
+            { id: 'pm-2', text: 'SQLite offline sync driver with indexDB fallback [RICE: 420]', completed: true, priority: 'high' },
+            { id: 'pm-3', text: 'Command Palette fuzzy card search [RICE: 360]', completed: true, priority: 'medium' },
+            { id: 'pm-4', text: 'Interactive teleprompter reading mode for script notes [RICE: 280]', completed: false, priority: 'medium' },
+            { id: 'pm-5', text: 'Export board to PDF vector poster [RICE: 240]', completed: false, priority: 'low' },
+          ],
+        },
+      },
+      {
+        type: 'note',
+        x: 860,
+        y: 80,
+        width: 360,
+        height: 330,
+        zIndex: 3,
+        color: 'paper',
+        content: {
+          title: 'North Star Metric & OKRs',
+          body: 'North Star Metric:\n- Weekly Active Workspaces with >= 3 distinct cards created\n\nQ4 Key Objectives:\n1. Increase Day-7 User Retention from 18% -> 34%\n2. Decrease average board load latency to < 180ms\n3. Reach 10,000 public board shares via read-only URLs\n4. Maintain 0 data loss incidents across offline reconnects',
+          fontFamily: 'mono',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'image',
+        x: 60,
+        y: 460,
+        width: 380,
+        height: 280,
+        zIndex: 4,
+        color: 'terracotta',
+        content: {
+          url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1000&auto=format&fit=crop',
+          caption: 'Product roadmap dashboard and user journey analytics',
+        },
+      },
+      {
+        type: 'todo',
+        x: 470,
+        y: 530,
+        width: 360,
+        height: 340,
+        zIndex: 5,
+        color: 'sage',
+        content: {
+          title: 'Sprint 24 Discovery Deliverables',
+          items: [
+            { id: 'pm-d1', text: 'Conduct 8 user interviews with engineering managers', completed: true, priority: 'high' },
+            { id: 'pm-d2', text: 'Synthesize customer journey drop-off funnel in Amplitude', completed: false, priority: 'high' },
+            { id: 'pm-d3', text: 'Draft PRD specification for custom card templates', completed: false, priority: 'medium' },
+            { id: 'pm-d4', text: 'Review competitive feature benchmark against Milanote & Miro', completed: false, priority: 'low' },
+          ],
+        },
+      },
+      {
+        type: 'event',
+        x: 860,
+        y: 440,
+        width: 360,
+        height: 270,
+        zIndex: 6,
+        color: 'amber',
+        content: {
+          title: 'Executive Product Council Review',
+          description: 'Quarterly roadmap presentation, feature resource allocation, and budget review.',
+          date: new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
+          startTime: '13:00',
+          endTime: '14:30',
+          location: 'Executive Boardroom / Zoom',
+          reminderMinutesBefore: 45,
+        },
+      },
+    ],
+  },
+
+  // =========================================================================
+  // 8. ARCHITECT & INTERIOR DESIGNER
+  // =========================================================================
+  architect: {
+    id: 'arch-residential',
+    mode: 'architect',
+    name: 'Architect',
+    badge: 'Spatial Planning & Materials',
+    headline: 'Architectural & Interior Design',
+    description: 'Engineered for architects, interior designers, and spatial planners managing material schedules, zoning codes, floor plans, and municipal permits.',
+    boardTitle: 'Architectural Design & Material Schedule',
+    boardDescription: 'Spatial concept notes, Carrara marble & white oak finish schedules, building code checklists, and client walkthrough milestones.',
+    cards: [
+      {
+        type: 'note',
+        x: 60,
+        y: 80,
+        width: 380,
+        height: 350,
+        zIndex: 1,
+        color: 'cream',
+        content: {
+          title: 'Architectural Concept & Spatial Flow',
+          body: 'Design Philosophy: Biophilic minimalism with authentic materiality.\n\nSpatial Intent:\n- Maximize Southern daylighting via double-glazed floor-to-ceiling clerestory glass\n- Thermal massing: Exposed polished concrete radiant heated floors\n- Transition zones: Recessed flush baseboards (12mm aluminum reveal)\n- Acoustic baffles: Slatted acoustic white oak ceiling panels over black felt',
+          fontFamily: 'oregon',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'note',
+        x: 470,
+        y: 80,
+        width: 360,
+        height: 350,
+        zIndex: 2,
+        color: 'paper',
+        content: {
+          title: 'Material Schedule & Specifications',
+          body: 'Finishes & Fixtures Matrix:\n- Flooring: 220mm engineered European White Oak (UV Matte Lacquer)\n- Countertops: 30mm Honed Carrara Marble (Calacatta Gold veining)\n- Cabinetry: Smoked rift-cut oak veneer with soft-close Blum hardware\n- Metal Accents: Patinated blackened steel with wax sealant\n- Wall Finish: Low-VOC Roman Clay limewash (Shade: Warm Bone)',
+          fontFamily: 'mono',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'image',
+        x: 860,
+        y: 80,
+        width: 360,
+        height: 280,
+        zIndex: 3,
+        color: 'terracotta',
+        content: {
+          url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1000&auto=format&fit=crop',
+          caption: 'Minimalist spatial interior with raw oak and natural light',
+        },
+      },
+      {
+        type: 'todo',
+        x: 60,
+        y: 460,
+        width: 380,
+        height: 380,
+        zIndex: 4,
+        color: 'sage',
+        content: {
+          title: 'Building Code & Permit Compliance',
+          items: [
+            { id: 'arc-1', text: 'Verify municipal boundary setback distances (6.0m front, 2.5m side)', completed: true, priority: 'high' },
+            { id: 'arc-2', text: 'Calculate allowable Floor Area Ratio (FAR limit: 0.65)', completed: true, priority: 'high' },
+            { id: 'arc-3', text: 'Review egress window clearances in all sleeping quarters', completed: false, priority: 'high' },
+            { id: 'arc-4', text: 'Submit structural engineer stamp for cantilevered terrace roof', completed: false, priority: 'high' },
+            { id: 'arc-5', text: 'File municipal stormwater retention and grading plan', completed: false, priority: 'medium' },
+          ],
+        },
+      },
+      {
+        type: 'todo',
+        x: 470,
+        y: 460,
+        width: 360,
+        height: 360,
+        zIndex: 5,
+        color: 'lavender',
+        content: {
+          title: 'Site Framing & Punch List',
+          items: [
+            { id: 'site-1', text: 'Inspect framing lumber moisture content (<15% before drywall)', completed: true, priority: 'high' },
+            { id: 'site-2', text: 'Rough-in plumbing pressure test (50 PSI hydrostatic hold)', completed: false, priority: 'high' },
+            { id: 'site-3', text: 'Verify recessed electrical outlet heights with millwork drawings', completed: false, priority: 'medium' },
+            { id: 'site-4', text: 'Measure subfloor deflection tolerance (L/480 under stone tile)', completed: false, priority: 'medium' },
+          ],
+        },
+      },
+      {
+        type: 'event',
+        x: 860,
+        y: 390,
+        width: 360,
+        height: 270,
+        zIndex: 6,
+        color: 'amber',
+        content: {
+          title: 'Client Schematic Walkthrough',
+          description: 'On-site 3D spatial walkthrough and material sample physical review with clients.',
+          date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+          startTime: '11:00',
+          endTime: '12:30',
+          location: 'Project Site (Studio Office)',
+          reminderMinutesBefore: 60,
+        },
+      },
+    ],
+  },
+
+  // =========================================================================
+  // 9. MUSIC PRODUCER & AUDIO ENGINEER
+  // =========================================================================
+  music_producer: {
+    id: 'mus-single',
+    mode: 'music_producer',
+    name: 'Music Producer',
+    badge: 'Audio Engineering & Mix',
+    headline: 'Music Production & Stems Pipeline',
+    description: 'Designed for music producers, recording engineers, and beatmakers structuring song arrangements, vocal mixing chains, and streaming masters.',
+    boardTitle: 'Audio Production & Mixdown Workspace',
+    boardDescription: 'Harmonic song arrangements, Neve/Pultec vocal chains, tracking checklists, and Apple Digital Master deliverables.',
+    cards: [
+      {
+        type: 'note',
+        x: 60,
+        y: 80,
+        width: 380,
+        height: 350,
+        zIndex: 1,
+        color: 'lavender',
+        content: {
+          title: 'Song Structure & Arrangement Map',
+          body: 'Session Specs:\n- Key: D Minor | Tempo: 124 BPM | Meter: 4/4\n- Primary Groove: Vintage LinnDrum + live shaker groove\n\nArrangement Sequence:\n- Intro: 8 bars (Filtered pad + subtle sub-bass teaser)\n- Verse 1: 16 bars (Dry lead vocal + rhythm guitar)\n- Pre-Chorus: 8 bars (Snare build + rising octave synth)\n- Chorus: 16 bars (Full wall of sound, vocal harmonies, sidechain 808)\n- Bridge: 8 bars (Stripped piano chords + emotional falsetto)\n- Outro: 16 bars (Fade-out tape delay wash)',
+          fontFamily: 'oregon',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'note',
+        x: 470,
+        y: 80,
+        width: 360,
+        height: 350,
+        zIndex: 2,
+        color: 'paper',
+        content: {
+          title: 'Lead Vocal DSP Processing Chain',
+          body: 'Signal Flow Architecture:\n1. Tuning: Melodyne transparent pitch correction\n2. Preamp: UAD Neve 1073 (+4dB at 12kHz high shelf)\n3. De-Esser: FabFilter Pro-DS (Center at 6.8kHz, -4dB reduction)\n4. Dynamic EQ: Pro-Q 3 notch cut at 380Hz boxiness\n5. Compression: Teletronix LA-2A (3-5dB gain reduction on peaks)\n6. Spatial FX: Valhalla VintageVerb (Plate mode, 1.8s decay, 45ms pre-delay)\n7. Width: MicroShift stereo detune (-9 cents / +9 cents)',
+          fontFamily: 'mono',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'image',
+        x: 860,
+        y: 80,
+        width: 360,
+        height: 280,
+        zIndex: 3,
+        color: 'terracotta',
+        content: {
+          url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=1000&auto=format&fit=crop',
+          caption: 'Analog audio console and studio acoustic monitoring environment',
+        },
+      },
+      {
+        type: 'todo',
+        x: 60,
+        y: 460,
+        width: 380,
+        height: 360,
+        zIndex: 4,
+        color: 'sky',
+        content: {
+          title: 'Tracking & Multi-Track Stems Pass',
+          items: [
+            { id: 'mus-1', text: 'Track main lead vocal pass with Neumann U87 condenser', completed: true, priority: 'high' },
+            { id: 'mus-2', text: 'Record left and right stereo acoustic guitar doubles', completed: true, priority: 'high' },
+            { id: 'mus-3', text: 'Print analog Moog subsequent 37 sub-bass lines', completed: false, priority: 'high' },
+            { id: 'mus-4', text: 'Layer 4-part choir vocal harmonies in chorus', completed: false, priority: 'medium' },
+            { id: 'mus-5', text: 'Record atmospheric vinyl crackle and ambient tape loop', completed: false, priority: 'low' },
+          ],
+        },
+      },
+      {
+        type: 'todo',
+        x: 470,
+        y: 460,
+        width: 360,
+        height: 380,
+        zIndex: 5,
+        color: 'sage',
+        content: {
+          title: 'Mastering Specifications & Exports',
+          items: [
+            { id: 'mas-1', text: 'Streaming Target: -14.0 LUFS integrated loudness', completed: false, priority: 'high' },
+            { id: 'mas-2', text: 'True Peak Ceiling: -1.0 dBTP (prevent inter-sample clipping)', completed: false, priority: 'high' },
+            { id: 'mas-3', text: 'Export 24-bit 96kHz Lossless Master WAV files', completed: false, priority: 'high' },
+            { id: 'mas-4', text: 'Generate Instrumental & TV Performance backing tracks', completed: false, priority: 'medium' },
+            { id: 'mas-5', text: 'Create 16-bit 44.1kHz Dithered Red Book CD Audio Master', completed: false, priority: 'low' },
+          ],
+        },
+      },
+      {
+        type: 'event',
+        x: 860,
+        y: 390,
+        width: 360,
+        height: 270,
+        zIndex: 6,
+        color: 'amber',
+        content: {
+          title: 'Final Label Mixdown Delivery',
+          description: 'Upload full stem package and master audio archive to record label server.',
+          date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+          startTime: '16:00',
+          endTime: '17:00',
+          location: 'Mastering Suite / WeTransfer Pro',
+          reminderMinutesBefore: 60,
+        },
+      },
+    ],
+  },
+
+  // =========================================================================
+  // 10. AUTHOR & SCREENWRITER
+  // =========================================================================
+  author: {
+    id: 'auth-novel',
+    mode: 'author',
+    name: 'Author',
+    badge: 'Narrative & Screenplay',
+    headline: 'Creative Writing & Worldbuilding',
+    description: 'Tailored for novelists, screenwriters, and creative authors managing 3-act story arcs, character dossiers, manuscript drafts, and literary submissions.',
+    boardTitle: 'Novel Structure & Character Dossier Board',
+    boardDescription: '3-Act thematic conflict arcs, protagonist flaws, chapter word count trackers, and literary agent submission milestones.',
+    cards: [
+      {
+        type: 'note',
+        x: 60,
+        y: 80,
+        width: 380,
+        height: 350,
+        zIndex: 1,
+        color: 'cream',
+        content: {
+          title: '3-Act Narrative Arc & Thematic Conflict',
+          body: 'Core Thematic Question:\n"Can true redemption exist without radical public sacrifice?"\n\nNarrative Structure:\n- Act 1: Inciting Incident (Chapter 3: The discovery of the encoded ledger)\n- Plot Point 1 (Page 75): Protagonist forced into exile across the northern strait\n- Midpoint (Page 180): False victory followed by immediate betrayal of closest ally\n- All Hope is Lost (Page 260): Confiscation of the family estate; imprisonment\n- Climax (Page 340): Trial confrontation in the grand council chamber\n- Resolution (Page 380): Bittersweet restitution and departure',
+          fontFamily: 'oregon',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'note',
+        x: 470,
+        y: 80,
+        width: 360,
+        height: 350,
+        zIndex: 2,
+        color: 'paper',
+        content: {
+          title: 'Protagonist Dossier & Flaw Matrix',
+          body: 'Character Dossier: Elena Vance (Age 32)\n\nPsychological Profile:\n- External Want: Expose the guild conspiracy and reclaim her father name\n- Internal Need: Learn to trust others and forgive her own past hesitation\n- Fatal Flaw: Cynical isolation; views every relationship as transactional\n- Sensory Anchor: Smells of dry parchment, lavender water, and damp stone\n- Signature Mannerism: Twirls a polished copper coin when making grave choices',
+          fontFamily: 'serif',
+          fontSize: 'sm',
+        },
+      },
+      {
+        type: 'image',
+        x: 860,
+        y: 80,
+        width: 360,
+        height: 280,
+        zIndex: 3,
+        color: 'terracotta',
+        content: {
+          url: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=1000&auto=format&fit=crop',
+          caption: 'Atmospheric antique writing desk with parchment and fountain pen',
+        },
+      },
+      {
+        type: 'todo',
+        x: 60,
+        y: 460,
+        width: 380,
+        height: 380,
+        zIndex: 4,
+        color: 'lavender',
+        content: {
+          title: 'Manuscript Drafting & Word Count Goals',
+          items: [
+            { id: 'wr-1', text: 'Chapters 1 - 5 rough draft: 15,000 words completed', completed: true, priority: 'high' },
+            { id: 'wr-2', text: 'Act 1 polish & pacing pass: tight hook on opening page', completed: true, priority: 'high' },
+            { id: 'wr-3', text: 'Draft Midpoint confrontation scene (Chapters 14-16)', completed: false, priority: 'high' },
+            { id: 'wr-4', text: 'Hit 65,000 words milestone before month end', completed: false, priority: 'medium' },
+            { id: 'wr-5', text: 'Fact-check 18th-century maritime navigation terminology', completed: false, priority: 'low' },
+          ],
+        },
+      },
+      {
+        type: 'todo',
+        x: 470,
+        y: 460,
+        width: 360,
+        height: 360,
+        zIndex: 5,
+        color: 'sage',
+        content: {
+          title: 'Sub-Plot Weaving & Foreshadowing',
+          items: [
+            { id: 'sp-1', text: 'Plant copper coin foreshadowing in Chapter 2 library scene', completed: true, priority: 'high' },
+            { id: 'sp-2', text: 'Develop mentor secret letter arc across Chapters 6 & 11', completed: false, priority: 'high' },
+            { id: 'sp-3', text: 'Eliminate secondary antagonist plot hole in Chapter 18', completed: false, priority: 'medium' },
+            { id: 'sp-4', text: 'Verify character voice consistency in emotional climax', completed: false, priority: 'medium' },
+          ],
+        },
+      },
+      {
+        type: 'event',
+        x: 860,
+        y: 390,
+        width: 360,
+        height: 270,
+        zIndex: 6,
+        color: 'amber',
+        content: {
+          title: 'Manuscript Submission to Agent',
+          description: 'Submit full completed 85,000-word manuscript draft and synopsis to literary agent.',
+          date: new Date(Date.now() + 86400000 * 6).toISOString().split('T')[0],
+          startTime: '10:00',
+          endTime: '11:00',
+          location: 'Literary Agency Submissions Portal',
+          reminderMinutesBefore: 120,
         },
       },
     ],
