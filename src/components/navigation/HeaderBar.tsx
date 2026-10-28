@@ -167,7 +167,7 @@ export const HeaderBar: React.FC = () => {
           <div className="w-[1px] h-4 bg-stone-300 dark:bg-stone-700 shrink-0" />
 
           {/* Multi-Board Dropdown */}
-          <BoardSwitcher />
+          <BoardSwitcher onOpenModes={() => setIsModeOpen(true)} />
 
           <div className="hidden sm:block w-[1px] h-4 bg-stone-300 dark:bg-stone-700 shrink-0" />
 
@@ -511,7 +511,7 @@ export const HeaderBar: React.FC = () => {
         onSuccess={() => setIsAuthOpen(false)}
       />
       <ExportModal isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
-      <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
+      <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} onOpenModes={() => setIsModeOpen(true)} />
       <ModeSelectorModal isOpen={isModeOpen} onClose={() => setIsModeOpen(false)} />
       <ShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
       <OnboardingHint onOpenShortcuts={() => setIsShortcutsOpen(true)} />

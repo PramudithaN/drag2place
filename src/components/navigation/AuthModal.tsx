@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { X, AlertCircle, Cloud } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
@@ -14,13 +16,14 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const mounted = useIsMounted();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleGoogleSignIn = async () => {
     const supabase = getSupabase();
@@ -83,14 +86,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }
   };
 
-  return (
+  return createPortal(
     <div
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
     >
       <div
         onWheel={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col space-y-4"
+        className="relative w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[92dvh] overflow-y-auto bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col space-y-4"
       >
         {/* Close */}
         <button
@@ -221,6 +224,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -5,7 +5,11 @@ import { useBoardStore } from '@/lib/store';
 import { ChevronDown, Plus, Trash2, Check, Layout, Edit2, Compass } from 'lucide-react';
 import { ModeSelectorModal } from './ModeSelectorModal';
 
-export const BoardSwitcher: React.FC = () => {
+interface BoardSwitcherProps {
+  onOpenModes?: () => void;
+}
+
+export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => {
   const {
     boards,
     activeBoardId,
@@ -221,7 +225,11 @@ export const BoardSwitcher: React.FC = () => {
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  setIsModeModalOpen(true);
+                  if (onOpenModes) {
+                    onOpenModes();
+                  } else {
+                    setIsModeModalOpen(true);
+                  }
                 }}
                 className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors"
               >

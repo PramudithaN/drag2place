@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { toPng } from 'html-to-image';
 import { X, Image as ImageIcon, Download, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -16,9 +18,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
   const [isExportingImage, setIsExportingImage] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const mounted = useIsMounted();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleExportPng = async () => {
     const canvasElement = document.getElementById('infinite-canvas-viewport');
@@ -92,14 +95,14 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
     reader.readAsText(file);
   };
 
-  return (
+  return createPortal(
     <div
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
     >
       <div
         onWheel={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col space-y-4"
+        className="relative w-full max-w-md my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[92dvh] overflow-y-auto bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col space-y-4"
       >
         {/* Close Button */}
         <button
@@ -218,6 +221,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

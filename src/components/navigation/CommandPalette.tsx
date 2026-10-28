@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { Search, StickyNote, CheckSquare, Calendar, Image as ImageIcon, Sun, Moon, ArrowRight, X, Compass } from 'lucide-react';
 import { CardContent, NoteCardData, TodoCardData, EventCardData, ImageCardData } from '@/types/board';
 import { ModeSelectorModal } from './ModeSelectorModal';
@@ -10,9 +12,11 @@ import { ModeSelectorModal } from './ModeSelectorModal';
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenModes?: () => void;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onOpenModes }) => {
+  const mounted = useIsMounted();
   const [query, setQuery] = useState('');
   const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   const { allCards, boards, jumpToCard, addCard, toggleTheme, theme } = useBoardStore();
@@ -29,7 +33,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     onClose();
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   // Filter cards matching query
   const getCardSearchText = (content: CardContent): string => {
@@ -76,7 +80,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     return boards.find((b) => b.id === boardId)?.title || 'Board';
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-24 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
       onClick={handleClose}
@@ -195,7 +199,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             onClick={() => {
               handleClose();
-              setIsModeModalOpen(true);
+              if (onOpenModes) {
+                onOpenModes();
+              } else {
+                setIsModeModalOpen(true);
+              }
             }}
             className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-xs text-amber-800 dark:text-amber-300 transition-colors"
           >
@@ -224,6 +232,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
       </div>
 
       <ModeSelectorModal isOpen={isModeModalOpen} onClose={() => setIsModeModalOpen(false)} />
-    </div>
+    </div>,
+    document.body
   );
 };

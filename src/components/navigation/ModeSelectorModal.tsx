@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useBoardStore } from '@/lib/store';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { WORKSPACE_MODES } from '@/lib/templates';
 import { WorkspaceMode } from '@/types/board';
 import {
@@ -26,18 +28,27 @@ interface ModeSelectorModalProps {
 }
 
 export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, onClose }) => {
+  const mounted = useIsMounted();
   const { createBoardFromTemplate } = useBoardStore();
 
   useEffect(() => {
     if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSelectMode = (mode: WorkspaceMode, scenarioId?: string) => {
     soundFx.playDrop();
@@ -48,25 +59,25 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
   const getModeIcon = (mode: WorkspaceMode) => {
     switch (mode) {
       case 'developer':
-        return <Terminal size={22} className="text-sky-600 dark:text-sky-400" />;
+        return <Terminal size={20} className="text-sky-600 dark:text-sky-400" />;
       case 'designer':
-        return <Layout size={22} className="text-emerald-600 dark:text-emerald-400" />;
+        return <Layout size={20} className="text-emerald-600 dark:text-emerald-400" />;
       case 'video_editor':
-        return <Video size={22} className="text-amber-600 dark:text-amber-400" />;
+        return <Video size={20} className="text-amber-600 dark:text-amber-400" />;
       case 'graphic_designer':
-        return <PenTool size={22} className="text-purple-600 dark:text-purple-400" />;
+        return <PenTool size={20} className="text-purple-600 dark:text-purple-400" />;
       case 'marketing':
-        return <Megaphone size={22} className="text-orange-600 dark:text-orange-400" />;
+        return <Megaphone size={20} className="text-orange-600 dark:text-orange-400" />;
       case 'influencer':
-        return <Camera size={22} className="text-rose-600 dark:text-rose-400" />;
+        return <Camera size={20} className="text-rose-600 dark:text-rose-400" />;
       case 'product_manager':
-        return <Target size={22} className="text-indigo-600 dark:text-indigo-400" />;
+        return <Target size={20} className="text-indigo-600 dark:text-indigo-400" />;
       case 'architect':
-        return <Building2 size={22} className="text-teal-600 dark:text-teal-400" />;
+        return <Building2 size={20} className="text-teal-600 dark:text-teal-400" />;
       case 'music_producer':
-        return <Music size={22} className="text-violet-600 dark:text-violet-400" />;
+        return <Music size={20} className="text-violet-600 dark:text-violet-400" />;
       case 'author':
-        return <BookOpen size={22} className="text-stone-700 dark:text-stone-300" />;
+        return <BookOpen size={20} className="text-stone-700 dark:text-stone-300" />;
     }
   };
 
@@ -95,46 +106,47 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 overflow-y-auto bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs flex items-center justify-center p-2.5 sm:p-4 md:p-6"
       onClick={onClose}
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-5xl max-h-[92vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-5xl my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[88dvh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-stone-900 dark:text-stone-100"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-stone-200/70 dark:border-stone-800/70">
-          <div>
-            <div className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1.5">
+        <div className="shrink-0 flex items-start justify-between p-3.5 sm:p-6 pb-3 sm:pb-4 border-b border-stone-200/70 dark:border-stone-800/70 gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1 sm:mb-1.5">
               Curated Headstarter Workspaces
             </div>
-            <h2 className="text-xl sm:text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
+            <h2 className="text-lg sm:text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
               Select Your Workspace Mode
             </h2>
-            <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-stone-600 dark:text-stone-400 mt-0.5 sm:mt-1 max-w-2xl leading-relaxed">
               Launch a tailored canvas with domain-specific cards, task checklists, and aesthetic moodboards structured for your profession.
             </p>
-            <div className="mt-2.5 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+            <div className="mt-2 sm:mt-2.5 inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] sm:text-xs font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span><strong>Does not replace your current board:</strong> Selecting any mode creates a brand new workspace. Your existing boards and cards remain safe and untouched.</span>
+              <span><strong>Safe:</strong> Creates a brand new workspace board. Your existing boards and cards remain untouched.</span>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
-            title="Close"
+            className="p-1.5 sm:p-2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer shrink-0"
+            title="Close (Esc)"
+            aria-label="Close modal"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Modes Grid */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4.5 scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5 scrollbar-thin">
           {(Object.keys(WORKSPACE_MODES) as WorkspaceMode[]).map((modeKey) => {
             const template = WORKSPACE_MODES[modeKey];
             const hasSubScenarios = template.subScenarios && template.subScenarios.length > 0;
@@ -143,11 +155,11 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
               <div
                 key={modeKey}
                 onClick={() => handleSelectMode(modeKey)}
-                className="group relative flex flex-col justify-between p-5 bg-white dark:bg-[#23201C] hover:bg-[#FDFBF7] dark:hover:bg-[#2A2621] border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer text-left"
+                className="group relative flex flex-col justify-between p-4 sm:p-5 bg-white dark:bg-[#23201C] hover:bg-[#FDFBF7] dark:hover:bg-[#2A2621] border border-stone-200 dark:border-stone-800 hover:border-stone-400 dark:hover:border-stone-600 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer text-left"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`p-2.5 rounded-xl border ${getAccentBg(modeKey)}`}>
+                  <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+                    <div className={`p-2 sm:p-2.5 rounded-xl border ${getAccentBg(modeKey)}`}>
                       {getModeIcon(modeKey)}
                     </div>
                     <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded-md">
@@ -155,14 +167,14 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
                     </span>
                   </div>
 
-                  <h3 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
+                  <h3 className="text-sm sm:text-base font-oregon font-bold text-stone-900 dark:text-stone-100 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
                     {template.name}
                   </h3>
                   <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400 mt-0.5">
                     {template.headline}
                   </div>
 
-                  <p className="text-xs text-stone-600 dark:text-stone-400 mt-2.5 leading-relaxed line-clamp-3">
+                  <p className="text-[11px] sm:text-xs text-stone-600 dark:text-stone-400 mt-2 leading-relaxed line-clamp-3">
                     {template.description}
                   </p>
 
@@ -179,7 +191,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
                             e.stopPropagation();
                             handleSelectMode(modeKey, sub.id);
                           }}
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-stone-700 dark:text-stone-300 bg-stone-100/70 hover:bg-stone-200/80 dark:bg-stone-800/60 dark:hover:bg-stone-700/80 transition-colors text-left"
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] sm:text-[11px] font-sans text-stone-700 dark:text-stone-300 bg-stone-100/70 hover:bg-stone-200/80 dark:bg-stone-800/60 dark:hover:bg-stone-700/80 transition-colors text-left"
                         >
                           <span className="truncate mr-1.5">{sub.name}</span>
                           <ArrowRight size={11} className="shrink-0 text-stone-400" />
@@ -189,8 +201,8 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
                   )}
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-800/60 flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300 group-hover:text-stone-900 dark:group-hover:text-stone-100">
-                  <span className="text-[11px] font-mono text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
+                <div className="pt-3.5 mt-3.5 border-t border-stone-100 dark:border-stone-800/60 flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300 group-hover:text-stone-900 dark:group-hover:text-stone-100">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-stone-400 group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
                     {template.cards.length} cards
                   </span>
                   <div className="flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-400 font-sans group-hover:translate-x-0.5 transition-transform">
@@ -204,11 +216,12 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         </div>
 
         {/* Footer info */}
-        <div className="px-6 py-3 bg-stone-100/70 dark:bg-stone-900/70 border-t border-stone-200/70 dark:border-stone-800/70 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
-          <span>Each mode creates a new workspace board without overwriting your existing work.</span>
-          <span className="font-mono text-[10px]">Press ESC to cancel</span>
+        <div className="shrink-0 px-4 sm:px-6 py-2.5 sm:py-3 bg-stone-100/70 dark:bg-stone-900/70 border-t border-stone-200/70 dark:border-stone-800/70 flex items-center justify-between text-[10px] sm:text-[11px] text-stone-500 dark:text-stone-400">
+          <span className="truncate mr-2">Each mode creates a new workspace board without overwriting your existing work.</span>
+          <span className="font-mono text-[10px] shrink-0 hidden xs:inline">Press ESC to cancel</span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

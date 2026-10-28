@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useBoardStore } from '@/lib/store';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { Trash2, LogOut, AlertTriangle, X } from 'lucide-react';
 
 export const ConfirmationModal: React.FC = () => {
+  const mounted = useIsMounted();
   const { confirmModal, closeConfirmModal } = useBoardStore();
 
   useEffect(() => {
@@ -23,7 +26,7 @@ export const ConfirmationModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [confirmModal, closeConfirmModal]);
 
-  if (!confirmModal) return null;
+  if (!confirmModal || !mounted) return null;
 
   const {
     title,
@@ -63,7 +66,7 @@ export const ConfirmationModal: React.FC = () => {
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={closeConfirmModal}
@@ -76,8 +79,9 @@ export const ConfirmationModal: React.FC = () => {
       >
         <button
           onClick={closeConfirmModal}
-          className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors"
+          className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors cursor-pointer"
           title="Dismiss"
+          aria-label="Dismiss modal"
         >
           <X size={16} />
         </button>
@@ -98,7 +102,7 @@ export const ConfirmationModal: React.FC = () => {
           <button
             type="button"
             onClick={closeConfirmModal}
-            className="px-3.5 py-2 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 rounded-xl transition-colors"
+            className="px-3.5 py-2 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 rounded-xl transition-colors cursor-pointer"
           >
             {cancelText}
           </button>
@@ -106,7 +110,7 @@ export const ConfirmationModal: React.FC = () => {
             type="button"
             autoFocus
             onClick={handleConfirm}
-            className={`px-4 py-2 text-xs font-semibold rounded-xl shadow-xs transition-colors ${
+            className={`px-4 py-2 text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer ${
               isDestructive
                 ? 'bg-rose-600 hover:bg-rose-700 text-white'
                 : 'bg-stone-800 hover:bg-stone-900 text-stone-100 dark:bg-stone-100 dark:hover:bg-white dark:text-stone-900'
@@ -116,6 +120,7 @@ export const ConfirmationModal: React.FC = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
