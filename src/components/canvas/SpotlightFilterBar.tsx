@@ -135,6 +135,11 @@ export const SpotlightFilterBar: React.FC = () => {
               key={opt.type}
               type="button"
               onClick={() => setFilterType(isSelected && opt.type !== 'all' ? 'all' : opt.type)}
+              title={
+                opt.type === 'all'
+                  ? 'Show all cards'
+                  : `Filter canvas to show only ${opt.label} (${count} cards)`
+              }
               className={`flex items-center gap-1.5 px-2 py-1 rounded-xl text-xs font-medium transition-all shrink-0 cursor-pointer ${
                 isSelected
                   ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs font-semibold'

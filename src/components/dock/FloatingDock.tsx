@@ -171,9 +171,18 @@ interface DockItemProps {
   label: string;
   onClick: () => void;
   active?: boolean;
+  description?: string;
+  shortcut?: string;
 }
 
-const DockItem: React.FC<DockItemProps> = ({ icon, label, onClick, active }) => {
+const DockItem: React.FC<DockItemProps> = ({
+  icon,
+  label,
+  onClick,
+  active,
+  description,
+  shortcut,
+}) => {
   return (
     <motion.button
       whileHover={{ scale: 1.15, y: -4 }}
@@ -186,10 +195,22 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, onClick, active }) => 
       }`}
     >
       {icon}
-      {/* Tooltip on desktop only */}
-      <span className="hidden sm:block absolute -top-9 opacity-0 group-hover:opacity-100 transition-all duration-150 px-2.5 py-1 text-[11px] font-sans font-medium text-stone-100 dark:text-stone-900 bg-stone-900/90 dark:bg-stone-100/90 rounded-lg whitespace-nowrap shadow-md pointer-events-none z-50">
-        {label}
-      </span>
+      {/* Rich Multi-line Tooltip on desktop */}
+      <div className="hidden sm:flex flex-col items-center absolute -top-14 opacity-0 group-hover:opacity-100 transition-all duration-150 px-2.5 py-1.5 text-[11px] font-sans font-medium text-stone-100 dark:text-stone-900 bg-stone-900/95 dark:bg-stone-100/95 backdrop-blur-md rounded-xl shadow-xl pointer-events-none z-50 whitespace-nowrap border border-stone-700/50 dark:border-stone-300/50">
+        <div className="flex items-center gap-1.5 font-semibold">
+          <span>{label}</span>
+          {shortcut && (
+            <kbd className="px-1 py-0.2 text-[9px] font-mono bg-stone-800 dark:bg-stone-200 text-amber-400 dark:text-amber-700 rounded font-bold">
+              {shortcut}
+            </kbd>
+          )}
+        </div>
+        {description && (
+          <span className="text-[10px] text-stone-300 dark:text-stone-600 font-normal mt-0.5">
+            {description}
+          </span>
+        )}
+      </div>
     </motion.button>
   );
 };
@@ -363,15 +384,14 @@ export const FloatingDock: React.FC = () => {
         {primaryTypes.map((type) => {
           const meta = ALL_CARDS_META[type];
           if (!meta) return null;
-          const labelWithShortcut = meta.shortcut
-            ? `${meta.label} (${meta.shortcut})`
-            : meta.label;
 
           return (
             <DockItem
               key={type}
               icon={meta.icon}
-              label={labelWithShortcut}
+              label={meta.label}
+              description={meta.description}
+              shortcut={meta.shortcut}
               onClick={() => handleAdd(type)}
             />
           );
@@ -380,7 +400,8 @@ export const FloatingDock: React.FC = () => {
         {/* "+ More Cards" Popover Trigger */}
         <DockItem
           icon={<LayoutGrid className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-amber-700 dark:text-amber-400" />}
-          label="More Card Types (+)"
+          label="More Card Types"
+          description="Browse and add any of 13 card types (+)"
           onClick={() => setShowCatalog(!showCatalog)}
           active={showCatalog}
         />
@@ -388,7 +409,8 @@ export const FloatingDock: React.FC = () => {
         {/* Section Frame tool */}
         <DockItem
           icon={<FolderKanban className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
-          label={targetSection ? `Inside "${targetSection.title}"` : 'Section Frame'}
+          label={targetSection ? `Target: "${targetSection.title}"` : 'Section Frame'}
+          description={targetSection ? 'Adding cards inside this section' : 'Group cards into visual zones'}
           onClick={() => addSection('New Section')}
           active={Boolean(targetSection)}
         />
@@ -399,6 +421,7 @@ export const FloatingDock: React.FC = () => {
         <DockItem
           icon={<GitFork className="w-4 h-4 sm:w-[19px] sm:h-[19px]" />}
           label="Connect Cards"
+          description="Draw vector arrows between cards"
           onClick={() => setActiveTool(activeTool === 'connect' ? 'select' : 'connect')}
           active={activeTool === 'connect'}
         />

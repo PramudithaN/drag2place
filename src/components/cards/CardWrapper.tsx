@@ -86,6 +86,81 @@ const CARD_TYPE_ACCENTS: Record<CardType, string> = {
   quote: 'border-t-2 border-t-amber-600/70',
 };
 
+const CARD_TYPE_INFO: Record<CardType, { title: string; subtitle: string; desc: string; shortcut?: string }> = {
+  note: {
+    title: 'Sticky Note Card',
+    subtitle: 'Text & Writing',
+    desc: 'Rich typography thoughts, ideas & markdown scratchpad.',
+    shortcut: 'N',
+  },
+  todo: {
+    title: 'Checklist Task Card',
+    subtitle: 'Sprint Tasks',
+    desc: 'Interactive sprint tasks, checklists & confetti completion.',
+    shortcut: 'T',
+  },
+  code: {
+    title: 'Code Terminal Card',
+    subtitle: 'Engineering & DevOps',
+    desc: 'Syntax-highlighted code editor, JSON validator & formatting.',
+    shortcut: 'C',
+  },
+  palette: {
+    title: 'Color Palette Card',
+    subtitle: 'Brand & Visual Design',
+    desc: 'Hex swatches, Pantone color codes & WCAG contrast ratios.',
+    shortcut: 'P',
+  },
+  metric: {
+    title: 'KPI Metric Goal Card',
+    subtitle: 'Planning & Telemetry',
+    desc: 'Interactive target tracker, percentage progress & value counters.',
+    shortcut: 'M',
+  },
+  event: {
+    title: 'Milestone Event Card',
+    subtitle: 'Calendar & Deadlines',
+    desc: 'Dated calendar milestone, countdown tags & Google Calendar sync.',
+    shortcut: 'E',
+  },
+  image: {
+    title: 'Media Moodboard Card',
+    subtitle: 'Design & Media',
+    desc: 'Visual assets, artwork, moodboard images & lightbox viewer.',
+    shortcut: 'I',
+  },
+  link: {
+    title: 'Web Embed & Bookmark',
+    subtitle: 'Bookmarks & Media',
+    desc: 'Live OpenGraph link preview & interactive video/audio players.',
+  },
+  audio: {
+    title: 'Audio Visualizer Card',
+    subtitle: 'Sound Design & Memos',
+    desc: 'Waveform audio player, time counter & sound memos.',
+  },
+  table: {
+    title: 'Data Grid Table Card',
+    subtitle: 'Data & Sprint Specs',
+    desc: 'Editable columns and rows for backlog specs, tables & budgets.',
+  },
+  countdown: {
+    title: 'Launch Countdown Card',
+    subtitle: 'Timers & Launches',
+    desc: 'Live ticking countdown (Days, Hours, Mins, Secs) to target date.',
+  },
+  quote: {
+    title: 'Editorial Pull-Quote Card',
+    subtitle: 'Principles & Citations',
+    desc: 'Pull-quote citations, design principles & author attribution.',
+  },
+  comment: {
+    title: 'Review Pin Note Card',
+    subtitle: 'Spatial Review',
+    desc: 'Spatial review pin for collaborator discussion & annotations.',
+  },
+};
+
 interface CardWrapperProps {
   card: Card;
   zoom: number;
@@ -544,65 +619,112 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         className="flex items-center justify-between px-3 py-2 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl touch-none"
       >
         <div className="flex items-center gap-1.5 flex-1 mr-2 min-w-0">
-          <GripVertical size={14} className="text-stone-400 shrink-0" />
-          <div
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-500/10 dark:bg-stone-400/10 shrink-0 text-[10px] font-mono font-medium text-stone-600 dark:text-stone-300 select-none"
-            title={`Card type: ${CARD_TYPE_META[card.type]?.label || card.type}`}
-          >
-            {CARD_TYPE_META[card.type]?.icon}
-            <span className="hidden sm:inline">{CARD_TYPE_META[card.type]?.label}</span>
+          {/* Tactile Drag Handle with Tooltip */}
+          <div className="relative group/grip flex items-center shrink-0">
+            <GripVertical size={14} className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200" />
+            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/grip:block z-50 pointer-events-none px-2 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-lg shadow-xl whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+              Drag to move • Shift+Click to multi-select
+            </div>
           </div>
-          <input
-            type="text"
-            value={getCardTitle()}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="w-full text-sm font-oregon font-bold tracking-wide bg-transparent text-stone-800 dark:text-stone-100 outline-none truncate"
-            placeholder={
-              card.type === 'note'
-                ? 'Untitled Note...'
-                : card.type === 'todo'
-                ? 'Checklist title...'
-                : card.type === 'code'
-                ? 'Code title...'
-                : card.type === 'palette'
-                ? 'Palette title...'
-                : card.type === 'event'
-                ? 'Event title...'
-                : 'Card title...'
-            }
-          />
+
+          {/* Card Type Badge with Rich Instant Tooltip */}
+          <div className="relative group/type flex items-center shrink-0">
+            <div
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-500/10 dark:bg-stone-400/10 text-[10px] font-mono font-medium text-stone-600 dark:text-stone-300 select-none cursor-help hover:bg-stone-500/20 transition-colors"
+            >
+              {CARD_TYPE_META[card.type]?.icon}
+              <span className="font-semibold">{CARD_TYPE_META[card.type]?.label}</span>
+            </div>
+
+            {/* Instant Floating Card Type Tooltip */}
+            <div className="absolute left-0 bottom-full mb-2 hidden group-hover/type:flex flex-col z-50 pointer-events-none w-56 p-2.5 bg-stone-900/95 dark:bg-stone-100/95 backdrop-blur-md text-stone-100 dark:text-stone-900 rounded-xl shadow-2xl border border-stone-700/50 dark:border-stone-300/50 text-left">
+              <div className="flex items-center justify-between gap-1 pb-1 mb-1 border-b border-stone-800 dark:border-stone-200">
+                <span className="text-xs font-bold font-sans">
+                  {CARD_TYPE_INFO[card.type]?.title || card.type}
+                </span>
+                {CARD_TYPE_INFO[card.type]?.shortcut && (
+                  <kbd className="px-1 py-0.2 text-[9px] font-mono font-bold bg-stone-800 dark:bg-stone-200 text-amber-400 dark:text-amber-700 rounded">
+                    {CARD_TYPE_INFO[card.type]?.shortcut}
+                  </kbd>
+                )}
+              </div>
+              <p className="text-[10px] text-stone-300 dark:text-stone-600 leading-snug font-sans">
+                {CARD_TYPE_INFO[card.type]?.desc}
+              </p>
+              <div className="mt-1.5 pt-1 border-t border-stone-800/80 dark:border-stone-200/80 flex items-center justify-between text-[9px] text-stone-400 dark:text-stone-500 font-mono">
+                <span>{CARD_TYPE_INFO[card.type]?.subtitle}</span>
+                <span>Type: {card.type}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Title with Tooltip on hover */}
+          <div className="relative group/title flex-1 min-w-0 mr-1">
+            <input
+              type="text"
+              value={getCardTitle()}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="w-full text-sm font-oregon font-bold tracking-wide bg-transparent text-stone-800 dark:text-stone-100 outline-none truncate"
+              placeholder={
+                card.type === 'note'
+                  ? 'Untitled Note...'
+                  : card.type === 'todo'
+                  ? 'Checklist title...'
+                  : card.type === 'code'
+                  ? 'Code title...'
+                  : card.type === 'palette'
+                  ? 'Palette title...'
+                  : card.type === 'event'
+                  ? 'Event title...'
+                  : 'Card title...'
+              }
+            />
+            {getCardTitle() && (
+              <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/title:block z-50 pointer-events-none max-w-xs px-2.5 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-xs font-sans rounded-lg shadow-xl whitespace-nowrap overflow-hidden text-ellipsis border border-stone-700/40 dark:border-stone-300/40">
+                {getCardTitle()}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card actions */}
         <div className="flex items-center gap-0.5 shrink-0" onMouseDown={(e) => e.stopPropagation()}>
-          {/* Connect button */}
-          <button
-            onClick={() => {
-              if (isConnectingOrigin) {
-                cancelConnecting();
-              } else {
-                startConnecting(card.id);
-              }
-            }}
-            className={`p-1 rounded-md transition-colors ${
-              isConnectingOrigin
-                ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-500 shadow-sm'
-                : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10'
-            }`}
-            title={isConnectingOrigin ? 'Cancel connecting' : 'Connect arrow to another card'}
-          >
-            <GitCommit size={14} />
-          </button>
+          {/* Connect button with Tooltip */}
+          <div className="relative group/connect">
+            <button
+              onClick={() => {
+                if (isConnectingOrigin) {
+                  cancelConnecting();
+                } else {
+                  startConnecting(card.id);
+                }
+              }}
+              className={`p-1 rounded-md transition-colors ${
+                isConnectingOrigin
+                  ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-500 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10'
+              }`}
+            >
+              <GitCommit size={14} />
+            </button>
+            <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/connect:block z-50 pointer-events-none px-2 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-lg shadow-xl whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+              {isConnectingOrigin ? 'Cancel connecting' : 'Connect with arrow to another card'}
+            </div>
+          </div>
 
-          {/* Duplicate card */}
-          <button
-            onClick={() => duplicateCard(card.id)}
-            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 rounded-md transition-colors"
-            title="Duplicate card (Ctrl+D)"
-          >
-            <Copy size={13} />
-          </button>
+          {/* Duplicate card with Tooltip */}
+          <div className="relative group/dup">
+            <button
+              onClick={() => duplicateCard(card.id)}
+              className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 rounded-md transition-colors"
+            >
+              <Copy size={13} />
+            </button>
+            <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/dup:block z-50 pointer-events-none px-2 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-lg shadow-xl whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+              Duplicate card (Ctrl+D)
+            </div>
+          </div>
 
           {/* Color palette picker */}
           <CardColorPicker
@@ -610,14 +732,18 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             onSelectColor={(col) => updateCardColor(card.id, col)}
           />
 
-          {/* Delete card */}
-          <button
-            onClick={handleDeleteCard}
-            className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
-            title="Delete card (Del or Backspace)"
-          >
-            <Trash2 size={13} />
-          </button>
+          {/* Delete card with Tooltip */}
+          <div className="relative group/del">
+            <button
+              onClick={handleDeleteCard}
+              className="p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+            <div className="absolute right-0 bottom-full mb-1.5 hidden group-hover/del:block z-50 pointer-events-none px-2 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-lg shadow-xl whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+              Delete card (Del / Backspace)
+            </div>
+          </div>
         </div>
       </div>
 
@@ -626,19 +752,23 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         onMouseDown={(e) => e.stopPropagation()}
         className="flex items-center flex-wrap gap-1 px-3 py-1 bg-stone-500/5 dark:bg-stone-400/5 border-b border-stone-200/40 dark:border-stone-800/40 text-[11px]"
       >
-        {/* Status Pill */}
-        <button
-          type="button"
-          onClick={handleCycleStatus}
-          className={`px-1.5 py-0.5 rounded-md font-medium text-[10px] tracking-wide transition-colors cursor-pointer ${
-            card.status
-              ? STATUS_META[card.status].badgeClass
-              : 'bg-stone-200/50 dark:bg-stone-800/50 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
-          }`}
-          title="Click to cycle status: To Do -> In Progress -> In Review -> Done"
-        >
-          {card.status ? STATUS_META[card.status].label : '+ Status'}
-        </button>
+        {/* Status Pill with Tooltip */}
+        <div className="relative group/status">
+          <button
+            type="button"
+            onClick={handleCycleStatus}
+            className={`px-1.5 py-0.5 rounded-md font-medium text-[10px] tracking-wide transition-colors cursor-pointer ${
+              card.status
+                ? STATUS_META[card.status].badgeClass
+                : 'bg-stone-200/50 dark:bg-stone-800/50 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+            }`}
+          >
+            {card.status ? STATUS_META[card.status].label : '+ Status'}
+          </button>
+          <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/status:block z-50 pointer-events-none px-2 py-1 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-lg shadow-xl whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+            Status: {card.status ? STATUS_META[card.status].label : 'None'} • Click to advance
+          </div>
+        </div>
 
         {/* Tag Badges */}
         {(card.tags || []).map((tag) => (
@@ -801,7 +931,6 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         onMouseDown={handleResizeStart}
         onTouchStart={handleTouchResizeStart}
         className="group/resize absolute bottom-1 right-1 w-5 h-5 cursor-nwse-resize flex items-end justify-end p-0.5 opacity-40 hover:!opacity-100 transition-opacity touch-none"
-        title="Drag corner to resize card"
       >
         <svg
           width="10"
@@ -816,6 +945,9 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <circle cx="4.5" cy="4.5" r="1.1" />
           <circle cx="0.5" cy="8.5" r="1.1" />
         </svg>
+        <div className="absolute right-full bottom-full mb-1 mr-1 hidden group-hover/resize:block z-50 pointer-events-none px-2 py-0.5 bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 text-[10px] font-sans font-medium rounded-md shadow-lg whitespace-nowrap border border-stone-700/40 dark:border-stone-300/40">
+          Drag to resize
+        </div>
       </div>
     </div>
   );
