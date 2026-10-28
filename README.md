@@ -48,7 +48,7 @@ flowchart TD
 
 ### 1. Spatial Infinite Canvas
 
-- **Freeform Viewport**: Navigate across unlimited spatial coordinates using `Space + Drag`, middle-mouse panning, or trackpad gestures.
+- **Freeform Viewport & Hand Tool**: Navigate across unlimited spatial coordinates using click-and-drag with the dynamic Hand tool, dedicated `H` Hand tool mode, `Space + Drag`, middle-mouse panning, or trackpad gestures.
 - **Precision Zooming**: Zoom from 25% to 250% anchored dynamically to cursor coordinates via `Ctrl + Wheel` or trackpad pinch.
 - **Right-Click Spatial Context Menu**: Contextual right-click menu anywhere on the canvas viewport to drop spatial comment pins at exact coordinates, spawn cards directly under the cursor, or reset the viewport.
 - **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
@@ -311,6 +311,8 @@ pnpm run build
 
 | Shortcut                | Context             | Action                                               |
 | ----------------------- | ------------------- | ---------------------------------------------------- |
+| `Click + Drag (Canvas)` | Canvas              | Pan across the infinite canvas with Hand tool        |
+| `H`                     | Canvas              | Toggle Hand / Pan Canvas tool mode                   |
 | `Space + Click + Drag`  | Canvas              | Pan across the infinite canvas                       |
 | `Ctrl + Scroll`         | Canvas              | Zoom viewport anchored to mouse cursor (25% - 250%)  |
 | `Ctrl + K` or `Cmd + K` | Global              | Toggle Global Command Palette & Search               |

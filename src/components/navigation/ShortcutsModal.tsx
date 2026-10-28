@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useIsMounted } from '@/lib/useIsMounted';
 import { X, Keyboard, MousePointer, PlusCircle, Command, Smartphone } from 'lucide-react';
 
 interface ShortcutsModalProps {
@@ -9,6 +11,8 @@ interface ShortcutsModalProps {
 }
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
+  const mounted = useIsMounted();
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -18,7 +22,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const shortcutSections = [
     {
@@ -37,6 +41,8 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       title: 'Canvas Navigation',
       icon: <MousePointer size={14} className="text-amber-600 dark:text-amber-400" />,
       items: [
+        { keys: ['Click & Drag'], desc: 'Pan freely across canvas with Hand tool' },
+        { keys: ['H'], desc: 'Toggle Hand / Pan Canvas tool' },
         { keys: ['Space', '+', 'Drag'], desc: 'Pan freely across the infinite canvas' },
         { keys: ['Ctrl', '+', 'Wheel'], desc: 'Precision zoom in and out anchored to cursor' },
         { keys: ['Right-Click'], desc: 'Open spatial context menu to place comment pins or notes' },
@@ -48,12 +54,10 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       icon: <PlusCircle size={14} className="text-emerald-600 dark:text-emerald-400" />,
       items: [
         { keys: ['N'], desc: 'Place a new Sticky Note' },
-        { keys: ['T'], desc: 'Place a new Task Checklist' },
-        { keys: ['C'], desc: 'Place a Code & JSON Snippet' },
-        { keys: ['P'], desc: 'Place a Color Palette card' },
-        { keys: ['M'], desc: 'Place a KPI Metric Goal' },
-        { keys: ['E'], desc: 'Place a Milestone Event with countdown' },
-        { keys: ['I'], desc: 'Place an Image / Moodboard item' },
+        { keys: ['T'], desc: 'Place a new Todo Checklist' },
+        { keys: ['E'], desc: 'Place a new Milestone Event' },
+        { keys: ['I'], desc: 'Place an Image card' },
+        { keys: ['C'], desc: 'Toggle Connect Line mode' },
       ],
     },
     {
@@ -68,19 +72,19 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     },
   ];
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-5 font-sans overflow-hidden"
+        className="relative w-full max-w-2xl my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[90dvh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-5 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
+        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center">
               <Keyboard size={18} />
@@ -105,7 +109,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Shortcuts Content */}
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 scrollbar-thin">
+        <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin">
           {shortcutSections.map((sec) => (
             <div key={sec.title} className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 font-semibold px-1">
@@ -141,11 +145,12 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Footer */}
-        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800/60 flex items-center justify-between text-[11px] text-stone-400">
+        <div className="shrink-0 pt-2 border-t border-stone-200/60 dark:border-stone-800/60 flex items-center justify-between text-[11px] text-stone-400">
           <span>Tip: Hover over dock buttons anytime for quick key tooltips</span>
           <span className="font-mono text-[10px]">Press Esc to close</span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

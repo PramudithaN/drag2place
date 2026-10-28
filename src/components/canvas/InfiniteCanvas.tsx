@@ -22,6 +22,7 @@ export const InfiniteCanvas: React.FC = () => {
     resetView,
     clearSelection,
     activeTool,
+    setActiveTool,
     addCard,
     deleteCard,
     deleteConnection,
@@ -74,6 +75,13 @@ export const InfiniteCanvas: React.FC = () => {
 
       if (e.code === 'Space' && !e.repeat) {
         setIsSpacePressed(true);
+      } else if (e.key === 'h' || e.key === 'H') {
+        const currentTool = useBoardStore.getState().activeTool;
+        setActiveTool(currentTool === 'pan' ? 'select' : 'pan');
+      } else if (e.key === 'v' || e.key === 'V') {
+        setActiveTool('select');
+      } else if (e.key === 'Escape') {
+        setActiveTool('select');
       } else if (e.key === 'n' || e.key === 'N') {
         addCard('note');
       } else if (e.key === 't' || e.key === 'T') {
@@ -119,7 +127,7 @@ export const InfiniteCanvas: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [addCard, deleteCard, selectedCardIds, openConfirmModal]);
+  }, [addCard, deleteCard, selectedCardIds, openConfirmModal, setActiveTool]);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -379,12 +387,74 @@ export const InfiniteCanvas: React.FC = () => {
     };
   }, [setPan, setZoom]);
 
+  // Global drag handler during panning so moving fast or over cards keeps panning smoothly
+  useEffect(() => {
+    if (!isPanning) return;
+
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      const state = useBoardStore.getState();
+      const currentZoom = state.currentBoard.zoom;
+      const deltaX = (e.clientX - startPanRef.current.mouseX) / currentZoom;
+      const deltaY = (e.clientY - startPanRef.current.mouseY) / currentZoom;
+
+      setPan({
+        x: startPanRef.current.x + deltaX,
+        y: startPanRef.current.y + deltaY,
+      });
+    };
+
+    const handleWindowMouseUp = () => {
+      setIsPanning(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      useBoardStore.getState().saveBoardLocally(true);
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [isPanning, setPan]);
+
   // Pan start & dismiss context menu
   const handleMouseDown = (e: React.MouseEvent) => {
     if (contextMenu) {
       setContextMenu(null);
     }
-    if (e.button === 1 || isSpacePressed || e.target === containerRef.current) {
+
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    // Ignore interactive UI like buttons, inputs, dialogs, dock, headers
+    const isInteractiveUI = Boolean(
+      target.closest(
+        'button, input, textarea, select, [role="button"], [role="dialog"], header, nav, [data-dock="true"], [data-controls="true"]'
+      )
+    );
+    if (isInteractiveUI) return;
+
+    const isCard = Boolean(target.closest('[data-card="true"]') || target.closest('[data-comment-pin="true"]'));
+
+    // Pan should start if:
+    // 1. Middle mouse button (button === 1)
+    // 2. Space key is held down
+    // 3. Hand tool is active in desktop mode (activeTool === 'pan')
+    // 4. Left click (button === 0) on empty canvas (when not in connect mode and not clicking on a card)
+    const shouldPan =
+      e.button === 1 ||
+      isSpacePressed ||
+      activeTool === 'pan' ||
+      (e.button === 0 && activeTool !== 'connect' && !isCard);
+
+    if (shouldPan) {
       e.preventDefault();
       setIsPanning(true);
       startPanRef.current = {
@@ -393,7 +463,7 @@ export const InfiniteCanvas: React.FC = () => {
         mouseX: e.clientX,
         mouseY: e.clientY,
       };
-      if (e.target === containerRef.current) {
+      if (!isCard) {
         clearSelection();
       }
     }
@@ -425,24 +495,6 @@ export const InfiniteCanvas: React.FC = () => {
     });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPanning) return;
-    const deltaX = (e.clientX - startPanRef.current.mouseX) / currentBoard.zoom;
-    const deltaY = (e.clientY - startPanRef.current.mouseY) / currentBoard.zoom;
-
-    setPan({
-      x: startPanRef.current.x + deltaX,
-      y: startPanRef.current.y + deltaY,
-    });
-  };
-
-  const handleMouseUp = () => {
-    if (isPanning) {
-      setIsPanning(false);
-      useBoardStore.getState().saveBoardLocally(true);
-    }
-  };
-
   // Find cards for connection lines
   const cardMap = new Map(cards.map((c) => [c.id, c]));
 
@@ -451,15 +503,12 @@ export const InfiniteCanvas: React.FC = () => {
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] select-none touch-none ${
-        isSpacePressed || isPanning
-          ? 'cursor-grab active:cursor-grabbing'
+        isPanning
+          ? 'cursor-grabbing'
           : activeTool === 'connect'
           ? 'cursor-crosshair'
-          : 'cursor-default'
+          : 'cursor-grab'
       }`}
     >
       {/* Background Dot Grid */}
