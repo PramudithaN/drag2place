@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Grid, Volume2, VolumeX, Sun, Moon, Maximize2, LayoutGrid, Map } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Grid, Volume2, VolumeX, Sun, Moon, Maximize2, LayoutGrid, Map, Rows3 } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 
 export const CanvasControls: React.FC = () => {
@@ -17,6 +17,8 @@ export const CanvasControls: React.FC = () => {
     setSoundEnabled,
     showMinimap,
     toggleMinimap,
+    compactMode,
+    toggleCompactMode,
     theme,
     toggleTheme,
   } = useBoardStore();
@@ -86,6 +88,20 @@ export const CanvasControls: React.FC = () => {
         aria-label="Toggle Minimap"
       >
         <Map size={15} />
+      </button>
+
+      {/* Toggle Compact Overview Mode */}
+      <button
+        onClick={toggleCompactMode}
+        className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
+          compactMode
+            ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs font-semibold'
+            : 'hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100'
+        }`}
+        title={`Compact View Mode (${compactMode ? 'Active' : 'Off'})`}
+        aria-label="Toggle Compact View"
+      >
+        <Rows3 size={15} />
       </button>
 
       <button

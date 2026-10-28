@@ -104,6 +104,8 @@ export type CardContent =
   | CommentCardData
   | LinkCardData;
 
+export type CardStatus = 'todo' | 'in_progress' | 'done' | 'review';
+
 export interface Card {
   id: string;
   boardId: string;
@@ -115,8 +117,23 @@ export interface Card {
   zIndex: number;
   color: CardColor;
   content: CardContent;
+  tags?: string[];
+  status?: CardStatus;
+  sectionId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BoardSection {
+  id: string;
+  boardId: string;
+  title: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: CardColor;
+  createdAt: string;
 }
 
 export interface Connection {

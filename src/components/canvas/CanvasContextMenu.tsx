@@ -14,12 +14,14 @@ import {
   RotateCcw,
   Maximize2,
   LayoutGrid,
+  FolderKanban,
 } from 'lucide-react';
 
 interface CanvasContextMenuProps {
   x: number;
   y: number;
   onAddComment: () => void;
+  onAddSection: () => void;
   onAddNote: () => void;
   onAddTodo: () => void;
   onAddCode: () => void;
@@ -38,6 +40,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   x,
   y,
   onAddComment,
+  onAddSection,
   onAddNote,
   onAddTodo,
   onAddCode,
@@ -116,6 +119,18 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
 
         {/* Quick Card Creation Options */}
         <div className="space-y-0.5 max-h-64 overflow-y-auto pr-0.5 scrollbar-thin">
+          <button
+            type="button"
+            onClick={() => {
+              onAddSection();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 transition-colors cursor-pointer"
+          >
+            <FolderKanban size={14} className="text-amber-700 dark:text-amber-400" />
+            <span>Section Frame (Group Cards)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {

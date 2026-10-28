@@ -43,6 +43,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       items: [
         { keys: ['Ctrl', 'V'], desc: 'Universal Paste (Auto-spawns image, web link, JSON, or note)' },
         { keys: ['Ctrl', 'D'], desc: 'Duplicate selected card(s)' },
+        { keys: ['F'], desc: 'Place a new Section Group Frame' },
         { keys: ['N'], desc: 'Place a new Sticky Note' },
         { keys: ['T'], desc: 'Place a new Todo Checklist' },
         { keys: ['E'], desc: 'Place a new Milestone Event' },
@@ -54,6 +55,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
       title: 'Global Actions & Search',
       icon: <Command size={14} className="text-sky-600 dark:text-sky-400" />,
       items: [
+        { keys: ['Ctrl', 'F'], desc: 'Spotlight Search & Type Filter bar' },
         { keys: ['Ctrl', 'K'], desc: 'Open Command Palette & full-workspace search' },
         { keys: ['Delete'], desc: 'Safely delete selected card(s)' },
         { keys: ['?'], desc: 'Toggle this keyboard shortcuts guide' },

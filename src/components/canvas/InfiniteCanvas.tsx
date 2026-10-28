@@ -13,12 +13,15 @@ import { HeaderBar } from '../navigation/HeaderBar';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
 import { MultiSelectActionBar } from './MultiSelectActionBar';
 import { CanvasMinimap } from './CanvasMinimap';
+import { SectionFrame } from './SectionFrame';
+import { SpotlightFilterBar } from './SpotlightFilterBar';
 
 export const InfiniteCanvas: React.FC = () => {
   const {
     currentBoard,
     getActiveCards,
     getActiveConnections,
+    getActiveSections,
     setPan,
     setZoom,
     resetView,
@@ -28,12 +31,14 @@ export const InfiniteCanvas: React.FC = () => {
     activeTool,
     setActiveTool,
     addCard,
+    addSection,
     deleteCard,
     duplicateSelectedCards,
     selectAllCards,
     selectCardsInRect,
     deleteConnection,
     selectedCardIds,
+    alignmentGuides,
     checkReminders,
     loadBoard,
     openConfirmModal,
@@ -41,6 +46,7 @@ export const InfiniteCanvas: React.FC = () => {
 
   const cards = getActiveCards() || [];
   const connections = getActiveConnections() || [];
+  const sections = getActiveSections() || [];
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -123,6 +129,8 @@ export const InfiniteCanvas: React.FC = () => {
         addCard('event');
       } else if (e.key === 'i' || e.key === 'I') {
         addCard('image');
+      } else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey) {
+        addSection('New Section');
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedCardIds.length === 0) return;
         const count = selectedCardIds.length;
@@ -154,7 +162,7 @@ export const InfiniteCanvas: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [addCard, deleteCard, duplicateSelectedCards, selectAllCards, fitToScreen, selectedCardIds, openConfirmModal, setActiveTool]);
+  }, [addCard, addSection, deleteCard, duplicateSelectedCards, selectAllCards, fitToScreen, selectedCardIds, openConfirmModal, setActiveTool]);
 
   // Universal clipboard paste (Ctrl+V) anywhere on the canvas
   useEffect(() => {
@@ -699,6 +707,9 @@ export const InfiniteCanvas: React.FC = () => {
       {/* Header bar */}
       <HeaderBar />
 
+      {/* Floating Spotlight Filter & Search Bar */}
+      <SpotlightFilterBar />
+
       {/* World Canvas Layer (target for html-to-image export) */}
       <div
         id="infinite-canvas-viewport"
@@ -741,6 +752,25 @@ export const InfiniteCanvas: React.FC = () => {
             })}
           </g>
         </svg>
+
+        {/* Visual Section Group Frames layer (underneath cards) */}
+        {sections.map((section) => (
+          <SectionFrame key={section.id} section={section} zoom={currentBoard.zoom} />
+        ))}
+
+        {/* Dynamic Magnetic Alignment Guides */}
+        {alignmentGuides?.vertical !== undefined && (
+          <div
+            className="absolute top-[-25000px] bottom-[-25000px] w-0 border-l border-dashed border-amber-600 dark:border-amber-400 pointer-events-none z-[9999]"
+            style={{ left: `${alignmentGuides.vertical}px`, height: '50000px' }}
+          />
+        )}
+        {alignmentGuides?.horizontal !== undefined && (
+          <div
+            className="absolute left-[-25000px] right-[-25000px] h-0 border-t border-dashed border-amber-600 dark:border-amber-400 pointer-events-none z-[9999]"
+            style={{ top: `${alignmentGuides.horizontal}px`, width: '50000px' }}
+          />
+        )}
 
         {/* Cards & Canvas Pins layer */}
         {cards.map((card) =>
@@ -787,6 +817,7 @@ export const InfiniteCanvas: React.FC = () => {
           x={contextMenu.screenX}
           y={contextMenu.screenY}
           onAddComment={() => addCard('comment', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddSection={() => addSection('New Section', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddNote={() => addCard('note', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddTodo={() => addCard('todo', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddCode={() => addCard('code', { x: contextMenu.canvasX, y: contextMenu.canvasY })}

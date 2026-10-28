@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { NoteCardData } from '@/types/board';
+import { useBoardStore } from '@/lib/store';
 
 interface NoteCardProps {
   cardId: string;
@@ -10,6 +11,7 @@ interface NoteCardProps {
 }
 
 export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
+  const compactMode = useBoardStore((s) => s.compactMode);
   const fontFamilyClass =
     data.fontFamily === 'oregon'
       ? 'font-oregon'
@@ -25,6 +27,19 @@ export const NoteCard: React.FC<NoteCardProps> = ({ data, onChange }) => {
       : data.fontSize === 'lg'
       ? 'text-base leading-relaxed'
       : 'text-sm leading-relaxed';
+
+  if (compactMode) {
+    return (
+      <div className="flex flex-col h-full justify-between py-1">
+        <p className={`line-clamp-3 text-xs text-stone-700 dark:text-stone-300 ${fontFamilyClass}`}>
+          {data.body || 'Empty note...'}
+        </p>
+        <span className="text-[10px] text-stone-400 font-mono">
+          {data.body ? `${data.body.split(/\s+/).filter(Boolean).length} words` : '0 words'}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full space-y-2">

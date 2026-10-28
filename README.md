@@ -51,9 +51,15 @@ flowchart TD
 - **Freeform Viewport & Navigation**: Navigate across unlimited spatial coordinates using click-and-drag panning, `Space + Drag`, middle-mouse panning, or trackpad gestures.
 - **Precision Zooming & Fit-to-Screen**: Zoom from 25% to 250% anchored dynamically to cursor coordinates, or press `Shift + 1` (or click Zoom-to-Fit) to smoothly frame all cards with optimal padding.
 - **Auto-Tidy & 2D Grid Alignment**: One-click intelligent layout algorithm that reorganizes cards into a balanced 2D matrix aligned strictly along both horizontal rows and vertical columns with zero overlapping.
+- **Visual Section Group Frames (Milanote / Miro Style)**: Labeled translucent group containers that visually organize cards into spatial work zones (e.g., *Focus & Intentions*, *Sprint Tasks*, *Research*). Dragging a section header translates all contained cards simultaneously.
+- **Smart Collision-Free Placement**: Adding cards automatically searches for the nearest vacant canvas space rather than stacking new items directly over existing ones.
+- **Spotlight & Type Filter Bar (`Ctrl + F`)**: Instant top filter bar offering full-text / `#tag` search and 1-click card type filtering (`[All]`, `[Notes]`, `[Tasks]`, `[Events]`, `[Embeds]`, `[Media]`, `[Code]`, `[Palettes]`, `[Metrics]`) that highlights matches and gently dims background clutter.
+- **Magnetic Smart Alignment Guides**: Real-time edge and centerline snapping with visual amber alignment guide lines while dragging cards.
+- **Compact Overview Mode**: One-click toggle in canvas controls to collapse expansive cards into neat, high-density glanceable dashboard tiles.
 - **Interactive Radar Minimap**: Toggleable bird's-eye canvas navigator showing miniaturized card positions and your live camera viewport with click-to-pan teleportation.
 - **Expanded Spatial Context Menu**: Right-click anywhere to place review pins or spawn any of the 8 card types (Notes, Todos, Events, Media, Code, Links, Palettes, Metrics) directly under the cursor.
-- **Visual Card Type Badges**: Tactile iconography and type pill in every card header for immediate identification.
+- **Visual Card Type Badges & Status Progression**: Tactile iconography and interactive status pill on every card (`To Do` -> `In Progress` -> `In Review` -> `Done`).
+- **Interactive Category Tags**: Add custom `#tag` badges to cards. Clicking any tag instantly filters the entire canvas by that tag in the Spotlight search bar.
 - **Tactile Corner Resize Gripper**: Intuitive diagonal dot-grip handle on every card for easy drag-to-resize.
 - **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
 - **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.

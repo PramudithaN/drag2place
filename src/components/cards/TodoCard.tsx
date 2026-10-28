@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { TodoCardData, TodoItem } from '@/types/board';
 import { Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
+import { useBoardStore } from '@/lib/store';
 import confetti from 'canvas-confetti';
 
 interface TodoCardProps {
@@ -13,6 +14,7 @@ interface TodoCardProps {
 }
 
 export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
+  const compactMode = useBoardStore((s) => s.compactMode);
   const [newItemText, setNewItemText] = useState('');
 
   const items = data.items || [];
@@ -69,6 +71,36 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
       items: items.map((i) => (i.id === itemId ? { ...i, text } : i)),
     });
   };
+
+  if (compactMode) {
+    const visibleItems = items.slice(0, 2);
+    const hiddenCount = items.length - visibleItems.length;
+
+    return (
+      <div className="flex flex-col h-full justify-between py-1 space-y-1.5">
+        <div className="flex items-center justify-between text-[11px] text-stone-500 font-mono">
+          <span>{completedCount}/{items.length} tasks</span>
+          <span className="font-semibold text-amber-600 dark:text-amber-400">{progressPercent}%</span>
+        </div>
+        <div className="w-full h-1 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
+          <div className="h-full bg-amber-600 dark:bg-amber-400 rounded-full" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="space-y-1">
+          {visibleItems.map((item) => (
+            <div key={item.id} className="flex items-center gap-1.5 text-xs truncate">
+              <span className={`w-1.5 h-1.5 rounded-full ${item.completed ? 'bg-emerald-500' : 'bg-stone-400'}`} />
+              <span className={`truncate ${item.completed ? 'line-through text-stone-400' : 'text-stone-700 dark:text-stone-300'}`}>
+                {item.text}
+              </span>
+            </div>
+          ))}
+          {hiddenCount > 0 && (
+            <span className="text-[10px] text-stone-400 font-mono block">+{hiddenCount} more tasks</span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full space-y-3">

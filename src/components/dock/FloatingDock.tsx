@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp, Link2 } from 'lucide-react';
+import { StickyNote, CheckSquare, Calendar, Image as ImageIcon, GitFork, Code2, Palette, TrendingUp, Link2, FolderKanban } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 import { CardType } from '@/types/board';
 
@@ -36,7 +36,7 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, onClick, active }) => 
 };
 
 export const FloatingDock: React.FC = () => {
-  const { addCard, activeTool, setActiveTool } = useBoardStore();
+  const { addCard, addSection, activeTool, setActiveTool } = useBoardStore();
 
   const handleAdd = (type: CardType) => {
     addCard(type);
@@ -92,6 +92,11 @@ export const FloatingDock: React.FC = () => {
           icon={<Link2 className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
           label="Link Preview"
           onClick={() => handleAdd('link')}
+        />
+        <DockItem
+          icon={<FolderKanban className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
+          label="Section Frame"
+          onClick={() => addSection('New Section')}
         />
 
         <div className="w-[1px] h-5 sm:h-6 bg-[#E0D8CC] dark:bg-[#38342E] mx-0.5 sm:mx-1 shrink-0" />

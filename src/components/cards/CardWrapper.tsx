@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Card, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData, CommentCardData, LinkCardData } from '@/types/board';
+import { Card, CardStatus, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData, CommentCardData, LinkCardData } from '@/types/board';
 import { useBoardStore } from '@/lib/store';
 import { COLOR_CLASSES } from '@/lib/colors';
 import { CardColorPicker } from './CardColorPicker';
@@ -28,8 +28,17 @@ import {
   TrendingUp,
   MessageSquare,
   Link2,
+  Plus,
+  X as XIcon,
 } from 'lucide-react';
 import { CardType } from '@/types/board';
+
+const STATUS_META: Record<CardStatus, { label: string; badgeClass: string }> = {
+  todo: { label: 'To Do', badgeClass: 'bg-stone-200/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300' },
+  in_progress: { label: 'In Progress', badgeClass: 'bg-amber-500/20 text-amber-800 dark:text-amber-300' },
+  review: { label: 'In Review', badgeClass: 'bg-blue-500/20 text-blue-800 dark:text-blue-300' },
+  done: { label: 'Done', badgeClass: 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300' },
+};
 
 const CARD_TYPE_META: Record<CardType, { icon: React.ReactNode; label: string }> = {
   note: { icon: <StickyNote size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Note' },
@@ -78,10 +87,19 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     activeTool,
     connectingFromCardId,
     openConfirmModal,
+    updateCardTags,
+    updateCardStatus,
+    setSearchQuery,
+    activeFilterType,
+    searchQuery,
+    compactMode,
   } = useBoardStore();
 
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
+
   const isSelected = selectedCardIds.includes(card.id);
   const isConnectingOrigin = connectingFromCardId === card.id;
   const isConnectingTarget = activeTool === 'connect' && connectingFromCardId !== null && connectingFromCardId !== card.id;
@@ -89,7 +107,31 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Dragging logic
+  // Spotlight Filter & Search Dimming
+  const isDimmed = React.useMemo(() => {
+    if (activeFilterType !== 'all' && card.type !== activeFilterType) {
+      return true;
+    }
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return false;
+
+    const queryClean = q.replace(/^#/, '');
+    if (card.tags?.some((t) => t.toLowerCase().includes(queryClean))) return false;
+    if (card.status?.toLowerCase().includes(queryClean)) return false;
+
+    const content = card.content;
+    if (card.type === 'note' && (content as NoteCardData).body?.toLowerCase().includes(q)) return false;
+    if (card.type === 'todo' && (content as TodoCardData).items?.some((it) => it.text.toLowerCase().includes(q))) return false;
+    if (card.type === 'event' && (content as EventCardData).description?.toLowerCase().includes(q)) return false;
+    if (card.type === 'link' && ((content as LinkCardData).url?.toLowerCase().includes(q) || (content as LinkCardData).description?.toLowerCase().includes(q))) return false;
+    if (card.type === 'code' && ((content as CodeCardData).code?.toLowerCase().includes(q) || (content as CodeCardData).language?.toLowerCase().includes(q))) return false;
+    if (card.type === 'comment' && (content as CommentCardData).text?.toLowerCase().includes(q)) return false;
+    if ('title' in content && typeof content.title === 'string' && content.title.toLowerCase().includes(q)) return false;
+    if ('caption' in content && typeof content.caption === 'string' && content.caption.toLowerCase().includes(q)) return false;
+    return true;
+  }, [card, activeFilterType, searchQuery]);
+
+  // Dragging logic with smart magnetic alignment guides
   const handleDragStart = (e: React.MouseEvent) => {
     // If in connect mode, don't drag; let click handler process connection
     if (activeTool === 'connect') return;
@@ -127,10 +169,79 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       const deltaX = (moveEvent.clientX - startMouseX) / zoom;
       const deltaY = (moveEvent.clientY - startMouseY) / zoom;
 
+      let finalDeltaX = deltaX;
+      let finalDeltaY = deltaY;
+
+      // Smart Magnetic Alignment Snapping (single card dragging)
+      if (targetIds.length === 1 && !useBoardStore.getState().snapToGrid) {
+        const candidateX = initialPositions[0].x + deltaX;
+        const candidateY = initialPositions[0].y + deltaY;
+        const otherCards = allCurrentCards.filter(
+          (c) => c.boardId === card.boardId && c.id !== card.id
+        );
+
+        let snapGuideX: number | undefined;
+        let snapGuideY: number | undefined;
+        const SNAP_DIST = 8;
+
+        const myCenter = candidateX + card.width / 2;
+        const myRight = candidateX + card.width;
+
+        for (const oc of otherCards) {
+          const ocCenter = oc.x + oc.width / 2;
+          const ocRight = oc.x + oc.width;
+
+          if (Math.abs(candidateX - oc.x) < SNAP_DIST) {
+            finalDeltaX = oc.x - initialPositions[0].x;
+            snapGuideX = oc.x;
+            break;
+          }
+          if (Math.abs(myCenter - ocCenter) < SNAP_DIST) {
+            finalDeltaX = ocCenter - card.width / 2 - initialPositions[0].x;
+            snapGuideX = ocCenter;
+            break;
+          }
+          if (Math.abs(myRight - ocRight) < SNAP_DIST) {
+            finalDeltaX = ocRight - card.width - initialPositions[0].x;
+            snapGuideX = ocRight;
+            break;
+          }
+        }
+
+        const myCenterY = candidateY + card.height / 2;
+        const myBottom = candidateY + card.height;
+
+        for (const oc of otherCards) {
+          const ocCenterY = oc.y + oc.height / 2;
+          const ocBottom = oc.y + oc.height;
+
+          if (Math.abs(candidateY - oc.y) < SNAP_DIST) {
+            finalDeltaY = oc.y - initialPositions[0].y;
+            snapGuideY = oc.y;
+            break;
+          }
+          if (Math.abs(myCenterY - ocCenterY) < SNAP_DIST) {
+            finalDeltaY = ocCenterY - card.height / 2 - initialPositions[0].y;
+            snapGuideY = ocCenterY;
+            break;
+          }
+          if (Math.abs(myBottom - ocBottom) < SNAP_DIST) {
+            finalDeltaY = ocBottom - card.height - initialPositions[0].y;
+            snapGuideY = ocBottom;
+            break;
+          }
+        }
+
+        useBoardStore.getState().setAlignmentGuides({
+          vertical: snapGuideX,
+          horizontal: snapGuideY,
+        });
+      }
+
       const deltas = initialPositions.map((pos) => ({
         id: pos.id,
-        x: pos.x + deltaX,
-        y: pos.y + deltaY,
+        x: pos.x + finalDeltaX,
+        y: pos.y + finalDeltaY,
       }));
 
       moveCards(deltas);
@@ -140,6 +251,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       setIsDragging(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      useBoardStore.getState().setAlignmentGuides(null);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       useBoardStore.getState().saveBoardLocally();
@@ -306,6 +418,34 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     });
   };
 
+  const handleCycleStatus = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const sequence: CardStatus[] = ['todo', 'in_progress', 'review', 'done'];
+    const currentIdx = card.status ? sequence.indexOf(card.status) : -1;
+    const nextStatus = sequence[(currentIdx + 1) % sequence.length];
+    updateCardStatus(card.id, nextStatus);
+  };
+
+  const handleAddTag = () => {
+    const trimmed = newTagInput.trim().replace(/^#/, '');
+    if (trimmed) {
+      const existing = card.tags || [];
+      if (!existing.includes(trimmed)) {
+        updateCardTags(card.id, [...existing, trimmed]);
+      }
+    }
+    setNewTagInput('');
+    setIsAddingTag(false);
+  };
+
+  const handleRemoveTag = (e: React.MouseEvent, tagToRemove: string) => {
+    e.stopPropagation();
+    const existing = card.tags || [];
+    updateCardTags(card.id, existing.filter((t) => t !== tagToRemove));
+  };
+
+  const hasSearchOrFilterActive = activeFilterType !== 'all' || searchQuery.trim().length > 0;
+
   return (
     <div
       ref={cardRef}
@@ -334,19 +474,23 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       style={{
         transform: `translate(${card.x}px, ${card.y}px)`,
         width: `${card.width}px`,
-        height: `${card.height}px`,
+        height: compactMode ? '160px' : `${card.height}px`,
         zIndex: isDragging ? 9999 : card.zIndex,
         willChange: isDragging ? 'transform' : 'auto',
       }}
-      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm ${CARD_TYPE_ACCENTS[card.type] || ''} ${
+      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm overflow-hidden ${CARD_TYPE_ACCENTS[card.type] || ''} ${
         isDragging || isResizing
           ? 'transition-none cursor-grabbing shadow-2xl opacity-95 ring-2 ring-stone-800/40 dark:ring-stone-200/40'
-          : 'transition-[box-shadow,border-color] duration-150 cursor-default'
+          : 'transition-all duration-200 cursor-default'
       } ${
         colorStyle.bg
       } ${colorStyle.border} ${
-        isSelected
+        isDimmed
+          ? 'opacity-15 blur-[0.4px] pointer-events-none scale-[0.98]'
+          : isSelected
           ? 'ring-2 ring-stone-700/60 dark:ring-stone-300/60 shadow-lg'
+          : hasSearchOrFilterActive
+          ? 'ring-2 ring-amber-500/80 shadow-md'
           : 'hover:shadow-md hover:border-stone-400/50 dark:hover:border-stone-500/50'
       } ${
         isAwaitingOrigin
@@ -366,7 +510,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       <div
         onMouseDown={handleDragStart}
         onTouchStart={handleTouchDragStart}
-        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl touch-none"
+        className="flex items-center justify-between px-3 py-2 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl touch-none"
       >
         <div className="flex items-center gap-1.5 flex-1 mr-2 min-w-0">
           <GripVertical size={14} className="text-stone-400 shrink-0" />
@@ -444,6 +588,78 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             <Trash2 size={13} />
           </button>
         </div>
+      </div>
+
+      {/* Category Tags & Status Badges Subheader */}
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        className="flex items-center flex-wrap gap-1 px-3 py-1 bg-stone-500/5 dark:bg-stone-400/5 border-b border-stone-200/40 dark:border-stone-800/40 text-[11px]"
+      >
+        {/* Status Pill */}
+        <button
+          type="button"
+          onClick={handleCycleStatus}
+          className={`px-1.5 py-0.5 rounded-md font-medium text-[10px] tracking-wide transition-colors cursor-pointer ${
+            card.status
+              ? STATUS_META[card.status].badgeClass
+              : 'bg-stone-200/50 dark:bg-stone-800/50 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+          }`}
+          title="Click to cycle status: To Do -> In Progress -> In Review -> Done"
+        >
+          {card.status ? STATUS_META[card.status].label : '+ Status'}
+        </button>
+
+        {/* Tag Badges */}
+        {(card.tags || []).map((tag) => (
+          <span
+            key={tag}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSearchQuery(`#${tag}`);
+            }}
+            className="group/tag inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-200/70 dark:bg-stone-800/80 text-stone-700 dark:text-stone-300 font-mono text-[10px] hover:bg-amber-500/20 hover:text-amber-800 dark:hover:text-amber-300 transition-colors cursor-pointer"
+            title={`Filter by tag #${tag}`}
+          >
+            #{tag}
+            <button
+              type="button"
+              onClick={(e) => handleRemoveTag(e, tag)}
+              className="opacity-0 group-hover/tag:opacity-100 hover:text-rose-500 transition-opacity ml-0.5"
+              title="Remove tag"
+            >
+              <XIcon size={10} />
+            </button>
+          </span>
+        ))}
+
+        {/* Add Tag Inline Form */}
+        {isAddingTag ? (
+          <div className="inline-flex items-center gap-1">
+            <input
+              type="text"
+              value={newTagInput}
+              onChange={(e) => setNewTagInput(e.target.value)}
+              onBlur={handleAddTag}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddTag();
+                if (e.key === 'Escape') setIsAddingTag(false);
+              }}
+              autoFocus
+              placeholder="tag name..."
+              className="w-16 px-1 py-0.2 text-[10px] font-mono rounded bg-white dark:bg-stone-800 border border-amber-500 outline-none text-stone-800 dark:text-stone-100"
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingTag(true)}
+            className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 transition-colors cursor-pointer"
+            title="Add tag"
+          >
+            <Plus size={10} />
+            <span>Tag</span>
+          </button>
+        )}
       </div>
 
       {/* Card Content Body */}

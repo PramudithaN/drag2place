@@ -1,4 +1,4 @@
-import { Board, Card, Connection } from '@/types/board';
+import { Board, Card, Connection, BoardSection } from '@/types/board';
 
 export const DEFAULT_BOARD_ID = 'main-board';
 
@@ -36,6 +36,8 @@ export const INITIAL_CARDS: Card[] = [
     height: 340,
     zIndex: 1,
     color: 'cream',
+    tags: ['onboarding', 'workspace'],
+    status: 'in_progress',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
@@ -55,6 +57,8 @@ export const INITIAL_CARDS: Card[] = [
     height: 380,
     zIndex: 2,
     color: 'sage',
+    tags: ['sprint', 'tasks'],
+    status: 'todo',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
@@ -78,6 +82,8 @@ export const INITIAL_CARDS: Card[] = [
     height: 290,
     zIndex: 3,
     color: 'amber',
+    tags: ['retreat', 'calendar'],
+    status: 'in_progress',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
@@ -100,6 +106,7 @@ export const INITIAL_CARDS: Card[] = [
     height: 320,
     zIndex: 4,
     color: 'paper',
+    tags: ['moodboard', 'aesthetic'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
@@ -117,5 +124,30 @@ export const INITIAL_CONNECTIONS: Connection[] = [
     toCardId: 'card-launch-todos',
     style: 'curved',
     label: 'next steps',
+  },
+];
+
+export const INITIAL_SECTIONS: BoardSection[] = [
+  {
+    id: 'section-daily-focus',
+    boardId: DEFAULT_BOARD_ID,
+    title: 'Focus & Intentions',
+    x: 50,
+    y: 40,
+    width: 740,
+    height: 440,
+    color: 'cream',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'section-schedule-media',
+    boardId: DEFAULT_BOARD_ID,
+    title: 'Events & Calendar',
+    x: 820,
+    y: 40,
+    width: 340,
+    height: 440,
+    color: 'amber',
+    createdAt: new Date().toISOString(),
   },
 ];

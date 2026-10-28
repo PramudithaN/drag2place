@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig, WorkspaceMode } from '@/types/board';
+import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig, WorkspaceMode, BoardSection, CardStatus } from '@/types/board';
 import { WORKSPACE_MODES } from './templates';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
-import { DEFAULT_BOARD_ID, INITIAL_BOARDS, INITIAL_CARDS, INITIAL_CONNECTIONS } from './initialData';
+import { DEFAULT_BOARD_ID, INITIAL_BOARDS, INITIAL_CARDS, INITIAL_CONNECTIONS, INITIAL_SECTIONS } from './initialData';
 
 interface BoardState {
   boards: Board[];
@@ -33,6 +33,32 @@ interface BoardState {
   // Theme actions
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
+
+  // Visual Sections (Grouping Frames)
+  allSections: BoardSection[];
+  getActiveSections: () => BoardSection[];
+  addSection: (title?: string, position?: { x: number; y: number }, size?: { width: number; height: number }, color?: CardColor) => BoardSection;
+  updateSection: (id: string, updates: Partial<BoardSection>) => void;
+  moveSection: (id: string, deltaX: number, deltaY: number) => void;
+  deleteSection: (id: string) => void;
+
+  // Search & Spotlight Filtering
+  activeFilterType: CardType | 'all';
+  searchQuery: string;
+  setFilterType: (filter: CardType | 'all') => void;
+  setSearchQuery: (query: string) => void;
+
+  // Compact Overview Mode
+  compactMode: boolean;
+  toggleCompactMode: () => void;
+
+  // Magnetic Alignment Guides
+  alignmentGuides: { vertical?: number; horizontal?: number } | null;
+  setAlignmentGuides: (guides: { vertical?: number; horizontal?: number } | null) => void;
+
+  // Card Tags & Status Badges
+  updateCardTags: (id: string, tags: string[]) => void;
+  updateCardStatus: (id: string, status?: CardStatus) => void;
 
   // Viewport actions
   setPan: (pan: { x: number; y: number }) => void;
@@ -166,6 +192,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   lastSyncedAt: null,
   saveStatus: 'saved',
 
+  allSections: INITIAL_SECTIONS,
+  activeFilterType: 'all',
+  searchQuery: '',
+  compactMode: false,
+  alignmentGuides: null,
+
   getActiveCards: () => {
     const { allCards, activeBoardId } = get();
     return (allCards || []).filter((c) => c.boardId === activeBoardId);
@@ -174,6 +206,118 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   getActiveConnections: () => {
     const { allConnections, activeBoardId } = get();
     return (allConnections || []).filter((c) => c.boardId === activeBoardId);
+  },
+
+  getActiveSections: () => {
+    const { allSections, activeBoardId } = get();
+    return (allSections || []).filter((s) => s.boardId === activeBoardId);
+  },
+
+  setFilterType: (activeFilterType) => set({ activeFilterType }),
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+  toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
+  setAlignmentGuides: (alignmentGuides) => set({ alignmentGuides }),
+
+  addSection: (title = 'New Section', position, size, color = 'cream') => {
+    const { currentBoard, activeBoardId } = get();
+    const posX = position ? position.x : -currentBoard.pan.x + 80;
+    const posY = position ? position.y : -currentBoard.pan.y + 60;
+    const width = size?.width || 720;
+    const height = size?.height || 480;
+
+    const newSection: BoardSection = {
+      id: `section-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      boardId: activeBoardId,
+      title,
+      x: posX,
+      y: posY,
+      width,
+      height,
+      color,
+      createdAt: new Date().toISOString(),
+    };
+
+    soundFx.playCheck();
+    set((state) => ({
+      allSections: [...state.allSections, newSection],
+    }));
+    get().saveBoardLocally();
+    return newSection;
+  },
+
+  updateSection: (id, updates) => {
+    set((state) => ({
+      allSections: state.allSections.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+    }));
+    get().saveBoardLocally();
+  },
+
+  moveSection: (id, deltaX, deltaY) => {
+    set((state) => {
+      const section = state.allSections.find((s) => s.id === id);
+      if (!section) return state;
+
+      const newSectionX = section.x + deltaX;
+      const newSectionY = section.y + deltaY;
+
+      // Cards inside this section prior to movement
+      const cardsInside = state.allCards.filter((c) => {
+        if (c.boardId !== section.boardId) return false;
+        const centerX = c.x + c.width / 2;
+        const centerY = c.y + c.height / 2;
+        return (
+          centerX >= section.x &&
+          centerX <= section.x + section.width &&
+          centerY >= section.y &&
+          centerY <= section.y + section.height
+        );
+      });
+
+      const insideCardIds = new Set(cardsInside.map((c) => c.id));
+      const now = new Date().toISOString();
+
+      return {
+        allSections: state.allSections.map((s) =>
+          s.id === id ? { ...s, x: newSectionX, y: newSectionY } : s
+        ),
+        allCards: state.allCards.map((c) => {
+          if (insideCardIds.has(c.id)) {
+            return {
+              ...c,
+              x: c.x + deltaX,
+              y: c.y + deltaY,
+              updatedAt: now,
+            };
+          }
+          return c;
+        }),
+      };
+    });
+    get().saveBoardLocally();
+  },
+
+  deleteSection: (id) => {
+    set((state) => ({
+      allSections: state.allSections.filter((s) => s.id !== id),
+    }));
+    soundFx.playDrop();
+    get().saveBoardLocally();
+  },
+
+  updateCardTags: (id, tags) => {
+    const now = new Date().toISOString();
+    set((state) => ({
+      allCards: state.allCards.map((c) => (c.id === id ? { ...c, tags, updatedAt: now } : c)),
+    }));
+    get().saveBoardLocally();
+  },
+
+  updateCardStatus: (id, status) => {
+    const now = new Date().toISOString();
+    set((state) => ({
+      allCards: state.allCards.map((c) => (c.id === id ? { ...c, status, updatedAt: now } : c)),
+    }));
+    get().saveBoardLocally();
   },
 
   switchBoard: (boardId: string) => {
@@ -289,6 +433,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       currentBoard: nextActive,
       allCards: state.allCards.filter((c) => c.boardId !== boardId),
       allConnections: state.allConnections.filter((conn) => conn.boardId !== boardId),
+      allSections: state.allSections.filter((s) => s.boardId !== boardId),
       selectedCardIds: [],
     }));
     get().saveBoardLocally();
@@ -589,11 +734,46 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   addCard: (type: CardType, position?: { x: number; y: number }) => {
-    const { currentBoard, allCards, activeBoardId } = get();
+    const { currentBoard, allCards, activeBoardId, getActiveCards } = get();
     const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
+    const activeCards = getActiveCards();
 
-    const posX = position ? position.x : -currentBoard.pan.x + 250;
-    const posY = position ? position.y : -currentBoard.pan.y + 150;
+    const cardWidth = type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300;
+    const cardHeight = type === 'event' || type === 'comment' ? 240 : type === 'metric' ? 260 : 340;
+
+    let posX = position ? position.x : -currentBoard.pan.x + 250;
+    let posY = position ? position.y : -currentBoard.pan.y + 150;
+
+    // Smart collision-free placement: when spawning from dock, find nearest vacant spot
+    if (!position && activeCards.length > 0) {
+      const padding = 32;
+      let collision = true;
+      let attempts = 0;
+      const maxCols = 3;
+      let col = 0;
+      let row = 0;
+      const originX = posX;
+      const originY = posY;
+
+      while (collision && attempts < 30) {
+        collision = activeCards.some((c) => {
+          const overlapX = posX < c.x + c.width + padding && posX + cardWidth + padding > c.x;
+          const overlapY = posY < c.y + c.height + padding && posY + cardHeight + padding > c.y;
+          return overlapX && overlapY;
+        });
+
+        if (collision) {
+          col++;
+          if (col >= maxCols) {
+            col = 0;
+            row++;
+          }
+          posX = originX + col * (cardWidth + padding);
+          posY = originY + row * (cardHeight + padding);
+          attempts++;
+        }
+      }
+    }
 
     const defaultColors: Record<CardType, CardColor> = DEDICATED_TYPE_COLORS;
 
@@ -1076,6 +1256,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     try {
       const savedCards = localStorage.getItem('drag2place_cards');
       const savedConnections = localStorage.getItem('drag2place_connections');
+      const savedSections = localStorage.getItem('drag2place_sections');
       const savedBoards = localStorage.getItem('drag2place_boards');
       const savedActiveBoardId = localStorage.getItem('drag2place_active_board_id');
       const savedTheme = localStorage.getItem('drag2place_theme') as 'light' | 'dark' | null;
@@ -1098,6 +1279,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       if (savedConnections) {
         set({ allConnections: JSON.parse(savedConnections) });
       }
+      if (savedSections) {
+        set({ allSections: JSON.parse(savedSections) });
+      }
 
       set({
         activeBoardId: activeId,
@@ -1116,9 +1300,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (typeof window === 'undefined') return;
     try {
       set({ saveStatus: 'saving' });
-      const { allCards, allConnections, boards, activeBoardId, theme } = get();
+      const { allCards, allConnections, allSections, boards, activeBoardId, theme } = get();
       localStorage.setItem('drag2place_cards', JSON.stringify(allCards));
       localStorage.setItem('drag2place_connections', JSON.stringify(allConnections));
+      localStorage.setItem('drag2place_sections', JSON.stringify(allSections));
       localStorage.setItem('drag2place_boards', JSON.stringify(boards));
       localStorage.setItem('drag2place_active_board_id', activeBoardId);
       localStorage.setItem('drag2place_theme', theme);
