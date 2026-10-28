@@ -48,9 +48,13 @@ flowchart TD
 
 ### 1. Spatial Infinite Canvas
 
-- **Freeform Viewport & Hand Tool**: Navigate across unlimited spatial coordinates using click-and-drag with the dynamic Hand tool, dedicated `H` Hand tool mode, `Space + Drag`, middle-mouse panning, or trackpad gestures.
-- **Precision Zooming**: Zoom from 25% to 250% anchored dynamically to cursor coordinates via `Ctrl + Wheel` or trackpad pinch.
-- **Right-Click Spatial Context Menu**: Contextual right-click menu anywhere on the canvas viewport to drop spatial comment pins at exact coordinates, spawn cards directly under the cursor, or reset the viewport.
+- **Freeform Viewport & Navigation**: Navigate across unlimited spatial coordinates using click-and-drag panning, `Space + Drag`, middle-mouse panning, or trackpad gestures.
+- **Precision Zooming & Fit-to-Screen**: Zoom from 25% to 250% anchored dynamically to cursor coordinates, or press `Shift + 1` (or click Zoom-to-Fit) to smoothly frame all cards with optimal padding.
+- **Auto-Tidy & 2D Grid Alignment**: One-click intelligent layout algorithm that reorganizes cards into a balanced 2D matrix aligned strictly along both horizontal rows and vertical columns with zero overlapping.
+- **Interactive Radar Minimap**: Toggleable bird's-eye canvas navigator showing miniaturized card positions and your live camera viewport with click-to-pan teleportation.
+- **Expanded Spatial Context Menu**: Right-click anywhere to place review pins or spawn any of the 8 card types (Notes, Todos, Events, Media, Code, Links, Palettes, Metrics) directly under the cursor.
+- **Visual Card Type Badges**: Tactile iconography and type pill in every card header for immediate identification.
+- **Tactile Corner Resize Gripper**: Intuitive diagonal dot-grip handle on every card for easy drag-to-resize.
 - **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
 - **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.
 
@@ -69,8 +73,13 @@ flowchart TD
 - **Interactive Color Palettes**: Swatch cards with click-to-copy Hex/Pantone codes, real-time WCAG contrast ratio compliance badges (AA/AAA), and custom color addition.
 - **KPI Goal Metrics**: Numeric target trackers with animated progress bars, percentage completion indicators, and quick adjustment buttons (+1, +10, -1, -10).
 - **Canvas Comments & Spatial Pins**: Collaborative review pins placed at exact canvas coordinates via right-click. Designed as tactile circular avatar pins with expandable discussion balloons, drag repositioning, timestamps, and active/resolved status toggles.
-- **Rich Web Link Previews**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons.
-- **Events and Deadlines**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (_Today_, _Tomorrow_, _In X days_), and customizable reminder intervals.
+- **Rich Web Link & Media Embeds**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons. Includes an **Interactive Embed Mode** for YouTube videos, Spotify audio players/playlists, Loom recordings, Figma prototypes, and CodePen sandboxes playable directly on the canvas without leaving the workspace.
+- **Events and Deadlines with Calendar Sync**: Milestone tracking with calendar date pickers, times, location indicators, dynamic countdown badges (_Today_, _Tomorrow_, _In X days_), customizable reminder intervals, **1-click Add to Google Calendar**, and **.ics file export** for Apple Calendar and Outlook.
+- **Universal Clipboard Smart-Paste (`Ctrl + V`)**: Paste screenshots, image files, URLs, JSON payloads, or plain text anywhere on the canvas to automatically generate the appropriate card type at the viewport center.
+- **Lasso / Marquee Box Selection (`Shift + Drag`)**: Drag across canvas space while holding `Shift` to multi-select cards in real-time.
+- **Synchronous Multi-Card Dragging**: Moving any selected card translates all selected cards together with identical delta coordinates.
+- **Floating Multi-Selection Action Toolbar**: Appears when 2+ cards are selected, offering instant 2D Grid Alignment (Horizontal & Vertical), Align Left, Align Top, Center Horizontally, Distribute Horizontally/Vertically, Batch Palette Recoloring, Duplicate (`Ctrl + D`), and Batch Deletion.
+- **Card Duplication (`Ctrl + D`)**: Duplicate cards on the fly via keyboard shortcut or direct header toolbar button.
 - **Media and Moodboards**: Image integration via URL or local file upload, accompanied by customizable captions and a full-screen lightbox modal.
 - **Tactile Color System**: Curated warm minimalist palettes across seven tactile tones (_Paper, Cream, Sage, Terracotta, Amber, Lavender, Sky_).
 

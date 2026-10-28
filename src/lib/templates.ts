@@ -543,7 +543,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         width: 360,
         height: 340,
         zIndex: 2,
-        color: 'paper',
+        color: 'lavender',
         content: {
           title: 'Color System: Pantone & CMYK Inks',
           swatches: [
@@ -608,7 +608,7 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
         width: 360,
         height: 270,
         zIndex: 6,
-        color: 'lavender',
+        color: 'amber',
         content: {
           title: 'Offset Press-Check Inspection',
           description: 'On-site press check at artisanal print house to inspect ink density and foil registration.',

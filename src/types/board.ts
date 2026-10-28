@@ -89,6 +89,8 @@ export interface LinkCardData {
   image?: string;
   favicon?: string;
   siteName?: string;
+  isEmbedMode?: boolean;
+  embedType?: 'youtube' | 'spotify' | 'figma' | 'loom' | 'codepen' | 'generic';
 }
 
 export type CardContent = 

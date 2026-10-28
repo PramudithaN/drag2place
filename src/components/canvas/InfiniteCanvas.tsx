@@ -11,6 +11,8 @@ import { FloatingDock } from '../dock/FloatingDock';
 import { CanvasControls } from './CanvasControls';
 import { HeaderBar } from '../navigation/HeaderBar';
 import { ConfirmationModal } from '../ui/ConfirmationModal';
+import { MultiSelectActionBar } from './MultiSelectActionBar';
+import { CanvasMinimap } from './CanvasMinimap';
 
 export const InfiniteCanvas: React.FC = () => {
   const {
@@ -20,11 +22,16 @@ export const InfiniteCanvas: React.FC = () => {
     setPan,
     setZoom,
     resetView,
+    fitToScreen,
+    tidyUpBoard,
     clearSelection,
     activeTool,
     setActiveTool,
     addCard,
     deleteCard,
+    duplicateSelectedCards,
+    selectAllCards,
+    selectCardsInRect,
     deleteConnection,
     selectedCardIds,
     checkReminders,
@@ -38,6 +45,12 @@ export const InfiniteCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [marquee, setMarquee] = useState<{
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
   const [contextMenu, setContextMenu] = useState<{
     screenX: number;
     screenY: number;
@@ -70,6 +83,20 @@ export const InfiniteCanvas: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        duplicateSelectedCards();
+        return;
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        selectAllCards();
+        return;
+      } else if (e.shiftKey && (e.key === '!' || e.key === '1')) {
+        e.preventDefault();
+        fitToScreen();
         return;
       }
 
@@ -127,7 +154,101 @@ export const InfiniteCanvas: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [addCard, deleteCard, selectedCardIds, openConfirmModal, setActiveTool]);
+  }, [addCard, deleteCard, duplicateSelectedCards, selectAllCards, fitToScreen, selectedCardIds, openConfirmModal, setActiveTool]);
+
+  // Universal clipboard paste (Ctrl+V) anywhere on the canvas
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      const state = useBoardStore.getState();
+      const zoom = state.currentBoard.zoom;
+      const pan = state.currentBoard.pan;
+
+      // Center position in canvas world coordinates
+      const targetCanvasX = window.innerWidth / 2 / zoom - pan.x;
+      const targetCanvasY = window.innerHeight / 2 / zoom - pan.y;
+      const spawnPos = { x: Math.round(targetCanvasX - 150), y: Math.round(targetCanvasY - 100) };
+
+      // 1. Check for image files in clipboard (e.g. copied screenshot)
+      const files = e.clipboardData?.files;
+      if (files && files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          if (file.type.startsWith('image/')) {
+            e.preventDefault();
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              const newCard = state.addCard('image', spawnPos);
+              state.updateCardContent(newCard.id, {
+                url: result,
+                caption: file.name || 'Pasted Image',
+              });
+            };
+            reader.readAsDataURL(file);
+            return;
+          }
+        }
+      }
+
+      // 2. Check for text data in clipboard
+      const text = e.clipboardData?.getData('text')?.trim();
+      if (!text) return;
+
+      e.preventDefault();
+
+      // Check if it's a URL
+      const isUrl = /^https?:\/\//i.test(text);
+      if (isUrl) {
+        const isImageUrl = /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(text);
+        if (isImageUrl) {
+          const newCard = state.addCard('image', spawnPos);
+          state.updateCardContent(newCard.id, {
+            url: text,
+            caption: 'Pasted Image URL',
+          });
+        } else {
+          const newCard = state.addCard('link', spawnPos);
+          state.updateCardContent(newCard.id, {
+            url: text,
+            title: '',
+          });
+        }
+        return;
+      }
+
+      // Check if it's formatted JSON
+      if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+        try {
+          const parsed = JSON.parse(text);
+          const pretty = JSON.stringify(parsed, null, 2);
+          const newCard = state.addCard('code', spawnPos);
+          state.updateCardContent(newCard.id, {
+            title: 'Pasted JSON Data',
+            code: pretty,
+            language: 'json',
+          });
+          return;
+        } catch {
+          // Fall through to note
+        }
+      }
+
+      // Default: create a Note card
+      const newCard = state.addCard('note', spawnPos);
+      state.updateCardContent(newCard.id, {
+        title: '',
+        body: text,
+      });
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, []);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -424,6 +545,51 @@ export const InfiniteCanvas: React.FC = () => {
     };
   }, [isPanning, setPan]);
 
+  // Global drag handler during marquee box selection
+  useEffect(() => {
+    if (!marquee) return;
+
+    document.body.style.cursor = 'crosshair';
+    document.body.style.userSelect = 'none';
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const state = useBoardStore.getState();
+      const canvasX = (e.clientX - rect.left) / state.currentBoard.zoom - state.currentBoard.pan.x;
+      const canvasY = (e.clientY - rect.top) / state.currentBoard.zoom - state.currentBoard.pan.y;
+
+      setMarquee((prev) => (prev ? { ...prev, currentX: canvasX, currentY: canvasY } : null));
+
+      selectCardsInRect(
+        {
+          left: Math.min(marquee.startX, canvasX),
+          top: Math.min(marquee.startY, canvasY),
+          right: Math.max(marquee.startX, canvasX),
+          bottom: Math.max(marquee.startY, canvasY),
+        },
+        false
+      );
+    };
+
+    const handleWindowMouseUp = () => {
+      setMarquee(null);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [marquee, selectCardsInRect]);
+
   // Pan start & dismiss context menu
   const handleMouseDown = (e: React.MouseEvent) => {
     if (contextMenu) {
@@ -442,6 +608,22 @@ export const InfiniteCanvas: React.FC = () => {
     if (isInteractiveUI) return;
 
     const isCard = Boolean(target.closest('[data-card="true"]') || target.closest('[data-comment-pin="true"]'));
+
+    // Marquee box selection starts when dragging with Shift held (on empty canvas or card surface)
+    if (e.button === 0 && e.shiftKey && activeTool !== 'connect') {
+      e.preventDefault();
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const canvasX = (e.clientX - rect.left) / currentBoard.zoom - currentBoard.pan.x;
+      const canvasY = (e.clientY - rect.top) / currentBoard.zoom - currentBoard.pan.y;
+      setMarquee({
+        startX: canvasX,
+        startY: canvasY,
+        currentX: canvasX,
+        currentY: canvasY,
+      });
+      return;
+    }
 
     // Pan should start if:
     // 1. Middle mouse button (button === 1)
@@ -568,7 +750,27 @@ export const InfiniteCanvas: React.FC = () => {
             <CardWrapper key={card.id} card={card} zoom={currentBoard.zoom} />
           )
         )}
+
+        {/* Marquee box selection rectangle - always on top of every card */}
+        {marquee && (
+          <div
+            className="absolute border-2 border-amber-600/90 bg-amber-500/20 dark:border-amber-400 dark:bg-amber-400/20 rounded-lg pointer-events-none transition-none shadow-sm ring-1 ring-amber-500/30"
+            style={{
+              left: `${Math.min(marquee.startX, marquee.currentX)}px`,
+              top: `${Math.min(marquee.startY, marquee.currentY)}px`,
+              width: `${Math.abs(marquee.currentX - marquee.startX)}px`,
+              height: `${Math.abs(marquee.currentY - marquee.startY)}px`,
+              zIndex: 999999,
+            }}
+          />
+        )}
       </div>
+
+      {/* Floating Multi-Selection Action Bar (appears when 2+ cards selected) */}
+      <MultiSelectActionBar />
+
+      {/* Interactive Minimap Radar View */}
+      <CanvasMinimap />
 
       {/* Bottom Floating macOS Dock */}
       <FloatingDock />
@@ -589,6 +791,12 @@ export const InfiniteCanvas: React.FC = () => {
           onAddTodo={() => addCard('todo', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddCode={() => addCard('code', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddLink={() => addCard('link', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddEvent={() => addCard('event', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddImage={() => addCard('image', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddPalette={() => addCard('palette', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddMetric={() => addCard('metric', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onFitToScreen={fitToScreen}
+          onTidyUp={tidyUpBoard}
           onResetView={resetView}
           onClose={() => setContextMenu(null)}
         />

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Grid, Volume2, VolumeX, Sun, Moon, Hand } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Grid, Volume2, VolumeX, Sun, Moon, Maximize2, LayoutGrid, Map } from 'lucide-react';
 import { useBoardStore } from '@/lib/store';
 
 export const CanvasControls: React.FC = () => {
@@ -9,12 +9,14 @@ export const CanvasControls: React.FC = () => {
     currentBoard,
     setZoom,
     resetView,
-    activeTool,
-    setActiveTool,
+    fitToScreen,
+    tidyUpBoard,
     snapToGrid,
     setSnapToGrid,
     soundEnabled,
     setSoundEnabled,
+    showMinimap,
+    toggleMinimap,
     theme,
     toggleTheme,
   } = useBoardStore();
@@ -50,27 +52,48 @@ export const CanvasControls: React.FC = () => {
         <ZoomIn size={15} />
       </button>
 
+      {/* Zoom to Fit All Cards */}
+      <button
+        onClick={fitToScreen}
+        className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] transition-colors text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100"
+        title="Fit All Cards to Screen (Shift + 1)"
+        aria-label="Fit All Cards to Screen"
+      >
+        <Maximize2 size={15} />
+      </button>
+
       <div className="w-[1px] h-3.5 sm:h-4 bg-[#E0D8CD] dark:bg-[#38342E] mx-0.5" />
+
+      {/* Tidy Up / Auto Arrange Cards */}
+      <button
+        onClick={tidyUpBoard}
+        className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] transition-colors text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100"
+        title="Align 2D Grid (Horizontal & Vertical Rows & Columns)"
+        aria-label="Align 2D Grid"
+      >
+        <LayoutGrid size={15} />
+      </button>
+
+      {/* Toggle Minimap */}
+      <button
+        onClick={toggleMinimap}
+        className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
+          showMinimap
+            ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs font-semibold'
+            : 'hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100'
+        }`}
+        title={`Minimap Navigator (${showMinimap ? 'Open' : 'Closed'})`}
+        aria-label="Toggle Minimap"
+      >
+        <Map size={15} />
+      </button>
 
       <button
         onClick={resetView}
         className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] transition-colors text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100"
-        title="Recenter Canvas"
+        title="Recenter Canvas to Origin (0,0)"
       >
         <RotateCcw size={15} />
-      </button>
-
-      <button
-        onClick={() => setActiveTool(activeTool === 'pan' ? 'select' : 'pan')}
-        className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
-          activeTool === 'pan'
-            ? 'bg-amber-600 dark:bg-amber-500 text-white shadow-xs font-semibold'
-            : 'hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724] text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100'
-        }`}
-        title={`Hand Tool / Drag Canvas (H) - ${activeTool === 'pan' ? 'Active' : 'Off'}`}
-        aria-label="Hand tool"
-      >
-        <Hand size={15} />
       </button>
 
       <button
@@ -85,19 +108,21 @@ export const CanvasControls: React.FC = () => {
         <Grid size={15} />
       </button>
 
+      {/* Mute / Unmute Sounds - Always visible */}
       <button
         onClick={() => setSoundEnabled(!soundEnabled)}
-        className={`hidden xs:flex p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
+        className={`flex p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
           soundEnabled
             ? 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724]'
             : 'text-stone-400 dark:text-stone-500 hover:bg-[#EFE9DF] dark:hover:bg-[#2A2724]'
         }`}
         title={soundEnabled ? 'Mute Interaction Sounds' : 'Unmute Sounds'}
+        aria-label={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
       >
         {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
       </button>
 
-      <div className="hidden xs:block w-[1px] h-3.5 sm:h-4 bg-[#E0D8CD] dark:bg-[#38342E] mx-0.5" />
+      <div className="w-[1px] h-3.5 sm:h-4 bg-[#E0D8CD] dark:bg-[#38342E] mx-0.5" />
 
       {/* Dark / Light Theme Toggle */}
       <button

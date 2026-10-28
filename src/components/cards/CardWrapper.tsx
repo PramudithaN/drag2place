@@ -14,7 +14,46 @@ import { PaletteCard } from './PaletteCard';
 import { MetricCard } from './MetricCard';
 import { CommentCard } from './CommentCard';
 import { LinkCard } from './LinkCard';
-import { GripVertical, Trash2, GitCommit } from 'lucide-react';
+import {
+  GripVertical,
+  Trash2,
+  GitCommit,
+  Copy,
+  StickyNote,
+  CheckSquare,
+  Calendar,
+  Image as ImageIcon,
+  Code2,
+  Palette,
+  TrendingUp,
+  MessageSquare,
+  Link2,
+} from 'lucide-react';
+import { CardType } from '@/types/board';
+
+const CARD_TYPE_META: Record<CardType, { icon: React.ReactNode; label: string }> = {
+  note: { icon: <StickyNote size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Note' },
+  todo: { icon: <CheckSquare size={12} className="text-emerald-700 dark:text-emerald-400" />, label: 'Checklist' },
+  event: { icon: <Calendar size={12} className="text-purple-700 dark:text-purple-400" />, label: 'Event' },
+  image: { icon: <ImageIcon size={12} className="text-sky-700 dark:text-sky-400" />, label: 'Media' },
+  code: { icon: <Code2 size={12} className="text-stone-700 dark:text-stone-300" />, label: 'Code' },
+  palette: { icon: <Palette size={12} className="text-rose-700 dark:text-rose-400" />, label: 'Palette' },
+  metric: { icon: <TrendingUp size={12} className="text-blue-700 dark:text-blue-400" />, label: 'Metric' },
+  comment: { icon: <MessageSquare size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Pin' },
+  link: { icon: <Link2 size={12} className="text-indigo-700 dark:text-indigo-400" />, label: 'Embed' },
+};
+
+const CARD_TYPE_ACCENTS: Record<CardType, string> = {
+  note: 'border-t-2 border-t-amber-600/70',
+  todo: 'border-t-2 border-t-emerald-600/70',
+  event: 'border-t-2 border-t-amber-500/80',
+  link: 'border-t-2 border-t-sky-500/80',
+  palette: 'border-t-2 border-t-purple-500/80',
+  metric: 'border-t-2 border-t-rose-500/80',
+  code: 'border-t-2 border-t-stone-700/80',
+  image: 'border-t-2 border-t-cyan-500/80',
+  comment: 'border-t-2 border-t-amber-500/80',
+};
 
 interface CardWrapperProps {
   card: Card;
@@ -24,11 +63,13 @@ interface CardWrapperProps {
 export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
   const {
     updateCardPosition,
+    moveCards,
     updateCardSize,
     updateCardContent,
     updateCardColor,
     bringToFront,
     deleteCard,
+    duplicateCard,
     selectedCardIds,
     selectCard,
     startConnecting,
@@ -55,13 +96,29 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
     e.stopPropagation();
     bringToFront(card.id);
-    selectCard(card.id, e.shiftKey);
+
+    const isAlreadySelected = selectedCardIds.includes(card.id);
+    let targetIds: string[];
+    if (e.shiftKey) {
+      selectCard(card.id, true);
+      targetIds = isAlreadySelected
+        ? selectedCardIds.filter((id) => id !== card.id)
+        : [...selectedCardIds, card.id];
+    } else if (isAlreadySelected && selectedCardIds.length > 1) {
+      targetIds = selectedCardIds;
+    } else {
+      selectCard(card.id, false);
+      targetIds = [card.id];
+    }
+
     setIsDragging(true);
 
     const startMouseX = e.clientX;
     const startMouseY = e.clientY;
-    const startCardX = card.x;
-    const startCardY = card.y;
+    const allCurrentCards = useBoardStore.getState().allCards;
+    const initialPositions = allCurrentCards
+      .filter((c) => targetIds.includes(c.id))
+      .map((c) => ({ id: c.id, x: c.x, y: c.y }));
 
     document.body.style.cursor = 'grabbing';
     document.body.style.userSelect = 'none';
@@ -69,13 +126,14 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = (moveEvent.clientX - startMouseX) / zoom;
       const deltaY = (moveEvent.clientY - startMouseY) / zoom;
-      const nextX = startCardX + deltaX;
-      const nextY = startCardY + deltaY;
 
-      if (cardRef.current) {
-        cardRef.current.style.transform = `translate(${nextX}px, ${nextY}px)`;
-      }
-      updateCardPosition(card.id, nextX, nextY);
+      const deltas = initialPositions.map((pos) => ({
+        id: pos.id,
+        x: pos.x + deltaX,
+        y: pos.y + deltaY,
+      }));
+
+      moveCards(deltas);
     };
 
     const handleMouseUp = () => {
@@ -280,10 +338,10 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         zIndex: isDragging ? 9999 : card.zIndex,
         willChange: isDragging ? 'transform' : 'auto',
       }}
-      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm ${
+      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm ${CARD_TYPE_ACCENTS[card.type] || ''} ${
         isDragging || isResizing
           ? 'transition-none cursor-grabbing shadow-2xl opacity-95 ring-2 ring-stone-800/40 dark:ring-stone-200/40'
-          : 'transition-[box-shadow,border-color] duration-150'
+          : 'transition-[box-shadow,border-color] duration-150 cursor-default'
       } ${
         colorStyle.bg
       } ${colorStyle.border} ${
@@ -310,8 +368,15 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         onTouchStart={handleTouchDragStart}
         className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl touch-none"
       >
-        <div className="flex items-center gap-1.5 flex-1 mr-2">
+        <div className="flex items-center gap-1.5 flex-1 mr-2 min-w-0">
           <GripVertical size={14} className="text-stone-400 shrink-0" />
+          <div
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-500/10 dark:bg-stone-400/10 shrink-0 text-[10px] font-mono font-medium text-stone-600 dark:text-stone-300 select-none"
+            title={`Card type: ${CARD_TYPE_META[card.type]?.label || card.type}`}
+          >
+            {CARD_TYPE_META[card.type]?.icon}
+            <span className="hidden sm:inline">{CARD_TYPE_META[card.type]?.label}</span>
+          </div>
           <input
             type="text"
             value={getCardTitle()}
@@ -355,6 +420,15 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             <GitCommit size={14} />
           </button>
 
+          {/* Duplicate card */}
+          <button
+            onClick={() => duplicateCard(card.id)}
+            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 rounded-md transition-colors"
+            title="Duplicate card (Ctrl+D)"
+          >
+            <Copy size={13} />
+          </button>
+
           {/* Color palette picker */}
           <CardColorPicker
             currentColor={card.color}
@@ -374,7 +448,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
       {/* Card Content Body */}
       <div
-        className="flex-1 p-3.5 overflow-hidden"
+        className="flex-1 p-3.5 overflow-hidden cursor-default"
         data-scrollable="true"
         onWheel={(e) => {
           if (!e.ctrlKey && !e.metaKey) {
@@ -447,14 +521,26 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         )}
       </div>
 
-      {/* Resizing handle on bottom right corner (enlarged hit target for mobile fingers) */}
+      {/* Resizing handle on bottom right corner with tactile corner gripper */}
       <div
         onMouseDown={handleResizeStart}
         onTouchStart={handleTouchResizeStart}
-        className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-4 sm:h-4 cursor-nwse-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center touch-none p-1"
-        title="Resize card"
+        className="group/resize absolute bottom-1 right-1 w-5 h-5 cursor-nwse-resize flex items-end justify-end p-0.5 opacity-40 hover:!opacity-100 transition-opacity touch-none"
+        title="Drag corner to resize card"
       >
-        <div className="w-2 h-2 sm:w-1.5 sm:h-1.5 bg-stone-500 rounded-xs" />
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          className="fill-stone-400 dark:fill-stone-500 group-hover/resize:fill-amber-600 dark:group-hover/resize:fill-amber-400 transition-colors pointer-events-none"
+        >
+          <circle cx="8.5" cy="8.5" r="1.1" />
+          <circle cx="8.5" cy="4.5" r="1.1" />
+          <circle cx="4.5" cy="8.5" r="1.1" />
+          <circle cx="8.5" cy="0.5" r="1.1" />
+          <circle cx="4.5" cy="4.5" r="1.1" />
+          <circle cx="0.5" cy="8.5" r="1.1" />
+        </svg>
       </div>
     </div>
   );

@@ -38,19 +38,30 @@ interface BoardState {
   setPan: (pan: { x: number; y: number }) => void;
   setZoom: (zoom: number) => void;
   resetView: () => void;
+  fitToScreen: () => void;
+  tidyUpBoard: () => void;
   jumpToCard: (cardId: string) => void;
   setSnapToGrid: (snap: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
+  showMinimap: boolean;
+  toggleMinimap: () => void;
   
   // Tool & selection
   setActiveTool: (tool: 'select' | 'connect' | 'pan') => void;
   setSelectedCards: (ids: string[]) => void;
   selectCard: (id: string, multi?: boolean) => void;
+  selectCardsInRect: (rect: { left: number; top: number; right: number; bottom: number }, additive?: boolean) => void;
+  selectAllCards: () => void;
   clearSelection: () => void;
   
   // Card operations
   addCard: (type: CardType, position?: { x: number; y: number }) => Card;
+  duplicateCard: (id: string) => Card | null;
+  duplicateSelectedCards: () => Card[];
   updateCardPosition: (id: string, x: number, y: number) => void;
+  moveCards: (deltas: { id: string; x: number; y: number }[]) => void;
+  alignSelectedCards: (type: 'left' | 'right' | 'top' | 'bottom' | 'center-h' | 'center-v' | 'distribute-h' | 'distribute-v' | 'grid') => void;
+  updateSelectedCardsColor: (color: CardColor) => void;
   updateCardSize: (id: string, width: number, height: number) => void;
   updateCardContent: (id: string, content: Partial<CardContent>) => void;
   updateCardColor: (id: string, color: CardColor) => void;
@@ -122,6 +133,18 @@ interface SupabaseConnRow {
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 
+export const DEDICATED_TYPE_COLORS: Record<CardType, CardColor> = {
+  note: 'cream',
+  todo: 'sage',
+  event: 'amber',
+  link: 'sky',
+  palette: 'lavender',
+  metric: 'terracotta',
+  code: 'paper',
+  image: 'paper',
+  comment: 'amber',
+};
+
 export const useBoardStore = create<BoardState>((set, get) => ({
   boards: INITIAL_BOARDS,
   activeBoardId: DEFAULT_BOARD_ID,
@@ -137,6 +160,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   openConfirmModal: (config: ConfirmModalConfig) => set({ confirmModal: config }),
   closeConfirmModal: () => set({ confirmModal: null }),
   theme: 'light',
+  showMinimap: false,
+  toggleMinimap: () => set((state) => ({ showMinimap: !state.showMinimap })),
   isSyncing: false,
   lastSyncedAt: null,
   saveStatus: 'saved',
@@ -324,6 +349,161 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       currentBoard: { ...state.currentBoard, pan: { x: 0, y: 0 }, zoom: 1 },
     })),
 
+  fitToScreen: () => {
+    const { getActiveCards } = get();
+    const cards = getActiveCards();
+    if (cards.length === 0) {
+      set((state) => ({
+        currentBoard: { ...state.currentBoard, pan: { x: 0, y: 0 }, zoom: 1 },
+      }));
+      return;
+    }
+
+    const minX = Math.min(...cards.map((c) => c.x));
+    const maxX = Math.max(...cards.map((c) => c.x + c.width));
+    const minY = Math.min(...cards.map((c) => c.y));
+    const maxY = Math.max(...cards.map((c) => c.y + c.height));
+
+    const contentWidth = Math.max(maxX - minX, 200);
+    const contentHeight = Math.max(maxY - minY, 200);
+
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1400;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 900;
+
+    const padding = 100;
+    const availableW = winW - padding * 2;
+    const availableH = winH - padding * 2 - 80;
+
+    const scaleX = availableW / contentWidth;
+    const scaleY = availableH / contentHeight;
+    const fitZoom = Math.min(Math.max(Math.min(scaleX, scaleY), 0.3), 1.15);
+
+    const centerX = minX + contentWidth / 2;
+    const centerY = minY + contentHeight / 2;
+
+    const panX = winW / (2 * fitZoom) - centerX;
+    const panY = winH / (2 * fitZoom) - centerY;
+
+    soundFx.playDrop();
+    set((state) => ({
+      currentBoard: {
+        ...state.currentBoard,
+        zoom: Math.round(fitZoom * 100) / 100,
+        pan: { x: Math.round(panX), y: Math.round(panY) },
+      },
+    }));
+    get().saveBoardLocally(true);
+  },
+
+  tidyUpBoard: () => {
+    const { getActiveCards, activeBoardId } = get();
+    const cards = getActiveCards();
+    if (cards.length === 0) return;
+
+    // Stable sort: reading order (top to bottom bands, then left to right)
+    const sortedCards = [...cards].sort((a, b) => {
+      const bandA = Math.floor(a.y / 180);
+      const bandB = Math.floor(b.y / 180);
+      if (bandA !== bandB) return bandA - bandB;
+      return a.x - b.x;
+    });
+
+    // 1. Determine optimal column count for balanced 2D matrix
+    const count = sortedCards.length;
+    let numCols = 3;
+    if (count <= 2) numCols = count;
+    else if (count <= 4) numCols = 2;
+    else if (count <= 9) numCols = 3;
+    else numCols = 4;
+
+    const numRows = Math.ceil(count / numCols);
+
+    // 2. Build 2D matrix [row][col] to align horizontally & vertically
+    const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
+      new Array(numCols).fill(null)
+    );
+
+    sortedCards.forEach((card, index) => {
+      const r = Math.floor(index / numCols);
+      const c = index % numCols;
+      matrix[r][c] = card;
+    });
+
+    // 3. Compute row heights (tallest card in row) & col widths (widest card in col)
+    const rowHeights = new Array(numRows).fill(300);
+    for (let r = 0; r < numRows; r++) {
+      let maxH = 260;
+      for (let c = 0; c < numCols; c++) {
+        const card = matrix[r][c];
+        if (card) {
+          maxH = Math.max(maxH, card.height || 320);
+        }
+      }
+      rowHeights[r] = maxH;
+    }
+
+    const colWidths = new Array(numCols).fill(340);
+    for (let c = 0; c < numCols; c++) {
+      let maxW = 320;
+      for (let r = 0; r < numRows; r++) {
+        const card = matrix[r][c];
+        if (card) {
+          maxW = Math.max(maxW, card.width || 340);
+        }
+      }
+      colWidths[c] = maxW;
+    }
+
+    // 4. Calculate starting X and Y positions with clean spacing
+    const gapX = 40;
+    const gapY = 40;
+    const startX = 80;
+    const startY = 80;
+
+    const colStartX = new Array(numCols).fill(startX);
+    for (let c = 1; c < numCols; c++) {
+      colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
+    }
+
+    const rowStartY = new Array(numRows).fill(startY);
+    for (let r = 1; r < numRows; r++) {
+      rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
+    }
+
+    // 5. Place cards: strictly aligned horizontally in rows & vertically in columns
+    const updated: Card[] = [];
+    const now = new Date().toISOString();
+
+    for (let r = 0; r < numRows; r++) {
+      for (let c = 0; c < numCols; c++) {
+        const card = matrix[r][c];
+        if (card) {
+          updated.push({
+            ...card,
+            x: colStartX[c],
+            y: rowStartY[r],
+            color: DEDICATED_TYPE_COLORS[card.type] || card.color,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+
+    const updateMap = new Map(updated.map((u) => [u.id, u]));
+
+    set((state) => ({
+      allCards: state.allCards.map((c) => {
+        if (c.boardId !== activeBoardId) return c;
+        const match = updateMap.get(c.id);
+        return match || c;
+      }),
+    }));
+
+    soundFx.playDrop();
+    get().saveBoardLocally();
+    get().fitToScreen();
+  },
+
   jumpToCard: (cardId: string) => {
     const card = get().allCards.find((c) => c.id === cardId);
     if (!card) return;
@@ -377,6 +557,37 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   clearSelection: () => set({ selectedCardIds: [] }),
 
+  selectCardsInRect: (rect, additive = false) => {
+    const { getActiveCards, selectedCardIds } = get();
+    const activeCards = getActiveCards();
+
+    const minX = Math.min(rect.left, rect.right);
+    const maxX = Math.max(rect.left, rect.right);
+    const minY = Math.min(rect.top, rect.bottom);
+    const maxY = Math.max(rect.top, rect.bottom);
+
+    const hitCardIds = activeCards
+      .filter((c) => {
+        const cardRight = c.x + c.width;
+        const cardBottom = c.y + c.height;
+        return c.x < maxX && cardRight > minX && c.y < maxY && cardBottom > minY;
+      })
+      .map((c) => c.id);
+
+    if (additive) {
+      const combined = Array.from(new Set([...selectedCardIds, ...hitCardIds]));
+      set({ selectedCardIds: combined });
+    } else {
+      set({ selectedCardIds: hitCardIds });
+    }
+  },
+
+  selectAllCards: () => {
+    const { getActiveCards } = get();
+    const activeCards = getActiveCards();
+    set({ selectedCardIds: activeCards.map((c) => c.id) });
+  },
+
   addCard: (type: CardType, position?: { x: number; y: number }) => {
     const { currentBoard, allCards, activeBoardId } = get();
     const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
@@ -384,17 +595,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const posX = position ? position.x : -currentBoard.pan.x + 250;
     const posY = position ? position.y : -currentBoard.pan.y + 150;
 
-    const defaultColors: Record<CardType, CardColor> = {
-      todo: 'paper',
-      note: 'cream',
-      event: 'amber',
-      image: 'sage',
-      code: 'paper',
-      palette: 'cream',
-      metric: 'sky',
-      comment: 'amber',
-      link: 'paper',
-    };
+    const defaultColors: Record<CardType, CardColor> = DEDICATED_TYPE_COLORS;
 
     let initialContent: CardContent;
 
@@ -487,6 +688,252 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     get().saveBoardLocally();
     return newCard;
+  },
+
+  duplicateCard: (id: string) => {
+    const { allCards, activeBoardId } = get();
+    const card = allCards.find((c) => c.id === id);
+    if (!card) return null;
+
+    const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
+    const newId = `card-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const clonedContent = JSON.parse(JSON.stringify(card.content)) as CardContent;
+
+    const newCard: Card = {
+      ...card,
+      id: newId,
+      boardId: activeBoardId,
+      x: card.x + 28,
+      y: card.y + 28,
+      zIndex: highestZ + 1,
+      content: clonedContent,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    soundFx.playDrop();
+
+    set((state) => ({
+      allCards: [...state.allCards, newCard],
+      selectedCardIds: [newCard.id],
+    }));
+
+    get().saveBoardLocally();
+    return newCard;
+  },
+
+  duplicateSelectedCards: () => {
+    const { allCards, selectedCardIds, activeBoardId } = get();
+    if (selectedCardIds.length === 0) return [];
+
+    const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
+    const cardsToDuplicate = allCards.filter((c) => selectedCardIds.includes(c.id));
+    if (cardsToDuplicate.length === 0) return [];
+
+    let currentZ = highestZ;
+    const newCards: Card[] = cardsToDuplicate.map((card) => {
+      currentZ += 1;
+      const newId = `card-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const clonedContent = JSON.parse(JSON.stringify(card.content)) as CardContent;
+      return {
+        ...card,
+        id: newId,
+        boardId: activeBoardId,
+        x: card.x + 28,
+        y: card.y + 28,
+        zIndex: currentZ,
+        content: clonedContent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    });
+
+    soundFx.playDrop();
+
+    set((state) => ({
+      allCards: [...state.allCards, ...newCards],
+      selectedCardIds: newCards.map((c) => c.id),
+    }));
+
+    get().saveBoardLocally();
+    return newCards;
+  },
+
+  moveCards: (deltas) =>
+    set((state) => {
+      const deltaMap = new Map(deltas.map((d) => [d.id, d]));
+      const now = new Date().toISOString();
+      const GRID_SIZE = 20;
+
+      return {
+        allCards: state.allCards.map((card) => {
+          const delta = deltaMap.get(card.id);
+          if (!delta) return card;
+
+          let nextX = delta.x;
+          let nextY = delta.y;
+          if (state.snapToGrid) {
+            nextX = Math.round(nextX / GRID_SIZE) * GRID_SIZE;
+            nextY = Math.round(nextY / GRID_SIZE) * GRID_SIZE;
+          }
+
+          return {
+            ...card,
+            x: nextX,
+            y: nextY,
+            updatedAt: now,
+          };
+        }),
+      };
+    }),
+
+  alignSelectedCards: (type) => {
+    const { getActiveCards, selectedCardIds } = get();
+    const activeCards = getActiveCards().filter((c) => selectedCardIds.includes(c.id));
+    if (activeCards.length < 2) return;
+
+    let updatedCards: { id: string; x: number; y: number }[] = [];
+
+    if (type === 'left') {
+      const minX = Math.min(...activeCards.map((c) => c.x));
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: minX, y: c.y }));
+    } else if (type === 'right') {
+      const maxRight = Math.max(...activeCards.map((c) => c.x + c.width));
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: maxRight - c.width, y: c.y }));
+    } else if (type === 'top') {
+      const minY = Math.min(...activeCards.map((c) => c.y));
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: minY }));
+    } else if (type === 'bottom') {
+      const maxBottom = Math.max(...activeCards.map((c) => c.y + c.height));
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: maxBottom - c.height }));
+    } else if (type === 'center-h') {
+      const avgCenterY = activeCards.reduce((sum, c) => sum + (c.y + c.height / 2), 0) / activeCards.length;
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: Math.round(avgCenterY - c.height / 2) }));
+    } else if (type === 'center-v') {
+      const avgCenterX = activeCards.reduce((sum, c) => sum + (c.x + c.width / 2), 0) / activeCards.length;
+      updatedCards = activeCards.map((c) => ({ id: c.id, x: Math.round(avgCenterX - c.width / 2), y: c.y }));
+    } else if (type === 'distribute-h') {
+      const sorted = [...activeCards].sort((a, b) => a.x - b.x);
+      const firstX = sorted[0].x;
+      const lastX = sorted[sorted.length - 1].x;
+      const totalSpacing = (lastX - firstX) / (sorted.length - 1);
+      updatedCards = sorted.map((c, index) => ({
+        id: c.id,
+        x: Math.round(firstX + index * totalSpacing),
+        y: c.y,
+      }));
+    } else if (type === 'distribute-v') {
+      const sorted = [...activeCards].sort((a, b) => a.y - b.y);
+      const firstY = sorted[0].y;
+      const lastY = sorted[sorted.length - 1].y;
+      const totalSpacing = (lastY - firstY) / (sorted.length - 1);
+      updatedCards = sorted.map((c, index) => ({
+        id: c.id,
+        x: c.x,
+        y: Math.round(firstY + index * totalSpacing),
+      }));
+    } else if (type === 'grid') {
+      // 2D Matrix Alignment: aligns selected cards horizontally in rows and vertically in columns
+      const sorted = [...activeCards].sort((a, b) => {
+        const bandA = Math.floor(a.y / 180);
+        const bandB = Math.floor(b.y / 180);
+        if (bandA !== bandB) return bandA - bandB;
+        return a.x - b.x;
+      });
+
+      const count = sorted.length;
+      let numCols = 3;
+      if (count <= 2) numCols = count;
+      else if (count <= 4) numCols = 2;
+      else if (count <= 9) numCols = 3;
+      else numCols = 4;
+
+      const numRows = Math.ceil(count / numCols);
+      const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
+        new Array(numCols).fill(null)
+      );
+
+      sorted.forEach((card, index) => {
+        const r = Math.floor(index / numCols);
+        const c = index % numCols;
+        matrix[r][c] = card;
+      });
+
+      const rowHeights = new Array(numRows).fill(300);
+      for (let r = 0; r < numRows; r++) {
+        let maxH = 260;
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) maxH = Math.max(maxH, card.height || 320);
+        }
+        rowHeights[r] = maxH;
+      }
+
+      const colWidths = new Array(numCols).fill(340);
+      for (let c = 0; c < numCols; c++) {
+        let maxW = 320;
+        for (let r = 0; r < numRows; r++) {
+          const card = matrix[r][c];
+          if (card) maxW = Math.max(maxW, card.width || 340);
+        }
+        colWidths[c] = maxW;
+      }
+
+      const minX = Math.min(...activeCards.map((c) => c.x));
+      const minY = Math.min(...activeCards.map((c) => c.y));
+      const gapX = 36;
+      const gapY = 36;
+
+      const colStartX = new Array(numCols).fill(minX);
+      for (let c = 1; c < numCols; c++) {
+        colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
+      }
+
+      const rowStartY = new Array(numRows).fill(minY);
+      for (let r = 1; r < numRows; r++) {
+        rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
+      }
+
+      updatedCards = [];
+      for (let r = 0; r < numRows; r++) {
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) {
+            updatedCards.push({
+              id: card.id,
+              x: colStartX[c],
+              y: rowStartY[r],
+            });
+          }
+        }
+      }
+    }
+
+    if (updatedCards.length > 0) {
+      const updateMap = new Map(updatedCards.map((u) => [u.id, u]));
+      set((state) => ({
+        allCards: state.allCards.map((c) => {
+          const match = updateMap.get(c.id);
+          return match ? { ...c, x: match.x, y: match.y, updatedAt: new Date().toISOString() } : c;
+        }),
+      }));
+      soundFx.playDrop();
+      get().saveBoardLocally();
+    }
+  },
+
+  updateSelectedCardsColor: (color: CardColor) => {
+    const { selectedCardIds } = get();
+    if (selectedCardIds.length === 0) return;
+    const now = new Date().toISOString();
+
+    set((state) => ({
+      allCards: state.allCards.map((c) =>
+        selectedCardIds.includes(c.id) ? { ...c, color, updatedAt: now } : c
+      ),
+    }));
+    soundFx.playDrop();
+    get().saveBoardLocally();
   },
 
   updateCardPosition: (id, x, y) =>

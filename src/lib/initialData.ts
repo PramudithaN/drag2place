@@ -54,7 +54,7 @@ export const INITIAL_CARDS: Card[] = [
     width: 320,
     height: 380,
     zIndex: 2,
-    color: 'paper',
+    color: 'sage',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {
@@ -99,7 +99,7 @@ export const INITIAL_CARDS: Card[] = [
     width: 360,
     height: 320,
     zIndex: 4,
-    color: 'sage',
+    color: 'paper',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     content: {

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { LinkCardData } from '@/types/board';
-import { ExternalLink, RotateCw, Globe, ArrowRight, Pencil, Image as ImageIcon } from 'lucide-react';
+import { ExternalLink, RotateCw, Globe, ArrowRight, Pencil, Image as ImageIcon, Play, FileText } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
 interface LinkCardProps {
@@ -10,6 +10,77 @@ interface LinkCardProps {
   data: LinkCardData;
   onChange: (data: LinkCardData) => void;
 }
+
+const getEmbedInfo = (rawUrl?: string): { embedUrl: string; type: string } | null => {
+  if (!rawUrl) return null;
+  try {
+    const parsed = new URL(rawUrl);
+    const host = parsed.hostname.toLowerCase();
+
+    // YouTube
+    if (host.includes('youtube.com') || host.includes('youtu.be')) {
+      let videoId = '';
+      if (host.includes('youtu.be')) {
+        videoId = parsed.pathname.slice(1).split('?')[0];
+      } else if (parsed.pathname.includes('/shorts/')) {
+        videoId = parsed.pathname.split('/shorts/')[1].split('/')[0];
+      } else if (parsed.pathname.includes('/embed/')) {
+        videoId = parsed.pathname.split('/embed/')[1].split('/')[0];
+      } else {
+        videoId = parsed.searchParams.get('v') || '';
+      }
+      if (videoId) {
+        return {
+          embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`,
+          type: 'YouTube Video',
+        };
+      }
+    }
+
+    // Spotify
+    if (host.includes('spotify.com')) {
+      const path = parsed.pathname;
+      if (path.includes('/track/') || path.includes('/playlist/') || path.includes('/album/') || path.includes('/episode/')) {
+        return {
+          embedUrl: `https://open.spotify.com/embed${path}`,
+          type: 'Spotify Player',
+        };
+      }
+    }
+
+    // Loom
+    if (host.includes('loom.com') && parsed.pathname.includes('/share/')) {
+      const id = parsed.pathname.split('/share/')[1].split('?')[0];
+      if (id) {
+        return {
+          embedUrl: `https://www.loom.com/embed/${id}`,
+          type: 'Loom Video',
+        };
+      }
+    }
+
+    // Figma
+    if (host.includes('figma.com') && (parsed.pathname.includes('/file/') || parsed.pathname.includes('/design/') || parsed.pathname.includes('/proto/'))) {
+      return {
+        embedUrl: `https://www.figma.com/embed?embed_host=drag2place&url=${encodeURIComponent(rawUrl)}`,
+        type: 'Figma Prototype',
+      };
+    }
+
+    // CodePen
+    if (host.includes('codepen.io') && parsed.pathname.includes('/pen/')) {
+      const embedPath = parsed.pathname.replace('/pen/', '/embed/');
+      return {
+        embedUrl: `https://codepen.io${embedPath}`,
+        type: 'CodePen Sandbox',
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
 
 export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
   const [urlInput, setUrlInput] = useState(data.url || '');
@@ -35,6 +106,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
       if (!res.ok) throw new Error('Preview fetch failed');
       const json = await res.json();
 
+      const detectedEmbed = getEmbedInfo(normalized);
       onChange({
         ...data,
         url: normalized,
@@ -43,6 +115,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
         image: json.image || undefined,
         favicon: json.favicon || `https://www.google.com/s2/favicons?domain=${new URL(normalized).hostname}&sz=64`,
         siteName: json.siteName || new URL(normalized).hostname,
+        isEmbedMode: Boolean(detectedEmbed),
       });
       setIsEditingUrl(false);
       soundFx.playDrop();
@@ -52,6 +125,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
       // Fallback
       try {
         const hostname = new URL(normalized).hostname;
+        const detectedEmbed = getEmbedInfo(normalized);
         onChange({
           ...data,
           url: normalized,
@@ -59,6 +133,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
           description: `Web link to ${hostname}`,
           siteName: hostname,
           favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+          isEmbedMode: Boolean(detectedEmbed),
         });
         setIsEditingUrl(false);
       } catch {
@@ -82,6 +157,9 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
     }
   })() : '';
 
+  const embedInfo = React.useMemo(() => getEmbedInfo(data.url), [data.url]);
+  const isEmbedActive = Boolean(data.isEmbedMode && embedInfo);
+
   return (
     <div className="flex flex-col h-full justify-between font-sans overflow-hidden">
       {/* If editing URL or inputting for the first time */}
@@ -89,7 +167,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
         <form onSubmit={handleSubmit} className="flex flex-col h-full justify-center p-2 space-y-3">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300">
             <Globe size={14} className="text-amber-700 dark:text-amber-400" />
-            <span>Generate Link Preview</span>
+            <span>Generate Link or Media Embed</span>
           </div>
 
           <div className="relative">
@@ -97,7 +175,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
               type="text"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://github.com or figma.com..."
+              placeholder="Paste YouTube, Spotify, Figma, or any web link..."
               className="w-full text-xs px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 placeholder-stone-400 focus:outline-hidden focus:border-stone-500 shadow-2xs font-mono"
               autoFocus
             />
@@ -136,6 +214,55 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
             </button>
           </div>
         </form>
+      ) : isEmbedActive ? (
+        /* Interactive Media Embed View (YouTube, Spotify, Loom, Figma, CodePen) */
+        <div className="flex flex-col h-full justify-between">
+          <div className="relative w-full flex-1 -mx-3.5 -mt-3.5 mb-2 overflow-hidden rounded-t-xl bg-black/5 dark:bg-black/30">
+            <iframe
+              src={embedInfo?.embedUrl}
+              title={data.title || embedInfo?.type || 'Media Embed'}
+              className="w-full h-full border-none"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+
+          {/* Embed Footer Controls */}
+          <div className="pt-2 border-t border-stone-200/70 dark:border-stone-800/70 flex items-center justify-between text-xs text-stone-500">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onChange({ ...data, isEmbedMode: false })}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-stone-200/70 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-300/70 transition-colors"
+                title="Switch to Bookmark Card"
+              >
+                <FileText size={11} />
+                <span>Bookmark View</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUrlInput(data.url);
+                  setIsEditingUrl(true);
+                }}
+                className="p-1 hover:text-stone-800 dark:hover:text-stone-200 rounded transition-colors"
+                title="Edit URL"
+              >
+                <Pencil size={12} />
+              </button>
+            </div>
+
+            <a
+              href={data.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 hover:underline"
+            >
+              <span>{embedInfo?.type.split(' ')[0] || 'Open'}</span>
+              <ExternalLink size={11} />
+            </a>
+          </div>
+        </div>
       ) : (
         /* Rich Preview Card Content */
         <div className="flex flex-col h-full justify-between">
@@ -201,6 +328,17 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
           {/* Footer controls */}
           <div className="pt-2 border-t border-stone-200/70 dark:border-stone-800/70 flex items-center justify-between text-xs text-stone-500">
             <div className="flex items-center gap-1">
+              {embedInfo && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...data, isEmbedMode: true })}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-amber-500/15 text-amber-800 dark:text-amber-300 hover:bg-amber-500/25 transition-colors mr-1"
+                  title={`Play interactive ${embedInfo.type}`}
+                >
+                  <Play size={10} className="fill-current" />
+                  <span>Play / Embed</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
