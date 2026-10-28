@@ -655,6 +655,10 @@ export const InfiniteCanvas: React.FC = () => {
       };
       if (!isCard) {
         clearSelection();
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-section="true"]')) {
+          useBoardStore.getState().selectSection(null);
+        }
       }
     }
   };

@@ -36,6 +36,8 @@ interface BoardState {
 
   // Visual Sections (Grouping Frames)
   allSections: BoardSection[];
+  selectedSectionId: string | null;
+  selectSection: (id: string | null) => void;
   getActiveSections: () => BoardSection[];
   addSection: (title?: string, position?: { x: number; y: number }, size?: { width: number; height: number }, color?: CardColor) => BoardSection;
   updateSection: (id: string, updates: Partial<BoardSection>) => void;
@@ -195,11 +197,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   saveStatus: 'saved',
 
   allSections: INITIAL_SECTIONS,
+  selectedSectionId: null,
   activeFilterType: 'all',
   searchQuery: '',
   showFilterBar: true,
   compactMode: false,
   alignmentGuides: null,
+
+  selectSection: (selectedSectionId) => set({ selectedSectionId }),
 
   getActiveCards: () => {
     const { allCards, activeBoardId } = get();
@@ -244,6 +249,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     soundFx.playCheck();
     set((state) => ({
       allSections: [...state.allSections, newSection],
+      selectedSectionId: newSection.id,
+      selectedCardIds: [],
     }));
     get().saveBoardLocally();
     return newSection;
@@ -303,6 +310,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   deleteSection: (id) => {
     set((state) => ({
       allSections: state.allSections.filter((s) => s.id !== id),
+      selectedSectionId: state.selectedSectionId === id ? null : state.selectedSectionId,
     }));
     soundFx.playDrop();
     get().saveBoardLocally();
@@ -336,6 +344,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       activeBoardId: targetBoard.id,
       currentBoard: targetBoard,
       selectedCardIds: [],
+      selectedSectionId: null,
       connectingFromCardId: null,
       activeTool: 'select',
     });
@@ -738,18 +747,100 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   addCard: (type: CardType, position?: { x: number; y: number }) => {
-    const { currentBoard, allCards, activeBoardId, getActiveCards } = get();
+    const { currentBoard, allCards, allSections, selectedSectionId, activeBoardId, getActiveCards } = get();
     const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
     const activeCards = getActiveCards();
 
-    const cardWidth = type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300;
+    let targetCardWidth = type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300;
     const cardHeight = type === 'event' || type === 'comment' ? 240 : type === 'metric' ? 260 : 340;
 
     let posX = position ? position.x : -currentBoard.pan.x + 250;
     let posY = position ? position.y : -currentBoard.pan.y + 150;
+    let assignedSectionId: string | undefined;
 
-    // Smart collision-free placement: when spawning from dock, find nearest vacant spot
-    if (!position && activeCards.length > 0) {
+    // Check if user has a section selected and no explicit position was provided
+    const targetSection = !position && selectedSectionId
+      ? allSections.find((s) => s.id === selectedSectionId && s.boardId === activeBoardId)
+      : null;
+
+    if (targetSection) {
+      assignedSectionId = targetSection.id;
+
+      // Cards that currently belong to this section
+      const sectionCards = activeCards.filter((c) => {
+        if (c.sectionId === targetSection.id) return true;
+        const centerX = c.x + c.width / 2;
+        const centerY = c.y + c.height / 2;
+        return (
+          centerX >= targetSection.x &&
+          centerX <= targetSection.x + targetSection.width &&
+          centerY >= targetSection.y &&
+          centerY <= targetSection.y + targetSection.height
+        );
+      });
+
+      // Internal layout padding & gaps
+      const padX = 24;
+      const padTop = 36;
+      const padBottom = 28;
+      const gapX = 24;
+      const gapY = 24;
+
+      const availWidth = Math.max(260, targetSection.width - padX * 2);
+
+      // Determine column count that fits comfortably inside the section width
+      let numCols = Math.max(1, Math.floor((availWidth + gapX) / (targetCardWidth + gapX)));
+      if (availWidth < 500) {
+        numCols = 1;
+      }
+
+      // Automatically adjust card width to fit the section columns cleanly
+      targetCardWidth = Math.min(
+        targetCardWidth,
+        Math.floor((availWidth - (numCols - 1) * gapX) / numCols)
+      );
+
+      // Search for the first non-overlapping slot inside the section
+      let slotFound = false;
+      let slotIndex = 0;
+      let slotX = targetSection.x + padX;
+      let slotY = targetSection.y + padTop;
+
+      while (!slotFound && slotIndex < 60) {
+        const col = slotIndex % numCols;
+        const row = Math.floor(slotIndex / numCols);
+
+        slotX = targetSection.x + padX + col * (targetCardWidth + gapX);
+        slotY = targetSection.y + padTop + row * (cardHeight + gapY);
+
+        const overlaps = sectionCards.some((sc) => {
+          const overlapX = slotX < sc.x + sc.width && slotX + targetCardWidth > sc.x;
+          const overlapY = slotY < sc.y + sc.height && slotY + cardHeight > sc.y;
+          return overlapX && overlapY;
+        });
+
+        if (!overlaps) {
+          slotFound = true;
+        } else {
+          slotIndex++;
+        }
+      }
+
+      posX = slotX;
+      posY = slotY;
+
+      // Make the section adjust to the cards! Automatically expand section height if needed
+      const neededHeight = (slotY - targetSection.y) + cardHeight + padBottom;
+      if (neededHeight > targetSection.height) {
+        const updatedHeight = Math.round(neededHeight);
+        set((state) => ({
+          allSections: state.allSections.map((s) =>
+            s.id === targetSection.id ? { ...s, height: updatedHeight } : s
+          ),
+        }));
+      }
+    } else if (!position && activeCards.length > 0) {
+      // Smart collision-free placement: when spawning from dock, find nearest vacant spot
       const padding = 32;
       let collision = true;
       let attempts = 0;
@@ -761,7 +852,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       while (collision && attempts < 30) {
         collision = activeCards.some((c) => {
-          const overlapX = posX < c.x + c.width + padding && posX + cardWidth + padding > c.x;
+          const overlapX = posX < c.x + c.width + padding && posX + targetCardWidth + padding > c.x;
           const overlapY = posY < c.y + c.height + padding && posY + cardHeight + padding > c.y;
           return overlapX && overlapY;
         });
@@ -772,7 +863,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             col = 0;
             row++;
           }
-          posX = originX + col * (cardWidth + padding);
+          posX = originX + col * (targetCardWidth + padding);
           posY = originY + row * (cardHeight + padding);
           attempts++;
         }
@@ -854,11 +945,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       type,
       x: posX,
       y: posY,
-      width: type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300,
-      height: type === 'event' || type === 'comment' ? 240 : type === 'metric' ? 260 : 340,
+      width: targetCardWidth,
+      height: cardHeight,
       zIndex: highestZ + 1,
       color: defaultColors[type],
       content: initialContent,
+      sectionId: assignedSectionId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

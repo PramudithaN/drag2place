@@ -21,7 +21,17 @@ interface SectionFrameProps {
 }
 
 export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => {
-  const { moveSection, updateSection, deleteSection, openConfirmModal } = useBoardStore();
+  const {
+    moveSection,
+    updateSection,
+    deleteSection,
+    openConfirmModal,
+    selectedSectionId,
+    selectSection,
+    clearSelection,
+  } = useBoardStore();
+
+  const isSelected = selectedSectionId === section.id;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(section.title);
@@ -123,22 +133,49 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
   return (
     <div
       data-section="true"
+      onClick={(e) => {
+        e.stopPropagation();
+        selectSection(section.id);
+        clearSelection();
+      }}
       style={{
         transform: `translate3d(${section.x}px, ${section.y}px, 0px)`,
         width: `${section.width}px`,
         height: `${section.height}px`,
         zIndex: 5,
       }}
-      className={`absolute rounded-3xl border-2 border-dashed transition-colors select-none ${colorClass} ${
+      className={`absolute rounded-3xl border-2 transition-all select-none ${colorClass} ${
+        isSelected
+          ? 'border-amber-500/90 ring-2 ring-amber-500/70 border-solid shadow-xl'
+          : 'border-dashed'
+      } ${
         isDragging ? 'opacity-90 ring-2 ring-amber-500/30' : ''
       }`}
     >
       {/* Section Header Bar */}
       <div
-        onMouseDown={handleDragStart}
-        className="group absolute -top-11 left-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#FAF8F5]/90 dark:bg-[#1E1C19]/90 backdrop-blur-md border border-[#E5DFD5] dark:border-[#38332B] shadow-sm text-stone-700 dark:text-stone-300 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+        onMouseDown={(e) => {
+          selectSection(section.id);
+          clearSelection();
+          handleDragStart(e);
+        }}
+        className={`group absolute -top-11 left-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl backdrop-blur-md border shadow-sm text-stone-700 dark:text-stone-300 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${
+          isSelected
+            ? 'bg-[#FAF8F5] dark:bg-[#1E1C19] border-amber-500 ring-2 ring-amber-500/40'
+            : 'bg-[#FAF8F5]/90 dark:bg-[#1E1C19]/90 border-[#E5DFD5] dark:border-[#38332B]'
+        }`}
       >
         <FolderKanban size={14} className="text-amber-700 dark:text-amber-400 shrink-0" />
+
+        {isSelected && (
+          <span
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-mono font-medium shrink-0 animate-in fade-in duration-200"
+            title="Active section: new cards from the dock will automatically be added inside here"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Active
+          </span>
+        )}
 
         {isEditingTitle ? (
           <input
