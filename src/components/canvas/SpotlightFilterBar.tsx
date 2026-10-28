@@ -14,6 +14,10 @@ import {
   Code2,
   Palette,
   TrendingUp,
+  Music,
+  Table,
+  Timer,
+  Quote,
 } from 'lucide-react';
 
 interface FilterOption {
@@ -26,12 +30,16 @@ const FILTER_OPTIONS: FilterOption[] = [
   { type: 'all', label: 'All' },
   { type: 'note', label: 'Notes', icon: <StickyNote size={12} className="text-amber-700 dark:text-amber-400" /> },
   { type: 'todo', label: 'Tasks', icon: <CheckSquare size={12} className="text-emerald-700 dark:text-emerald-400" /> },
-  { type: 'event', label: 'Events', icon: <Calendar size={12} className="text-purple-700 dark:text-purple-400" /> },
-  { type: 'link', label: 'Embeds', icon: <Link2 size={12} className="text-indigo-700 dark:text-indigo-400" /> },
-  { type: 'image', label: 'Media', icon: <ImageIcon size={12} className="text-sky-700 dark:text-sky-400" /> },
   { type: 'code', label: 'Code', icon: <Code2 size={12} className="text-stone-700 dark:text-stone-300" /> },
+  { type: 'table', label: 'Tables', icon: <Table size={12} className="text-sky-700 dark:text-sky-400" /> },
+  { type: 'audio', label: 'Audio', icon: <Music size={12} className="text-amber-700 dark:text-amber-400" /> },
+  { type: 'image', label: 'Media', icon: <ImageIcon size={12} className="text-sky-700 dark:text-sky-400" /> },
   { type: 'palette', label: 'Palettes', icon: <Palette size={12} className="text-rose-700 dark:text-rose-400" /> },
   { type: 'metric', label: 'Metrics', icon: <TrendingUp size={12} className="text-blue-700 dark:text-blue-400" /> },
+  { type: 'countdown', label: 'Timers', icon: <Timer size={12} className="text-rose-700 dark:text-rose-400" /> },
+  { type: 'quote', label: 'Quotes', icon: <Quote size={12} className="text-amber-700 dark:text-amber-400" /> },
+  { type: 'event', label: 'Events', icon: <Calendar size={12} className="text-purple-700 dark:text-purple-400" /> },
+  { type: 'link', label: 'Embeds', icon: <Link2 size={12} className="text-indigo-700 dark:text-indigo-400" /> },
 ];
 
 export const SpotlightFilterBar: React.FC = () => {

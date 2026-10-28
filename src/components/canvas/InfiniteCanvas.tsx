@@ -830,6 +830,10 @@ export const InfiniteCanvas: React.FC = () => {
           onAddImage={() => addCard('image', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddPalette={() => addCard('palette', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onAddMetric={() => addCard('metric', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddAudio={() => addCard('audio', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddTable={() => addCard('table', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddCountdown={() => addCard('countdown', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
+          onAddQuote={() => addCard('quote', { x: contextMenu.canvasX, y: contextMenu.canvasY })}
           onFitToScreen={fitToScreen}
           onTidyUp={tidyUpBoard}
           onResetView={resetView}

@@ -14,6 +14,10 @@ import { PaletteCard } from './PaletteCard';
 import { MetricCard } from './MetricCard';
 import { CommentCard } from './CommentCard';
 import { LinkCard } from './LinkCard';
+import { AudioCard } from './AudioCard';
+import { TableCard } from './TableCard';
+import { CountdownCard } from './CountdownCard';
+import { QuoteCard } from './QuoteCard';
 import {
   GripVertical,
   Trash2,
@@ -28,10 +32,20 @@ import {
   TrendingUp,
   MessageSquare,
   Link2,
+  Music,
+  Table,
+  Timer,
+  Quote,
   Plus,
   X as XIcon,
 } from 'lucide-react';
-import { CardType } from '@/types/board';
+import {
+  CardType,
+  AudioCardData,
+  TableCardData,
+  CountdownCardData,
+  QuoteCardData,
+} from '@/types/board';
 
 const STATUS_META: Record<CardStatus, { label: string; badgeClass: string }> = {
   todo: { label: 'To Do', badgeClass: 'bg-stone-200/80 dark:bg-stone-800 text-stone-700 dark:text-stone-300' },
@@ -50,6 +64,10 @@ const CARD_TYPE_META: Record<CardType, { icon: React.ReactNode; label: string }>
   metric: { icon: <TrendingUp size={12} className="text-blue-700 dark:text-blue-400" />, label: 'Metric' },
   comment: { icon: <MessageSquare size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Pin' },
   link: { icon: <Link2 size={12} className="text-indigo-700 dark:text-indigo-400" />, label: 'Embed' },
+  audio: { icon: <Music size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Audio' },
+  table: { icon: <Table size={12} className="text-sky-700 dark:text-sky-400" />, label: 'Table' },
+  countdown: { icon: <Timer size={12} className="text-rose-700 dark:text-rose-400" />, label: 'Countdown' },
+  quote: { icon: <Quote size={12} className="text-amber-700 dark:text-amber-400" />, label: 'Quote' },
 };
 
 const CARD_TYPE_ACCENTS: Record<CardType, string> = {
@@ -62,6 +80,10 @@ const CARD_TYPE_ACCENTS: Record<CardType, string> = {
   code: 'border-t-2 border-t-stone-700/80',
   image: 'border-t-2 border-t-cyan-500/80',
   comment: 'border-t-2 border-t-amber-500/80',
+  audio: 'border-t-2 border-t-amber-500/80',
+  table: 'border-t-2 border-t-sky-500/80',
+  countdown: 'border-t-2 border-t-rose-500/80',
+  quote: 'border-t-2 border-t-amber-600/70',
 };
 
 interface CardWrapperProps {
@@ -391,15 +413,24 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
   const colorStyle = COLOR_CLASSES[card.color] || COLOR_CLASSES.paper;
 
   const getCardTitle = () => {
-    if ('title' in card.content) {
-      return (card.content as NoteCardData | TodoCardData | EventCardData).title ?? '';
+    if ('title' in card.content && typeof (card.content as { title?: unknown }).title === 'string') {
+      return (card.content as { title: string }).title;
     }
-    return (card.content as ImageCardData).caption || '';
+    if (card.type === 'quote' && 'quote' in card.content) {
+      const q = (card.content as QuoteCardData).quote;
+      return q ? (q.length > 25 ? `${q.substring(0, 25)}…` : q) : 'Quote';
+    }
+    if (card.type === 'image' && 'caption' in card.content) {
+      return (card.content as ImageCardData).caption || '';
+    }
+    return '';
   };
 
   const handleTitleChange = (newTitle: string) => {
     if (card.type === 'image') {
       updateCardContent(card.id, { caption: newTitle });
+    } else if (card.type === 'quote') {
+      updateCardContent(card.id, { quote: newTitle });
     } else {
       updateCardContent(card.id, { title: newTitle });
     }
@@ -732,6 +763,34 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
           <LinkCard
             cardId={card.id}
             data={card.content as LinkCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'audio' && (
+          <AudioCard
+            cardId={card.id}
+            data={card.content as AudioCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'table' && (
+          <TableCard
+            cardId={card.id}
+            data={card.content as TableCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'countdown' && (
+          <CountdownCard
+            cardId={card.id}
+            data={card.content as CountdownCardData}
+            onChange={(newData) => updateCardContent(card.id, newData)}
+          />
+        )}
+        {card.type === 'quote' && (
+          <QuoteCard
+            cardId={card.id}
+            data={card.content as QuoteCardData}
             onChange={(newData) => updateCardContent(card.id, newData)}
           />
         )}

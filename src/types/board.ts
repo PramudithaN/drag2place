@@ -1,4 +1,17 @@
-export type CardType = 'todo' | 'note' | 'event' | 'image' | 'code' | 'palette' | 'metric' | 'comment' | 'link';
+export type CardType = 
+  | 'todo' 
+  | 'note' 
+  | 'event' 
+  | 'image' 
+  | 'code' 
+  | 'palette' 
+  | 'metric' 
+  | 'comment' 
+  | 'link'
+  | 'audio'
+  | 'table'
+  | 'countdown'
+  | 'quote';
 
 export type CardColor = 
   | 'cream'
@@ -93,6 +106,36 @@ export interface LinkCardData {
   embedType?: 'youtube' | 'spotify' | 'figma' | 'loom' | 'codepen' | 'generic';
 }
 
+export interface AudioCardData {
+  title: string;
+  artist?: string;
+  url: string;
+  duration?: number;
+}
+
+export interface TableRow {
+  id: string;
+  cells: string[];
+}
+
+export interface TableCardData {
+  title: string;
+  columns: string[];
+  rows: TableRow[];
+}
+
+export interface CountdownCardData {
+  title: string;
+  targetDate: string;
+  description?: string;
+}
+
+export interface QuoteCardData {
+  quote: string;
+  author: string;
+  citation?: string;
+}
+
 export type CardContent = 
   | TodoCardData 
   | NoteCardData 
@@ -102,7 +145,11 @@ export type CardContent =
   | PaletteCardData 
   | MetricCardData
   | CommentCardData
-  | LinkCardData;
+  | LinkCardData
+  | AudioCardData
+  | TableCardData
+  | CountdownCardData
+  | QuoteCardData;
 
 export type CardStatus = 'todo' | 'in_progress' | 'done' | 'review';
 

@@ -71,12 +71,16 @@ flowchart TD
 - **Board Management**: Inline workspace renaming and safe deletion with confirmation modals.
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
 
-### 3. Visual Card Suite
+### 3. Visual Card Suite (13 Dynamic Types)
 
 - **Notes and Prose**: Markdown-capable stationery notes with on-the-fly typography switching between authentic **Oregon LDO**, **Editorial Serif**, **Modern Sans**, and **Clean Monospace**. Features clean, uncluttered placeholders and auto-focus so users can immediately begin writing without deleting sample text.
 - **Checklists and Tasks**: Dynamic to-do cards featuring completed counters, progress meters, priority badges, strikethrough transitions, and particle confetti upon task completion.
 - **Code Snippet & Terminal**: Dark obsidian terminal window with line numbers, syntax formatting, copy button, and built-in JSON prettifier and validator.
+- **Data Grid / Editable Table**: Tabular cards for project backlogs, technical specifications, and budgets with dynamic column headers, add/delete rows, and inline cell editing.
 - **Interactive Color Palettes**: Swatch cards with click-to-copy Hex/Pantone codes, real-time WCAG contrast ratio compliance badges (AA/AAA), and custom color addition.
+- **Audio Visualizer & Memo**: Waveform visualizer with live play/pause time tracking, artist and track title fields, and custom audio URL streaming for sound designers and podcasters.
+- **Countdown Launch Timer**: Live ticking countdown timer displaying Days, Hours, Minutes, and Seconds until target launch dates, with celebration indicators on milestone completion.
+- **Editorial Pull-Quote**: Pullquote cards for memorable brand principles, customer testimonials, and book citations with author and source attribution.
 - **KPI Goal Metrics**: Numeric target trackers with animated progress bars, percentage completion indicators, and quick adjustment buttons (+1, +10, -1, -10).
 - **Canvas Comments & Spatial Pins**: Collaborative review pins placed at exact canvas coordinates via right-click. Designed as tactile circular avatar pins with expandable discussion balloons, drag repositioning, timestamps, and active/resolved status toggles.
 - **Rich Web Link & Media Embeds**: Bookmark cards that fetch OpenGraph metadata, title, hero images, description snippets, and domain favicons. Includes an **Interactive Embed Mode** for YouTube videos, Spotify audio players/playlists, Loom recordings, Figma prototypes, and CodePen sandboxes playable directly on the canvas without leaving the workspace.
@@ -95,9 +99,14 @@ flowchart TD
 - **Two-Step Connection Workflow**: Activate the connect tool from the dock, select an origin card, and click any destination card to complete the vector path.
 - **Connection Customization**: Interactive deletion triggers and label badges anchored along curve tangents.
 
-### 5. Floating Bottom Dock
+### 5. Floating Bottom Dock & Mode-Curated Cards
 
+- **Dynamic Dock by Workspace Mode**: The dock automatically curates primary card icons according to your active board's persona mode (Developer, Designer, Video Editor, Graphic Designer, Marketing, Influencer, Product Manager, Architect, Music Producer, Author).
+- **Expanded Card Catalog Popover (`+ More Cards`)**: One-click catalog popup displaying all 13 card types organized into clear functional domains (*Text & Writing, Design & Media, Engineering & Data, Planning & Milestones*) with instant search filtering.
+- **Section Smart-Targeting Indicator**: When a section is selected, the dock and catalog show an active placement badge to confirm cards will spawn cleanly inside the section.
 - **macOS-Style Magnification**: Spring-physics magnification on hover powered by Framer Motion.
+- **Quick Spawn Actions**: Keyboard triggers (`N` for Note, `T` for Todo, `E` for Event, `I` for Image, `C` for Code).
+- **Embedded Brand Identity**: Clean typography and brand mark integration.
 - **Quick Spawn Actions**: Keyboard triggers (`N` for Note, `T` for Todo, `E` for Event, `I` for Image, `C` for Connect mode).
 - **Embedded Brand Identity**: Clean typography and brand mark integration.
 

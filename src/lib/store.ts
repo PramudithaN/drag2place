@@ -173,6 +173,10 @@ export const DEDICATED_TYPE_COLORS: Record<CardType, CardColor> = {
   code: 'paper',
   image: 'paper',
   comment: 'amber',
+  audio: 'amber',
+  table: 'sky',
+  countdown: 'terracotta',
+  quote: 'cream',
 };
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -751,14 +755,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
     const activeCards = getActiveCards();
 
-    let targetCardWidth = type === 'code' ? 360 : type === 'palette' ? 320 : type === 'image' || type === 'link' ? 340 : type === 'comment' ? 270 : 300;
-    const cardHeight = type === 'event' || type === 'comment' ? 240 : type === 'metric' ? 260 : 340;
+    let targetCardWidth =
+      type === 'code' || type === 'table'
+        ? 380
+        : type === 'palette' || type === 'audio' || type === 'countdown' || type === 'quote'
+        ? 320
+        : type === 'image' || type === 'link'
+        ? 340
+        : type === 'comment'
+        ? 270
+        : 300;
+    const cardHeight =
+      type === 'event' || type === 'comment' || type === 'audio' || type === 'countdown'
+        ? 240
+        : type === 'metric' || type === 'quote'
+        ? 260
+        : type === 'table'
+        ? 320
+        : 340;
 
     let posX = position ? position.x : -currentBoard.pan.x + 250;
     let posY = position ? position.y : -currentBoard.pan.y + 150;
     let assignedSectionId: string | undefined;
 
-    // Check if user has a section selected and no explicit position was provided
+    // Check if user has a section selected or if position falls inside a section
     const targetSection = !position && selectedSectionId
       ? allSections.find((s) => s.id === selectedSectionId && s.boardId === activeBoardId)
       : null;
@@ -838,6 +858,18 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             s.id === targetSection.id ? { ...s, height: updatedHeight } : s
           ),
         }));
+      }
+    } else if (position) {
+      const container = allSections.find(
+        (s) =>
+          s.boardId === activeBoardId &&
+          posX >= s.x &&
+          posX <= s.x + s.width &&
+          posY >= s.y &&
+          posY <= s.y + s.height
+      );
+      if (container) {
+        assignedSectionId = container.id;
       }
     } else if (!position && activeCards.length > 0) {
       // Smart collision-free placement: when spawning from dock, find nearest vacant spot
@@ -929,6 +961,38 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         url: '',
         title: '',
         description: '',
+      };
+    } else if (type === 'audio') {
+      initialContent = {
+        title: 'Audio Track',
+        artist: 'Voice Memo / Sound Design',
+        url: '',
+        duration: 180,
+      };
+    } else if (type === 'table') {
+      initialContent = {
+        title: 'Project Backlog',
+        columns: ['Feature / Milestone', 'Priority', 'Status'],
+        rows: [
+          { id: 'r1', cells: ['Design System Audit', 'High', 'Done'] },
+          { id: 'r2', cells: ['Waveform Visualizer', 'Medium', 'In Progress'] },
+          { id: 'r3', cells: ['Vector Die-line Exporter', 'Low', 'Backlog'] },
+        ],
+      };
+    } else if (type === 'countdown') {
+      const target = new Date();
+      target.setDate(target.getDate() + 7);
+      target.setHours(12, 0, 0, 0);
+      initialContent = {
+        title: 'Launch Countdown',
+        targetDate: target.toISOString().slice(0, 16),
+        description: 'Product Launch Date',
+      };
+    } else if (type === 'quote') {
+      initialContent = {
+        quote: 'Simplicity is about subtracting the obvious and adding the meaningful.',
+        author: 'John Maeda',
+        citation: 'The Laws of Simplicity',
       };
     } else {
       initialContent = {

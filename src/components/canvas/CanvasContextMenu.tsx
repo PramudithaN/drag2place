@@ -15,6 +15,10 @@ import {
   Maximize2,
   LayoutGrid,
   FolderKanban,
+  Music,
+  Table,
+  Timer,
+  Quote,
 } from 'lucide-react';
 
 interface CanvasContextMenuProps {
@@ -30,6 +34,10 @@ interface CanvasContextMenuProps {
   onAddImage: () => void;
   onAddPalette: () => void;
   onAddMetric: () => void;
+  onAddAudio: () => void;
+  onAddTable: () => void;
+  onAddCountdown: () => void;
+  onAddQuote: () => void;
   onFitToScreen: () => void;
   onTidyUp: () => void;
   onResetView: () => void;
@@ -49,6 +57,10 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
   onAddImage,
   onAddPalette,
   onAddMetric,
+  onAddAudio,
+  onAddTable,
+  onAddCountdown,
+  onAddQuote,
   onFitToScreen,
   onTidyUp,
   onResetView,
@@ -225,6 +237,54 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           >
             <TrendingUp size={14} className="text-blue-600 dark:text-blue-400" />
             <span>KPI Metric Goal (M)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onAddTable();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 transition-colors cursor-pointer"
+          >
+            <Table size={14} className="text-sky-600 dark:text-sky-400" />
+            <span>Data Grid / Table</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onAddAudio();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 transition-colors cursor-pointer"
+          >
+            <Music size={14} className="text-amber-600 dark:text-amber-400" />
+            <span>Audio Visualizer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onAddCountdown();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 transition-colors cursor-pointer"
+          >
+            <Timer size={14} className="text-rose-600 dark:text-rose-400" />
+            <span>Countdown Timer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onAddQuote();
+              onClose();
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 transition-colors cursor-pointer"
+          >
+            <Quote size={14} className="text-amber-600 dark:text-amber-400" />
+            <span>Quote / Pullquote</span>
           </button>
         </div>
 
