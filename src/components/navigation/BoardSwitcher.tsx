@@ -82,19 +82,19 @@ export const BoardSwitcher: React.FC = () => {
         ) : (
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-stone-500/10 transition-colors group text-left cursor-pointer"
+            className="flex items-center gap-1.5 px-1.5 sm:px-2 py-1 rounded-lg hover:bg-stone-500/10 transition-colors group text-left cursor-pointer max-w-full"
             title={`Active Workspace: ${currentBoard.title} (${activeCardsCount} ${activeCardsCount === 1 ? 'card' : 'cards'})`}
           >
-            <span className="font-oregon font-semibold text-stone-800 dark:text-stone-200 text-sm">
+            <span className="font-oregon font-semibold text-stone-800 dark:text-stone-200 text-xs sm:text-sm max-w-[85px] xs:max-w-[130px] sm:max-w-[180px] md:max-w-none truncate">
               {currentBoard.title}
             </span>
             <span
               title={`${activeCardsCount} ${activeCardsCount === 1 ? 'card' : 'cards'} on this board`}
-              className="text-[11px] font-mono text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+              className="hidden sm:inline text-[11px] font-mono text-stone-400 dark:text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
             >
               ({activeCardsCount} {activeCardsCount === 1 ? 'card' : 'cards'})
             </span>
-            <ChevronDown size={13} className="text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-transform" />
+            <ChevronDown size={13} className="text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-transform shrink-0" />
           </button>
         )}
       </div>
@@ -103,7 +103,7 @@ export const BoardSwitcher: React.FC = () => {
       {isOpen && (
         <div
           onWheel={(e) => e.stopPropagation()}
-          className="absolute left-0 top-full mt-2 w-64 p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1"
+          className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1"
         >
           <div className="flex items-center justify-between px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 border-b border-stone-200 dark:border-stone-800">
             <span>Workspaces</span>

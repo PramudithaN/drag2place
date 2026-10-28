@@ -49,10 +49,11 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
 
   return (
     <>
-      {/* Invisible backdrop to capture clicks outside */}
+      {/* Invisible backdrop to capture clicks / touches outside */}
       <div
         className="fixed inset-0 z-50 cursor-default"
         onMouseDown={onClose}
+        onTouchStart={onClose}
         onContextMenu={(e) => {
           e.preventDefault();
           onClose();

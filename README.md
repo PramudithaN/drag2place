@@ -4,6 +4,10 @@ Drag2Place is an open-source, spatial personal workspace and dashboard inspired 
 
 Built with a local-first architecture, Drag2Place ensures instantaneous interactions with zero latency, offline resilience, and automatic cloud backup via Supabase PostgreSQL.
 
+<p align="center">
+  <img src="public/drag2place-display.png" alt="Drag2Place Spatial Workspace Display" width="100%" />
+</p>
+
 ---
 
 ## Architectural Overview
@@ -136,6 +140,20 @@ Curated professional workspace presets featuring domain-tailored card content, c
 - **Music Producer & Audio Engineer**: Harmonic song arrangement sequences (BPM, key, meter), UAD Neve & Pultec vocal mixing signal chains, tracking passes, multi-track stems, and Apple Digital Master deliverables (-14 LUFS).
 - **Author & Screenwriter**: 3-Act narrative conflict structures, psychological protagonist flaw dossiers, chapter word count trackers, subplot weaving checklists, and literary agent submission milestones.
 
+### 13. Mobile & Responsive Touch Experience
+
+- **Touchscreen Canvas Gestures**:
+  - **1-Finger Drag**: Effortlessly pan across infinite canvas coordinates with native velocity and inertia.
+  - **2-Finger Pinch-to-Zoom & Pan**: Smooth, exponential zooming anchored dynamically to the pinch center point.
+  - **Long-Press (0.5s) Context Menu**: Touch and hold the canvas background to bring up the spatial context menu with tactile haptic feedback (`navigator.vibrate`) to place comments or spawn cards anywhere.
+  - **Card Touch Dragging & Resizing**: Touch-action isolated card headers for dragging, and enlarged corner handles (`touch-none`) for comfortable finger resizing.
+  - **Comment Pin Repositioning**: Touch and slide review pins directly to spatial canvas targets.
+- **Adaptive Responsive Layout**:
+  - **Collapsible Mobile Header**: Automatically converts desktop toolbars into a sleek mobile header featuring compact board title truncation, search trigger, notification badge, and an accessible slide-out mobile menu.
+  - **Swipeable Horizontal Floating Dock**: Horizontally scrolling card dock with momentum snapping and safe-area inset padding (`env(safe-area-inset-bottom)`) for iPhone notch and home indicators.
+  - **Collision-Free Canvas Controls**: Dynamically floats above the dock on mobile screens, preserving zoom in/out, 100% reset, and theme toggling without overlapping tools.
+  - **Responsive Modals**: All modals (Command Palette, Mode Selector, Export, Shortcuts, Auth, Notifications) adapt seamlessly from desktop monitors down to 360px mobile viewports with fluid scrolling and touch dismissal.
+
 ---
 
 ## Technology Stack
@@ -161,6 +179,7 @@ Curated professional workspace presets featuring domain-tailored card content, c
 drag2place/
 ├── public/                      # Static assets, branding, and fonts
 │   ├── fonts/                   # Luke Owens Oregon LDO TrueType binaries
+│   ├── drag2place-display.png   # Workspace showcase / application display
 │   ├── drag2placeLogo.png       # Primary 1080x1080 brand logo
 │   └── favicon.ico              # Root favicon
 ├── src/

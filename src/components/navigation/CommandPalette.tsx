@@ -78,12 +78,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-24 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
       onClick={handleClose}
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-lg bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-lg max-h-[85vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >

@@ -117,7 +117,7 @@ export const TodoCard: React.FC<TodoCardProps> = ({ data, onChange }) => {
 
             <button
               onClick={() => removeItem(item.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition-opacity"
+              className="opacity-40 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100 p-1 text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 transition-opacity cursor-pointer shrink-0"
               title="Delete item"
             >
               <Trash2 size={13} />

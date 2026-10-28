@@ -77,6 +77,54 @@ export const CanvasCommentPin: React.FC<CanvasCommentPinProps> = ({ card, zoom }
     window.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Touch dragging the pin on mobile
+  const handleTouchDragStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    bringToFront(card.id);
+    setIsDragging(true);
+
+    const touch = e.touches[0];
+    const startTouchX = touch.clientX;
+    const startTouchY = touch.clientY;
+    const startCardX = card.x;
+    const startCardY = card.y;
+
+    let deltaX = 0;
+    let deltaY = 0;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+      const curTouch = moveEvent.touches[0];
+      deltaX = (curTouch.clientX - startTouchX) / zoom;
+      deltaY = (curTouch.clientY - startTouchY) / zoom;
+      const newX = Math.round(startCardX + deltaX);
+      const newY = Math.round(startCardY + deltaY);
+
+      if (pinRef.current) {
+        pinRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0px)`;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+      setIsDragging(false);
+
+      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+        updateCardPosition(card.id, Math.round(startCardX + deltaX), Math.round(startCardY + deltaY));
+      }
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+  };
+
   const handleToggleResolve = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundFx.playCheck();
@@ -97,6 +145,7 @@ export const CanvasCommentPin: React.FC<CanvasCommentPinProps> = ({ card, zoom }
   return (
     <div
       ref={pinRef}
+      data-comment-pin="true"
       style={{
         transform: `translate3d(${card.x}px, ${card.y}px, 0px)`,
         zIndex: isOpen ? 9999 : isDragging ? 9998 : card.zIndex + 100,
@@ -112,11 +161,12 @@ export const CanvasCommentPin: React.FC<CanvasCommentPinProps> = ({ card, zoom }
       <div className="relative group">
         <div
           onMouseDown={handleDragStart}
+          onTouchStart={handleTouchDragStart}
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen(!isOpen);
           }}
-          className={`relative flex items-center justify-center w-8 h-8 rounded-full shadow-lg shadow-black/20 ring-2 transition-transform cursor-grab active:cursor-grabbing ${
+          className={`relative flex items-center justify-center w-8 h-8 rounded-full shadow-lg shadow-black/20 ring-2 transition-transform cursor-grab active:cursor-grabbing touch-none ${
             isDragging ? 'scale-110 ring-4' : 'hover:scale-110'
           } ${
             isResolved

@@ -97,22 +97,22 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs"
       onClick={onClose}
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-5xl max-h-[90vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-5xl max-h-[92vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-6 pb-4 border-b border-stone-200/70 dark:border-stone-800/70">
+        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-stone-200/70 dark:border-stone-800/70">
           <div>
             <div className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-amber-100/80 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 mb-1.5">
               Curated Headstarter Workspaces
             </div>
-            <h2 className="text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
+            <h2 className="text-xl sm:text-2xl font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
               Select Your Workspace Mode
             </h2>
             <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
@@ -126,7 +126,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
 
           <button
             onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors"
+            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
             title="Close"
           >
             <X size={18} />
@@ -134,7 +134,7 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
         </div>
 
         {/* Modes Grid */}
-        <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4.5 scrollbar-thin">
           {(Object.keys(WORKSPACE_MODES) as WorkspaceMode[]).map((modeKey) => {
             const template = WORKSPACE_MODES[modeKey];
             const hasSubScenarios = template.subScenarios && template.subScenarios.length > 0;

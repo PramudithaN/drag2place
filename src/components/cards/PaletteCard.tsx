@@ -222,7 +222,7 @@ export const PaletteCard: React.FC<PaletteCardProps> = ({ data, onChange }) => {
                 <button
                   type="button"
                   onClick={() => handleDeleteSwatch(swatch.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-rose-500 rounded transition-opacity cursor-pointer"
+                  className="opacity-40 sm:opacity-0 sm:group-hover:opacity-100 hover:opacity-100 p-1 text-stone-400 hover:text-rose-500 rounded transition-opacity cursor-pointer"
                   title="Remove swatch"
                 >
                   <Trash2 size={12} />

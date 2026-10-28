@@ -26,7 +26,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -34,11 +34,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
 
     const timer = setTimeout(() => {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
     }, 50);
 
     return () => {
       clearTimeout(timer);
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [isOpen, onClose]);
 
@@ -56,7 +58,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
     <div
       ref={drawerRef}
       onWheel={(e) => e.stopPropagation()}
-      className="fixed top-16 right-6 z-50 w-80 sm:w-96 bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3"
+      className="fixed top-14 sm:top-16 right-3 left-3 sm:left-auto sm:right-6 z-50 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] max-h-[80vh] bg-[#FDFBF7] dark:bg-[#1D1B18] border border-[#E8E2D6] dark:border-[#33302A] rounded-2xl shadow-2xl p-4 flex flex-col space-y-3 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-stone-200/60 dark:border-stone-800">

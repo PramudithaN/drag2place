@@ -95,11 +95,11 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose }) => 
   return (
     <div
       onWheel={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs p-3 sm:p-4"
     >
       <div
         onWheel={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-3xl p-6 shadow-2xl flex flex-col space-y-4"
+        className="relative w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E6E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col space-y-4"
       >
         {/* Close Button */}
         <button

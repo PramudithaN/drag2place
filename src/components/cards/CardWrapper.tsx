@@ -130,6 +130,99 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
+  // Touch dragging logic for mobile / tablet
+  const handleTouchDragStart = (e: React.TouchEvent) => {
+    if (activeTool === 'connect') return;
+    if (e.touches.length !== 1) return;
+
+    e.stopPropagation();
+    bringToFront(card.id);
+    selectCard(card.id, false);
+    setIsDragging(true);
+
+    const touch = e.touches[0];
+    const startTouchX = touch.clientX;
+    const startTouchY = touch.clientY;
+    const startCardX = card.x;
+    const startCardY = card.y;
+
+    let latestX = startCardX;
+    let latestY = startCardY;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+      const curTouch = moveEvent.touches[0];
+      const deltaX = (curTouch.clientX - startTouchX) / zoom;
+      const deltaY = (curTouch.clientY - startTouchY) / zoom;
+      latestX = startCardX + deltaX;
+      latestY = startCardY + deltaY;
+
+      if (cardRef.current) {
+        cardRef.current.style.transform = `translate(${latestX}px, ${latestY}px)`;
+      }
+      updateCardPosition(card.id, latestX, latestY);
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+      useBoardStore.getState().saveBoardLocally();
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+  };
+
+  // Touch resizing logic for mobile / tablet
+  const handleTouchResizeStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    bringToFront(card.id);
+    setIsResizing(true);
+
+    const touch = e.touches[0];
+    const startTouchX = touch.clientX;
+    const startTouchY = touch.clientY;
+    const startWidth = card.width;
+    const startHeight = card.height;
+
+    let latestW = startWidth;
+    let latestH = startHeight;
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+      const curTouch = moveEvent.touches[0];
+      const deltaW = (curTouch.clientX - startTouchX) / zoom;
+      const deltaH = (curTouch.clientY - startTouchY) / zoom;
+
+      latestW = Math.max(180, Math.round(startWidth + deltaW));
+      latestH = Math.max(120, Math.round(startHeight + deltaH));
+
+      updateCardSize(card.id, latestW, latestH);
+    };
+
+    const handleTouchEnd = () => {
+      setIsResizing(false);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+      useBoardStore.getState().saveBoardLocally();
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
+  };
+
   // Resizing logic
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -197,6 +290,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
   return (
     <div
       ref={cardRef}
+      data-card="true"
       onClick={(e) => {
         e.stopPropagation();
 
@@ -252,7 +346,8 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
       {/* Card Header & Toolbar */}
       <div
         onMouseDown={handleDragStart}
-        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl"
+        onTouchStart={handleTouchDragStart}
+        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing border-b border-stone-200/50 dark:border-stone-800/50 rounded-t-2xl touch-none"
       >
         <div className="flex items-center gap-1.5 flex-1 mr-2">
           <GripVertical size={14} className="text-stone-400 shrink-0" />
@@ -417,13 +512,14 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         )}
       </div>
 
-      {/* Resizing handle on bottom right corner */}
+      {/* Resizing handle on bottom right corner (enlarged hit target for mobile fingers) */}
       <div
         onMouseDown={handleResizeStart}
-        className="absolute bottom-1 right-1 w-3.5 h-3.5 cursor-nwse-resize opacity-20 hover:opacity-100 transition-opacity flex items-center justify-center"
-        title="Resize"
+        onTouchStart={handleTouchResizeStart}
+        className="absolute -bottom-1 -right-1 w-6 h-6 sm:w-4 sm:h-4 cursor-nwse-resize opacity-40 hover:opacity-100 transition-opacity flex items-center justify-center touch-none p-1"
+        title="Resize card"
       >
-        <div className="w-1.5 h-1.5 bg-stone-500 rounded-xs" />
+        <div className="w-2 h-2 sm:w-1.5 sm:h-1.5 bg-stone-500 rounded-xs" />
       </div>
     </div>
   );

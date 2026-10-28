@@ -199,6 +199,186 @@ export const InfiniteCanvas: React.FC = () => {
     };
   }, [setZoom, setPan]);
 
+  // Touch handling for mobile & tablet (single-finger pan, two-finger pinch-zoom & pan, long-press context menu)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let touchMode: 'none' | 'pan' | 'pinch' = 'none';
+    let startX = 0;
+    let startY = 0;
+    let startPanX = 0;
+    let startPanY = 0;
+    let startDist = 0;
+    let startZoom = 1;
+    let pinchMidX = 0;
+    let pinchMidY = 0;
+    let hasMoved = false;
+    let longPressTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const clearLongPress = () => {
+      if (longPressTimeout) {
+        clearTimeout(longPressTimeout);
+        longPressTimeout = null;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Ignore touches on cards, comment pins, buttons, inputs, dialogs, dock, headers
+      const isCard = target.closest('[data-card="true"]') || target.closest('[data-comment-pin="true"]');
+      const isInteractiveUI = target.closest(
+        'button, input, textarea, select, [role="button"], [role="dialog"], header, nav, [data-dock="true"], [data-controls="true"]'
+      );
+      if (isCard || isInteractiveUI) {
+        clearLongPress();
+        return;
+      }
+
+      // Close open context menu on canvas touch
+      setContextMenu(null);
+
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchMode = 'pan';
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const state = useBoardStore.getState();
+        startPanX = state.currentBoard.pan.x;
+        startPanY = state.currentBoard.pan.y;
+        hasMoved = false;
+
+        // Long press detection for spatial context menu
+        clearLongPress();
+        longPressTimeout = setTimeout(() => {
+          if (!hasMoved && touchMode === 'pan') {
+            touchMode = 'none';
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+              try {
+                navigator.vibrate(20);
+              } catch {}
+            }
+            const rect = container.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            const curZoom = useBoardStore.getState().currentBoard.zoom;
+            const curPan = useBoardStore.getState().currentBoard.pan;
+            const canvasX = Math.round(mouseX / curZoom - curPan.x);
+            const canvasY = Math.round(mouseY / curZoom - curPan.y);
+
+            setContextMenu({
+              screenX: touch.clientX,
+              screenY: touch.clientY,
+              canvasX,
+              canvasY,
+            });
+          }
+        }, 500);
+      } else if (e.touches.length === 2) {
+        clearLongPress();
+        touchMode = 'pinch';
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        startDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const state = useBoardStore.getState();
+        startZoom = state.currentBoard.zoom;
+        startPanX = state.currentBoard.pan.x;
+        startPanY = state.currentBoard.pan.y;
+        pinchMidX = (t1.clientX + t2.clientX) / 2;
+        pinchMidY = (t1.clientY + t2.clientY) / 2;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchMode === 'none') return;
+
+      // Prevent native browser scroll and pull-to-refresh
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+
+      if (touchMode === 'pan' && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (Math.hypot(dx, dy) > 8) {
+          hasMoved = true;
+          clearLongPress();
+        }
+
+        const state = useBoardStore.getState();
+        const curZoom = state.currentBoard.zoom;
+        setPan({
+          x: startPanX + dx / curZoom,
+          y: startPanY + dy / curZoom,
+        });
+      } else if (touchMode === 'pinch' && e.touches.length === 2) {
+        clearLongPress();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const curDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        if (startDist <= 0) return;
+
+        const scale = curDist / startDist;
+        const newZoom = Math.min(Math.max(startZoom * scale, 0.25), 2.5);
+
+        const curMidX = (t1.clientX + t2.clientX) / 2;
+        const curMidY = (t1.clientY + t2.clientY) / 2;
+
+        const rect = container.getBoundingClientRect();
+        const anchorX = pinchMidX - rect.left;
+        const anchorY = pinchMidY - rect.top;
+
+        const basePanX = anchorX - (anchorX - startPanX) * (newZoom / startZoom);
+        const basePanY = anchorY - (anchorY - startPanY) * (newZoom / startZoom);
+
+        const deltaMidX = (curMidX - pinchMidX) / newZoom;
+        const deltaMidY = (curMidY - pinchMidY) / newZoom;
+
+        setZoom(newZoom);
+        setPan({
+          x: basePanX + deltaMidX,
+          y: basePanY + deltaMidY,
+        });
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      clearLongPress();
+      if (e.touches.length === 0) {
+        if (touchMode !== 'none') {
+          useBoardStore.getState().saveBoardLocally(true);
+        }
+        touchMode = 'none';
+      } else if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        touchMode = 'pan';
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const state = useBoardStore.getState();
+        startPanX = state.currentBoard.pan.x;
+        startPanY = state.currentBoard.pan.y;
+        hasMoved = true;
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      clearLongPress();
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [setPan, setZoom]);
+
   // Pan start & dismiss context menu
   const handleMouseDown = (e: React.MouseEvent) => {
     if (contextMenu) {
@@ -274,7 +454,7 @@ export const InfiniteCanvas: React.FC = () => {
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] select-none ${
+      className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] select-none touch-none ${
         isSpacePressed || isPanning
           ? 'cursor-grab active:cursor-grabbing'
           : activeTool === 'connect'

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { X, Keyboard, MousePointer, PlusCircle, Command } from 'lucide-react';
+import { X, Keyboard, MousePointer, PlusCircle, Command, Smartphone } from 'lucide-react';
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -21,6 +21,18 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   const shortcutSections = [
+    {
+      title: 'Mobile & Touchscreen Gestures',
+      icon: <Smartphone size={14} className="text-purple-600 dark:text-purple-400" />,
+      items: [
+        { keys: ['1-Finger', 'Drag'], desc: 'Pan freely across the infinite canvas' },
+        { keys: ['2-Finger', 'Pinch'], desc: 'Smoothly zoom in and out anchored to fingers' },
+        { keys: ['Touch & Hold'], desc: 'Open spatial context menu to place comments & cards' },
+        { keys: ['Drag Header'], desc: 'Move any card to a new spatial position' },
+        { keys: ['Drag Corner'], desc: 'Resize card width & height on mobile' },
+        { keys: ['Tap Dock Icon'], desc: 'Instantly spawn new card at current view' },
+      ],
+    },
     {
       title: 'Canvas Navigation',
       icon: <MousePointer size={14} className="text-amber-600 dark:text-amber-400" />,
@@ -58,12 +70,12 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
       onWheel={(e) => e.stopPropagation()}
     >
       <div
-        className="relative w-full max-w-2xl bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-3xl shadow-2xl p-6 flex flex-col space-y-5 font-sans"
+        className="relative w-full max-w-2xl max-h-[90vh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-5 font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -75,10 +87,10 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             </div>
             <div>
               <h2 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100">
-                Keyboard Shortcuts & Controls
+                Shortcuts & Touch Gestures
               </h2>
               <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                Speed up your spatial workflow with quick triggers and gestures.
+                Speed up your spatial workflow with quick triggers, keys, and mobile gestures.
               </p>
             </div>
           </div>
@@ -93,7 +105,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Shortcuts Content */}
-        <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 scrollbar-thin">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 scrollbar-thin">
           {shortcutSections.map((sec) => (
             <div key={sec.title} className="space-y-1.5">
               <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 font-semibold px-1">
