@@ -584,7 +584,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
         zIndex: isDragging ? 9999 : card.zIndex,
         willChange: isDragging ? 'transform' : 'auto',
       }}
-      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm overflow-hidden ${CARD_TYPE_ACCENTS[card.type] || ''} ${
+      className={`absolute select-none flex flex-col rounded-2xl border shadow-sm hover:z-30 ${CARD_TYPE_ACCENTS[card.type] || ''} ${
         isDragging || isResizing
           ? 'transition-none cursor-grabbing shadow-2xl opacity-95 ring-2 ring-stone-800/40 dark:ring-stone-200/40'
           : 'transition-all duration-200 cursor-default'
@@ -825,7 +825,7 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
 
       {/* Card Content Body */}
       <div
-        className="flex-1 p-3.5 overflow-hidden cursor-default"
+        className="flex-1 p-3.5 overflow-hidden rounded-b-2xl cursor-default"
         data-scrollable="true"
         onWheel={(e) => {
           if (!e.ctrlKey && !e.metaKey) {

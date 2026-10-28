@@ -171,8 +171,8 @@ interface DockItemProps {
   label: string;
   onClick: () => void;
   active?: boolean;
-  description?: string;
-  shortcut?: string;
+  onHover?: () => void;
+  onLeave?: () => void;
 }
 
 const DockItem: React.FC<DockItemProps> = ({
@@ -180,14 +180,17 @@ const DockItem: React.FC<DockItemProps> = ({
   label,
   onClick,
   active,
-  description,
-  shortcut,
+  onHover,
+  onLeave,
 }) => {
   return (
     <motion.button
       whileHover={{ scale: 1.15, y: -4 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      title={label}
       className={`group relative flex flex-col items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl shrink-0 transition-colors ${
         active
           ? 'bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900 shadow-md ring-2 ring-stone-900 dark:ring-stone-100'
@@ -195,25 +198,16 @@ const DockItem: React.FC<DockItemProps> = ({
       }`}
     >
       {icon}
-      {/* Rich Multi-line Tooltip on desktop */}
-      <div className="hidden sm:flex flex-col items-center absolute -top-14 opacity-0 group-hover:opacity-100 transition-all duration-150 px-2.5 py-1.5 text-[11px] font-sans font-medium text-stone-100 dark:text-stone-900 bg-stone-900/95 dark:bg-stone-100/95 backdrop-blur-md rounded-xl shadow-xl pointer-events-none z-50 whitespace-nowrap border border-stone-700/50 dark:border-stone-300/50">
-        <div className="flex items-center gap-1.5 font-semibold">
-          <span>{label}</span>
-          {shortcut && (
-            <kbd className="px-1 py-0.2 text-[9px] font-mono bg-stone-800 dark:bg-stone-200 text-amber-400 dark:text-amber-700 rounded font-bold">
-              {shortcut}
-            </kbd>
-          )}
-        </div>
-        {description && (
-          <span className="text-[10px] text-stone-300 dark:text-stone-600 font-normal mt-0.5">
-            {description}
-          </span>
-        )}
-      </div>
     </motion.button>
   );
 };
+
+interface ActiveTooltip {
+  label: string;
+  description?: string;
+  shortcut?: string;
+  icon?: React.ReactNode;
+}
 
 export const FloatingDock: React.FC = () => {
   const {
@@ -229,6 +223,7 @@ export const FloatingDock: React.FC = () => {
 
   const [showCatalog, setShowCatalog] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
+  const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Determine active mode and primary cards
@@ -373,6 +368,34 @@ export const FloatingDock: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Floating Dock Dynamic HUD Tooltip (Always 100% visible, never clipped by overflow) */}
+      <AnimatePresence>
+        {activeTooltip && !showCatalog && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            transition={{ duration: 0.12 }}
+            className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-stone-900/95 dark:bg-stone-100/95 text-stone-100 dark:text-stone-900 shadow-2xl backdrop-blur-md border border-stone-700/50 dark:border-stone-300/50 pointer-events-none z-50 whitespace-nowrap"
+          >
+            <div className="flex items-center gap-1.5 font-sans font-bold text-xs">
+              {activeTooltip.icon}
+              <span>{activeTooltip.label}</span>
+            </div>
+            {activeTooltip.shortcut && (
+              <kbd className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-stone-800 dark:bg-stone-200 text-amber-400 dark:text-amber-700 rounded shadow-xs">
+                {activeTooltip.shortcut}
+              </kbd>
+            )}
+            {activeTooltip.description && (
+              <span className="text-[11px] text-stone-300 dark:text-stone-600 font-sans font-normal border-l border-stone-700 dark:border-stone-300 pl-2">
+                {activeTooltip.description}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Floating Dock Bar */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -390,9 +413,16 @@ export const FloatingDock: React.FC = () => {
               key={type}
               icon={meta.icon}
               label={meta.label}
-              description={meta.description}
-              shortcut={meta.shortcut}
               onClick={() => handleAdd(type)}
+              onHover={() =>
+                setActiveTooltip({
+                  label: meta.label,
+                  description: meta.description,
+                  shortcut: meta.shortcut,
+                  icon: meta.icon,
+                })
+              }
+              onLeave={() => setActiveTooltip(null)}
             />
           );
         })}
@@ -400,19 +430,35 @@ export const FloatingDock: React.FC = () => {
         {/* "+ More Cards" Popover Trigger */}
         <DockItem
           icon={<LayoutGrid className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-amber-700 dark:text-amber-400" />}
-          label="More Card Types"
-          description="Browse and add any of 13 card types (+)"
+          label="More Card Types (+)"
           onClick={() => setShowCatalog(!showCatalog)}
           active={showCatalog}
+          onHover={() =>
+            setActiveTooltip({
+              label: 'More Card Types (+)',
+              description: 'Browse all 13 card categories & custom types',
+              icon: <LayoutGrid className="w-3.5 h-3.5 text-amber-500" />,
+            })
+          }
+          onLeave={() => setActiveTooltip(null)}
         />
 
         {/* Section Frame tool */}
         <DockItem
           icon={<FolderKanban className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />}
           label={targetSection ? `Target: "${targetSection.title}"` : 'Section Frame'}
-          description={targetSection ? 'Adding cards inside this section' : 'Group cards into visual zones'}
           onClick={() => addSection('New Section')}
           active={Boolean(targetSection)}
+          onHover={() =>
+            setActiveTooltip({
+              label: targetSection ? `Target: "${targetSection.title}"` : 'Section Frame',
+              description: targetSection
+                ? 'Adding cards inside this active section'
+                : 'Group & contain cards into visual zones',
+              icon: <FolderKanban className="w-3.5 h-3.5 text-amber-500" />,
+            })
+          }
+          onLeave={() => setActiveTooltip(null)}
         />
 
         <div className="w-[1px] h-5 sm:h-6 bg-[#E0D8CC] dark:bg-[#38342E] mx-0.5 sm:mx-1 shrink-0" />
@@ -421,9 +467,16 @@ export const FloatingDock: React.FC = () => {
         <DockItem
           icon={<GitFork className="w-4 h-4 sm:w-[19px] sm:h-[19px]" />}
           label="Connect Cards"
-          description="Draw vector arrows between cards"
           onClick={() => setActiveTool(activeTool === 'connect' ? 'select' : 'connect')}
           active={activeTool === 'connect'}
+          onHover={() =>
+            setActiveTooltip({
+              label: 'Connect Cards',
+              description: 'Draw curved arrows to connect cards',
+              icon: <GitFork className="w-3.5 h-3.5 text-amber-500" />,
+            })
+          }
+          onLeave={() => setActiveTooltip(null)}
         />
 
         {/* Drag2Place Brand space tag */}
