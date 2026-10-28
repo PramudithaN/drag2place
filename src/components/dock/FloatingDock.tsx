@@ -282,6 +282,9 @@ export const FloatingDock: React.FC = () => {
         {showCatalog && (
           <motion.div
             ref={popoverRef}
+            data-scrollable="true"
+            data-catalog="true"
+            onWheel={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: 14, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
@@ -330,8 +333,12 @@ export const FloatingDock: React.FC = () => {
               />
             </div>
 
-            {/* Catalog Grid */}
-            <div className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto scrollbar-thin pr-1">
+            {/* Catalog Grid with Scroll Isolation */}
+            <div
+              data-scrollable="true"
+              onWheel={(e) => e.stopPropagation()}
+              className="grid grid-cols-2 gap-1.5 max-h-[300px] overflow-y-auto overscroll-contain scrollbar-thin pr-1 touch-pan-y"
+            >
               {filteredTypes.map((type) => {
                 const meta = ALL_CARDS_META[type];
                 const isPrimaryInMode = primaryTypes.includes(type);

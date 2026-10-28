@@ -266,16 +266,25 @@ export const InfiniteCanvas: React.FC = () => {
       const container = containerRef.current;
       if (!container) return;
 
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // If hovering inside an open modal, card catalog popover, dock, or scrollable content: do NOT scroll or zoom canvas
+      const isScrollableUi =
+        target.closest('[data-dock="true"]') ||
+        target.closest('[data-scrollable="true"]') ||
+        target.closest('[role="dialog"]') ||
+        target.closest('textarea') ||
+        target.closest('pre');
+
+      if (isScrollableUi) {
+        return;
+      }
+
       // 1. If Ctrl or Meta is held: zoom the canvas anchored to cursor
       if (e.ctrlKey || e.metaKey) {
         // Prevent native browser page zoom completely
         e.preventDefault();
-
-        // If hovering inside an open modal dialog, don't zoom the background canvas
-        const modalElement = document.querySelector('[role="dialog"]');
-        if (modalElement && modalElement.contains(e.target as Node)) {
-          return;
-        }
 
         const state = useBoardStore.getState();
         const currentZoom = state.currentBoard.zoom;
@@ -304,12 +313,7 @@ export const InfiniteCanvas: React.FC = () => {
         }, 600);
       } else {
         // 2. Normal two-finger trackpad panning on the canvas viewport
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-
-        // If target is inside scrollable card content or modal, allow native content scrolling
-        const isScrollable = target.closest('[data-scrollable="true"]') || target.closest('textarea') || target.closest('pre') || target.closest('[role="dialog"]');
-        if (!isScrollable && container.contains(target)) {
+        if (container.contains(target)) {
           // Prevent browser back/forward swipe history navigation
           e.preventDefault();
           const state = useBoardStore.getState();
