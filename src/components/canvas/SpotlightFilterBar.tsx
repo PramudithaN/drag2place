@@ -40,6 +40,8 @@ export const SpotlightFilterBar: React.FC = () => {
     setFilterType,
     searchQuery,
     setSearchQuery,
+    showFilterBar,
+    toggleFilterBar,
     allCards,
     activeBoardId,
   } = useBoardStore();
@@ -56,28 +58,36 @@ export const SpotlightFilterBar: React.FC = () => {
     return map;
   }, [allCards, activeBoardId]);
 
-  // Global Ctrl+F / Cmd+F shortcut to focus search
+  const hasActiveFilter = activeFilterType !== 'all' || searchQuery.trim().length > 0;
+
+  // Global Ctrl+F / Cmd+F shortcut to focus search & open bar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
         e.preventDefault();
-        inputRef.current?.focus();
+        if (!showFilterBar) {
+          toggleFilterBar();
+        }
+        setTimeout(() => inputRef.current?.focus(), 50);
       }
-      if (e.key === 'Escape' && (searchQuery || activeFilterType !== 'all')) {
+      if (e.key === 'Escape' && hasActiveFilter) {
         setSearchQuery('');
         setFilterType('all');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchQuery, activeFilterType, setSearchQuery, setFilterType]);
+  }, [hasActiveFilter, showFilterBar, toggleFilterBar, setSearchQuery, setFilterType]);
 
-  const hasActiveFilter = activeFilterType !== 'all' || searchQuery.trim().length > 0;
+  // Hide completely when user closed it and no filter is actively running
+  if (!showFilterBar && !hasActiveFilter) {
+    return null;
+  }
 
   return (
     <div
       data-controls="true"
-      className="fixed top-14 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-md text-stone-700 dark:text-stone-300 select-none max-w-[95vw] overflow-x-auto scrollbar-none transition-all"
+      className="fixed top-[4.5rem] sm:top-20 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1 bg-[#FAF8F5]/95 dark:bg-[#1C1A17]/95 backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl shadow-stone-900/10 dark:shadow-black/30 text-stone-700 dark:text-stone-300 select-none max-w-[95vw] overflow-x-auto scrollbar-none transition-all"
     >
       {/* Search Bar */}
       <div className="flex items-center gap-1.5 px-2 py-1 bg-white/70 dark:bg-stone-900/60 rounded-xl border border-stone-200/80 dark:border-stone-800 shrink-0">
@@ -154,6 +164,17 @@ export const SpotlightFilterBar: React.FC = () => {
           <span>Reset</span>
         </button>
       )}
+
+      {/* Dismiss Bar Button */}
+      <button
+        type="button"
+        onClick={toggleFilterBar}
+        className="p-1.5 hover:bg-stone-200/60 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors ml-0.5 shrink-0"
+        title="Hide filter bar (Ctrl + F)"
+        aria-label="Hide filter bar"
+      >
+        <X size={13} />
+      </button>
     </div>
   );
 };

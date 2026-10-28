@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useBoardStore } from '@/lib/store';
-import { Bell, CloudOff, Sun, Moon, Search, Download, Compass, HelpCircle, Menu, RefreshCw, Check } from 'lucide-react';
+import { Bell, CloudOff, Sun, Moon, Search, Download, Compass, HelpCircle, Menu, RefreshCw, Check, Filter } from 'lucide-react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { getSupabase } from '@/lib/supabase/client';
 import { NotificationCenter } from './NotificationCenter';
@@ -28,6 +28,10 @@ export const HeaderBar: React.FC = () => {
     openConfirmModal,
     isSyncing,
     saveStatus,
+    showFilterBar,
+    toggleFilterBar,
+    activeFilterType,
+    searchQuery,
   } = useBoardStore();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -197,6 +201,23 @@ export const HeaderBar: React.FC = () => {
 
         {/* Desktop Right Controls (md+) */}
         <div className="hidden md:flex items-center gap-2 pointer-events-auto">
+          {/* Spotlight Filter Bar Toggle */}
+          <button
+            onClick={toggleFilterBar}
+            className={`flex items-center gap-1.5 p-2 px-3 backdrop-blur-md border rounded-2xl shadow-sm transition-colors text-xs font-medium cursor-pointer ${
+              showFilterBar || activeFilterType !== 'all' || searchQuery.trim().length > 0
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-800 dark:text-amber-300'
+                : 'bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] border-[#E7E0D4] dark:border-[#33302A] text-stone-600 dark:text-stone-300'
+            }`}
+            title="Toggle Card Spotlight & Type Filter (Ctrl + F)"
+          >
+            <Filter size={13} className={showFilterBar || activeFilterType !== 'all' || searchQuery.trim().length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-stone-500'} />
+            <span className="font-sans text-[11px]">Filter</span>
+            {(activeFilterType !== 'all' || searchQuery.trim().length > 0) && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            )}
+          </button>
+
           {/* Quick Search / Command Palette */}
           <button
             onClick={() => setIsCommandOpen(true)}

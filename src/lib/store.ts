@@ -45,6 +45,8 @@ interface BoardState {
   // Search & Spotlight Filtering
   activeFilterType: CardType | 'all';
   searchQuery: string;
+  showFilterBar: boolean;
+  toggleFilterBar: () => void;
   setFilterType: (filter: CardType | 'all') => void;
   setSearchQuery: (query: string) => void;
 
@@ -195,6 +197,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   allSections: INITIAL_SECTIONS,
   activeFilterType: 'all',
   searchQuery: '',
+  showFilterBar: true,
   compactMode: false,
   alignmentGuides: null,
 
@@ -215,6 +218,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   setFilterType: (activeFilterType) => set({ activeFilterType }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
+  toggleFilterBar: () => set((state) => ({ showFilterBar: !state.showFilterBar })),
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
   setAlignmentGuides: (alignmentGuides) => set({ alignmentGuides }),
 
