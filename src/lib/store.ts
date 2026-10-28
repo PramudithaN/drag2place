@@ -485,7 +485,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   setTheme: (theme) => {
     if (typeof document !== 'undefined') {
-      if (theme === "dark") { document.documentElement.classList.add("dark"); } else { document.documentElement.classList.remove("dark"); }
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.style.colorScheme = "dark";
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.style.colorScheme = "light";
+      }
     }
     set((state) => ({
       theme,
@@ -1450,7 +1456,18 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       if (savedTheme) {
         set({ theme: savedTheme });
-        if (savedTheme === "dark") { document.documentElement.classList.add("dark"); } else { document.documentElement.classList.remove("dark"); } } else { set({ theme: "light" }); document.documentElement.classList.remove("dark"); }
+        if (savedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
+        } else {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.style.colorScheme = "light";
+        }
+      } else {
+        set({ theme: "light" });
+        document.documentElement.classList.remove("dark");
+        document.documentElement.style.colorScheme = "light";
+      }
     } catch {
       // Keep defaults
     }
