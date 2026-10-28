@@ -269,8 +269,9 @@ export const InfiniteCanvas: React.FC = () => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
-      // If hovering inside an open modal, card catalog popover, dock, or scrollable content: do NOT scroll or zoom canvas
+      // If hovering inside an open modal, right-click context menu, card catalog popover, dock, or scrollable content: do NOT scroll or zoom canvas
       const isScrollableUi =
+        target.closest('[data-contextmenu="true"]') ||
         target.closest('[data-dock="true"]') ||
         target.closest('[data-scrollable="true"]') ||
         target.closest('[role="dialog"]') ||

@@ -94,6 +94,10 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         className="fixed inset-0 z-50 cursor-default"
         onMouseDown={onClose}
         onTouchStart={onClose}
+        onWheel={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
         onContextMenu={(e) => {
           e.preventDefault();
           onClose();
@@ -103,8 +107,11 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
       {/* Sleek Floating Context Menu */}
       <div
         ref={menuRef}
+        data-contextmenu="true"
+        data-scrollable="true"
         style={{ left: `${safeX}px`, top: `${safeY}px` }}
         onMouseDown={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         className="fixed z-50 w-60 p-1.5 bg-[#FAF8F5]/95 dark:bg-[#1C1A17]/95 backdrop-blur-xl border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-2xl text-stone-700 dark:text-stone-200 select-none animate-in fade-in zoom-in-95 duration-100 font-sans"
       >
         {/* Primary Action: Add Comment Pin */}
@@ -130,7 +137,11 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         <div className="my-1.5 border-t border-stone-200/60 dark:border-stone-800/60" />
 
         {/* Quick Card Creation Options */}
-        <div className="space-y-0.5 max-h-64 overflow-y-auto pr-0.5 scrollbar-thin">
+        <div
+          data-scrollable="true"
+          onWheel={(e) => e.stopPropagation()}
+          className="space-y-0.5 max-h-64 overflow-y-auto overscroll-contain pr-0.5 scrollbar-thin touch-pan-y"
+        >
           <button
             type="button"
             onClick={() => {
