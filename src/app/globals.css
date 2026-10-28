@@ -11,6 +11,9 @@
   --card-bg: #FFFFFF;
   --card-border: #EAE5DC;
   --toolbar-bg: rgba(250, 248, 245, 0.92);
+  --scrollbar-thumb: #D5CEBF;
+  --scrollbar-thumb-hover: #B7AB97;
+  --scrollbar-track: transparent;
 }
 
 .dark {
@@ -20,6 +23,9 @@
   --card-bg: #1D1B18;
   --card-border: #2F2C27;
   --toolbar-bg: rgba(26, 24, 22, 0.92);
+  --scrollbar-thumb: #3B3630;
+  --scrollbar-thumb-hover: #524B43;
+  --scrollbar-track: transparent;
 }
 
 @theme inline {
@@ -42,27 +48,69 @@ body {
   touch-action: manipulation;
 }
 
-/* Custom aesthetic scrollbar */
+/* Custom aesthetic theme-matched scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
 ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Scrollbar Utility Classes */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
-::-webkit-scrollbar-track {
+.scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #D8D2C5;
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
   border-radius: 9999px;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #3E3A34;
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #BCB4A4;
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Global Interactive Pointer: Ensure all buttons, clickable triggers, links, checkboxes, color chips, and selects show cursor: pointer */
