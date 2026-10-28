@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useBoardStore } from '@/lib/store';
+import { useClickOutside } from '@/lib/useClickOutside';
 import { ChevronDown, Plus, Trash2, Check, Layout, Edit2, Compass } from 'lucide-react';
 import { ModeSelectorModal } from './ModeSelectorModal';
 
@@ -30,16 +31,14 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
   const [isCreating, setIsCreating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-        setIsCreating(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useClickOutside(
+    menuRef,
+    () => {
+      setIsOpen(false);
+      setIsCreating(false);
+    },
+    isOpen || isCreating
+  );
 
   const handleSaveTitle = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

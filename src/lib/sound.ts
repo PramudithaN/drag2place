@@ -1,6 +1,10 @@
 // Procedural Web Audio API sound effects
 // Soft, warm, tactile feedback for a calm, aesthetic workspace
 
+interface WebkitWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 class SoundFX {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
@@ -8,7 +12,7 @@ class SoundFX {
   private getContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as WebkitWindow).webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
       }

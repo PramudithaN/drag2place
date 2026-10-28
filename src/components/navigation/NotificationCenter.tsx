@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { notificationService, AppNotification } from '@/lib/notifications';
+import { useClickOutside } from '@/lib/useClickOutside';
 import { Bell, Trash2, Clock, X, Volume2 } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
@@ -23,26 +24,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   }, []);
 
   // Click outside to close notification center
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }, 50);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isOpen, onClose]);
+  useClickOutside(drawerRef, onClose, isOpen);
 
   const handleRequestPermission = async () => {
     const status = await notificationService.requestPermission();

@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { useIsMounted } from '@/lib/useIsMounted';
+import React from 'react';
+import { Modal } from '@/components/ui/Modal';
 import { X, Keyboard, MousePointer, PlusCircle, Command, Smartphone } from 'lucide-react';
 
 interface ShortcutsModalProps {
@@ -11,19 +10,6 @@ interface ShortcutsModalProps {
 }
 
 export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose }) => {
-  const mounted = useIsMounted();
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen || !mounted) return null;
-
   const shortcutSections = [
     {
       title: 'Mobile & Touchscreen Gestures',
@@ -72,85 +58,82 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     },
   ];
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-stone-900/40 dark:bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
-      onClick={onClose}
-      onWheel={(e) => e.stopPropagation()}
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="2xl"
+      ariaLabel="Shortcuts and Gestures"
+      className="p-4 sm:p-6 space-y-4 sm:space-y-5 font-sans"
     >
-      <div
-        className="relative w-full max-w-2xl my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[90dvh] bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 flex flex-col space-y-4 sm:space-y-5 font-sans overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="shrink-0 flex items-center justify-between pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center">
-              <Keyboard size={18} />
+      {/* Header */}
+      <div className="shrink-0 flex items-center justify-between pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+            <Keyboard size={18} />
+          </div>
+          <div>
+            <h2 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100">
+              Shortcuts & Touch Gestures
+            </h2>
+            <p className="text-[11px] text-stone-500 dark:text-stone-400">
+              Speed up your spatial workflow with quick triggers, keys, and mobile gestures.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+          title="Close (Esc)"
+          aria-label="Close shortcuts guide"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* Shortcuts Content */}
+      <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin">
+        {shortcutSections.map((sec) => (
+          <div key={sec.title} className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 font-semibold px-1">
+              {sec.icon}
+              <span>{sec.title}</span>
             </div>
-            <div>
-              <h2 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100">
-                Shortcuts & Touch Gestures
-              </h2>
-              <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                Speed up your spatial workflow with quick triggers, keys, and mobile gestures.
-              </p>
+
+            <div className="bg-white/60 dark:bg-stone-900/50 border border-stone-200/60 dark:border-stone-800/60 rounded-2xl divide-y divide-stone-200/50 dark:divide-stone-800/50 overflow-hidden">
+              {sec.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between px-3.5 py-2 text-xs">
+                  <span className="text-stone-700 dark:text-stone-300 font-medium">
+                    {item.desc}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0 ml-3">
+                    {item.keys.map((k, ki) => (
+                      <kbd
+                        key={ki}
+                        className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-2xs ${
+                          k === '+'
+                            ? 'text-stone-400 bg-transparent shadow-none px-0.5'
+                            : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-stone-700'
+                        }`}
+                      >
+                        {k}
+                      </kbd>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800 transition-colors cursor-pointer"
-            title="Close (Esc)"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Shortcuts Content */}
-        <div className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1 scrollbar-thin">
-          {shortcutSections.map((sec) => (
-            <div key={sec.title} className="space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 font-semibold px-1">
-                {sec.icon}
-                <span>{sec.title}</span>
-              </div>
-
-              <div className="bg-white/60 dark:bg-stone-900/50 border border-stone-200/60 dark:border-stone-800/60 rounded-2xl divide-y divide-stone-200/50 dark:divide-stone-800/50 overflow-hidden">
-                {sec.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between px-3.5 py-2 text-xs">
-                    <span className="text-stone-700 dark:text-stone-300 font-medium">
-                      {item.desc}
-                    </span>
-                    <div className="flex items-center gap-1 shrink-0 ml-3">
-                      {item.keys.map((k, ki) => (
-                        <kbd
-                          key={ki}
-                          className={`font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded shadow-2xs ${
-                            k === '+'
-                              ? 'text-stone-400 bg-transparent shadow-none px-0.5'
-                              : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-stone-700'
-                          }`}
-                        >
-                          {k}
-                        </kbd>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="shrink-0 pt-2 border-t border-stone-200/60 dark:border-stone-800/60 flex items-center justify-between text-[11px] text-stone-400">
-          <span>Tip: Hover over dock buttons anytime for quick key tooltips</span>
-          <span className="font-mono text-[10px]">Press Esc to close</span>
-        </div>
+        ))}
       </div>
-    </div>,
-    document.body
+
+      {/* Footer */}
+      <div className="shrink-0 pt-2 border-t border-stone-200/60 dark:border-stone-800/60 flex items-center justify-between text-[11px] text-stone-400">
+        <span>Tip: Hover over dock buttons anytime for quick key tooltips</span>
+        <span className="font-mono text-[10px]">Press Esc to close</span>
+      </div>
+    </Modal>
   );
 };

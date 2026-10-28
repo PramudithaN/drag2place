@@ -1,22 +1,18 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { useBoardStore } from '@/lib/store';
-import { useIsMounted } from '@/lib/useIsMounted';
+import { Modal } from './Modal';
 import { Trash2, LogOut, AlertTriangle, X } from 'lucide-react';
 
 export const ConfirmationModal: React.FC = () => {
-  const mounted = useIsMounted();
   const { confirmModal, closeConfirmModal } = useBoardStore();
 
   useEffect(() => {
     if (!confirmModal) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeConfirmModal();
-      } else if (e.key === 'Enter') {
+      if (e.key === 'Enter') {
         confirmModal.onConfirm();
         closeConfirmModal();
       }
@@ -26,7 +22,7 @@ export const ConfirmationModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [confirmModal, closeConfirmModal]);
 
-  if (!confirmModal || !mounted) return null;
+  if (!confirmModal) return null;
 
   const {
     title,
@@ -66,61 +62,57 @@ export const ConfirmationModal: React.FC = () => {
     }
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
-      onClick={closeConfirmModal}
-      onWheel={(e) => e.stopPropagation()}
+  return (
+    <Modal
+      isOpen={Boolean(confirmModal)}
+      onClose={closeConfirmModal}
+      size="sm"
+      ariaLabel={title}
+      className="p-5 sm:p-6 space-y-4"
     >
-      <div
-        className="relative w-full max-w-sm p-5 sm:p-6 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col space-y-4"
-        onClick={(e) => e.stopPropagation()}
-        onWheel={(e) => e.stopPropagation()}
+      <button
+        type="button"
+        onClick={closeConfirmModal}
+        className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors cursor-pointer"
+        title="Dismiss"
+        aria-label="Dismiss modal"
       >
-        <button
-          onClick={closeConfirmModal}
-          className="absolute top-4 right-4 p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg transition-colors cursor-pointer"
-          title="Dismiss"
-          aria-label="Dismiss modal"
-        >
-          <X size={16} />
-        </button>
+        <X size={16} />
+      </button>
 
-        <div className="flex items-start gap-3.5">
-          {getIcon()}
-          <div className="space-y-1">
-            <h3 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
-              {title}
-            </h3>
-            <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed font-sans">
-              {message}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
-          <button
-            type="button"
-            onClick={closeConfirmModal}
-            className="px-3.5 py-2 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 rounded-xl transition-colors cursor-pointer"
-          >
-            {cancelText}
-          </button>
-          <button
-            type="button"
-            autoFocus
-            onClick={handleConfirm}
-            className={`px-4 py-2 text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer ${
-              isDestructive
-                ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                : 'bg-stone-800 hover:bg-stone-900 text-stone-100 dark:bg-stone-100 dark:hover:bg-white dark:text-stone-900'
-            }`}
-          >
-            {confirmText}
-          </button>
+      <div className="flex items-start gap-3.5">
+        {getIcon()}
+        <div className="space-y-1">
+          <h3 className="text-base font-oregon font-bold text-stone-900 dark:text-stone-100 tracking-wide">
+            {title}
+          </h3>
+          <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed font-sans">
+            {message}
+          </p>
         </div>
       </div>
-    </div>,
-    document.body
+
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+        <button
+          type="button"
+          onClick={closeConfirmModal}
+          className="px-3.5 py-2 text-xs font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-200/60 dark:hover:bg-stone-800/60 rounded-xl transition-colors cursor-pointer"
+        >
+          {cancelText}
+        </button>
+        <button
+          type="button"
+          autoFocus
+          onClick={handleConfirm}
+          className={`px-4 py-2 text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer ${
+            isDestructive
+              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+              : 'bg-stone-800 hover:bg-stone-900 text-stone-100 dark:bg-stone-100 dark:hover:bg-white dark:text-stone-900'
+          }`}
+        >
+          {confirmText}
+        </button>
+      </div>
+    </Modal>
   );
 };

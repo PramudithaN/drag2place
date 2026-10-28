@@ -197,33 +197,42 @@ drag2place/
 │   │   │   ├── CanvasGrid.tsx       # Dot matrix canvas grid
 │   │   │   ├── ConnectionLine.tsx   # Cubic bezier vector connections
 │   │   │   └── InfiniteCanvas.tsx   # Canvas event coordinator
-│   │   ├── cards/               #Draggable card suite
+│   │   ├── cards/               # Draggable card suite
+│   │   │   ├── CardColorPicker.tsx  # Shared tactile color selection popover
 │   │   │   ├── CardWrapper.tsx      # Coordinates, drag mechanics, resizing, color menu
 │   │   │   ├── EventCard.tsx        # Milestone and deadline card
 │   │   │   ├── ImageCard.tsx        # Image and lightbox card
+│   │   │   ├── LinkCard.tsx         # OpenGraph rich bookmark preview card
 │   │   │   ├── NoteCard.tsx         # Rich typography stationery note
 │   │   │   └── TodoCard.tsx         # Checklists with progress meter
 │   │   ├── dock/                # Bottom navigation dock
-│   │   │   └── FloatingDock.tsx     # Spring-physics floating dock
+│   │   │   └── FloatingDock.tsx     # Spring-physics floating dock & tool controls
 │   │   ├── navigation/          # Modals and header chrome
 │   │   │   ├── AuthModal.tsx        # Authentication modal
 │   │   │   ├── BoardSwitcher.tsx    # Multi-board dropdown switcher
 │   │   │   ├── CommandPalette.tsx   # Global search and command modal (Ctrl + K)
 │   │   │   ├── ExportModal.tsx      # PNG capture and JSON backup modal
-│   │   │   ├── HeaderBar.tsx        # Top status bar, brand logo, profile dropdown
+│   │   │   ├── HeaderBar.tsx        # Top status bar and coordination hub
+│   │   │   ├── MobileMenuDrawer.tsx # Accessible mobile slide-out navigation menu
 │   │   │   ├── ModeSelectorModal.tsx # Role-based workspace mode selector
 │   │   │   ├── NotificationCenter.tsx # In-app notification drawer
 │   │   │   ├── OnboardingHint.tsx   # First-visit quick gesture & shortcut guidance
+│   │   │   ├── ProfileDropdown.tsx  # User avatar, account menu, and sign out
 │   │   │   └── ShortcutsModal.tsx   # Keyboard shortcuts & controls guide (?)
 │   │   └── ui/                  # Reusable presentation components
-│   │       └── ConfirmationModal.tsx # Universal destructive action confirmation dialog
+│   │       ├── ConfirmationModal.tsx # Universal destructive action confirmation dialog
+│   │       └── Modal.tsx            # Accessible dialog primitive with portal & scroll lock
 │   ├── lib/                     # Domain services and infrastructure
 │   │   ├── supabase/
 │   │   │   ├── client.ts        # Supabase client factory with offline fallback
 │   │   │   └── schema.sql       # PostgreSQL migration schema with RLS policies
+│   │   ├── colors.ts            # Centralized tactile color palettes & Tailwind tokens
+│   │   ├── initialData.ts       # Baseline workspace templates, cards, and connections
 │   │   ├── notifications.ts     # Browser notification service
 │   │   ├── sound.ts             # Web Audio API acoustic synthesizer
-│   │   └── store.ts             # Primary Zustand store with sync drivers
+│   │   ├── store.ts             # Primary Zustand store with sync drivers
+│   │   ├── useClickOutside.ts   # Reusable outside-click detection hook
+│   │   └── useIsMounted.ts      # SSR-safe hydration mounting hook
 │   └── types/
 │       └── board.ts             # Strict TypeScript domain interfaces
 ├── .env.example                 # Template for environment credentials

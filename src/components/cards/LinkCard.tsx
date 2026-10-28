@@ -29,7 +29,9 @@ export const LinkCard: React.FC<LinkCardProps> = ({ data, onChange }) => {
     }
 
     try {
-      const res = await fetch(`/api/link-preview?url=${encodeURIComponent(normalized)}`);
+      const res = await fetch(`/api/link-preview?url=${encodeURIComponent(normalized)}`, {
+        signal: AbortSignal.timeout(8000),
+      });
       if (!res.ok) throw new Error('Preview fetch failed');
       const json = await res.json();
 

@@ -1,5 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().trim();
+  if (
+    normalized === 'localhost' ||
+    normalized.endsWith('.localhost') ||
+    normalized.endsWith('.local') ||
+    normalized === '127.0.0.1' ||
+    normalized === '0.0.0.0' ||
+    normalized === '::1' ||
+    normalized === '169.254.169.254'
+  ) {
+    return true;
+  }
+  // Disallow private/internal IPv4 ranges: 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16
+  if (/^127\./.test(normalized)) return true;
+  if (/^10\./.test(normalized)) return true;
+  if (/^192\.168\./.test(normalized)) return true;
+  if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(normalized)) return true;
+  if (/^169\.254\./.test(normalized)) return true;
+  return false;
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get('url');
@@ -16,6 +38,10 @@ export async function GET(req: NextRequest) {
     }
   } catch {
     return NextResponse.json({ error: 'Malformed URL' }, { status: 400 });
+  }
+
+  if (isBlockedHostname(parsedUrl.hostname)) {
+    return NextResponse.json({ error: 'Restricted target host' }, { status: 400 });
   }
 
   const defaultFavicon = `https://www.google.com/s2/favicons?domain=${parsedUrl.hostname}&sz=128`;

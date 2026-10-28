@@ -4,6 +4,7 @@ import { WORKSPACE_MODES } from './templates';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
+import { DEFAULT_BOARD_ID, INITIAL_BOARDS, INITIAL_CARDS, INITIAL_CONNECTIONS } from './initialData';
 
 interface BoardState {
   boards: Board[];
@@ -118,126 +119,6 @@ interface SupabaseConnRow {
   label?: string;
   style?: 'solid' | 'dashed' | 'curved';
 }
-
-const DEFAULT_BOARD_ID = 'main-board';
-
-const INITIAL_BOARDS: Board[] = [
-  {
-    id: DEFAULT_BOARD_ID,
-    title: 'Daily Canvas & Ideas',
-    description: 'Personal aesthetic sanctuary for plans, tasks, and notes.',
-    theme: 'light',
-    pan: { x: 0, y: 0 },
-    zoom: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'project-launch',
-    title: 'Product Roadmap & Vision',
-    description: 'Quarterly milestones and high-level architectural designs.',
-    theme: 'light',
-    pan: { x: 0, y: 0 },
-    zoom: 1,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-const INITIAL_CARDS: Card[] = [
-  {
-    id: 'card-welcome-note',
-    boardId: DEFAULT_BOARD_ID,
-    type: 'note',
-    x: 80,
-    y: 90,
-    width: 320,
-    height: 340,
-    zIndex: 1,
-    color: 'cream',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    content: {
-      title: 'Welcome to your Workspace',
-      body: 'A quiet, spatial space inspired by Milanote.\n\n- Drag cards freely anywhere on this infinite canvas.\n- Use the bottom dock to place new ideas, todos, events, and images.\n- Connect cards with visual arrows.\n- Set dates to receive native sound and push reminders.\n\nEnjoy the slow, intentional flow.',
-      fontFamily: 'oregon',
-      fontSize: 'base',
-    },
-  },
-  {
-    id: 'card-launch-todos',
-    boardId: DEFAULT_BOARD_ID,
-    type: 'todo',
-    x: 440,
-    y: 90,
-    width: 320,
-    height: 380,
-    zIndex: 2,
-    color: 'paper',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    content: {
-      title: 'Today & Next Priorities',
-      items: [
-        { id: '1', text: 'Outline visual design ideas', completed: true, priority: 'high' },
-        { id: '2', text: 'Curate warm minimalist palette', completed: true, priority: 'medium' },
-        { id: '3', text: 'Schedule weekly planning session', completed: false, priority: 'medium' },
-        { id: '4', text: 'Test browser notification alerts', completed: false, priority: 'high' },
-        { id: '5', text: 'Review creative project goals', completed: false, priority: 'low' },
-      ],
-    },
-  },
-  {
-    id: 'card-upcoming-event',
-    boardId: DEFAULT_BOARD_ID,
-    type: 'event',
-    x: 800,
-    y: 90,
-    width: 300,
-    height: 290,
-    zIndex: 3,
-    color: 'amber',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    content: {
-      title: 'Studio Creative Retreat',
-      description: 'Deep work and board retrospective with ambient soundscapes.',
-      date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-      startTime: '10:00',
-      endTime: '13:00',
-      location: 'Local Artisan Studio',
-      reminderMinutesBefore: 60,
-    },
-  },
-  {
-    id: 'card-aesthetic-mood',
-    boardId: DEFAULT_BOARD_ID,
-    type: 'image',
-    x: 440,
-    y: 500,
-    width: 360,
-    height: 320,
-    zIndex: 4,
-    color: 'sage',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    content: {
-      url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=1000&auto=format&fit=crop',
-      caption: 'Calm morning workspace: clean lines, natural wood, warm sun.',
-    },
-  },
-];
-
-const INITIAL_CONNECTIONS: Connection[] = [
-  {
-    id: 'conn-1',
-    boardId: DEFAULT_BOARD_ID,
-    fromCardId: 'card-welcome-note',
-    toCardId: 'card-launch-todos',
-    style: 'curved',
-    label: 'next steps',
-  },
-];
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -914,7 +795,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const { data: cloudBoards, error: bErr } = await supabase
         .from('boards')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .returns<SupabaseBoardRow[]>();
 
       if (bErr || !cloudBoards || cloudBoards.length === 0) {
         // No existing boards in cloud yet, automatically push current local workspace
@@ -926,13 +808,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const { data: cloudCards } = await supabase
         .from('cards')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .returns<SupabaseCardRow[]>();
 
       const { data: cloudConns } = await supabase
         .from('connections')
-        .select('*');
+        .select('*')
+        .returns<SupabaseConnRow[]>();
 
-      const mappedBoards: Board[] = (cloudBoards as unknown as SupabaseBoardRow[]).map((b) => ({
+      const mappedBoards: Board[] = (cloudBoards || []).map((b: SupabaseBoardRow) => ({
         id: b.id,
         title: b.title,
         description: b.description || '',
@@ -943,7 +827,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         updatedAt: b.updated_at,
       }));
 
-      const mappedCards: Card[] = ((cloudCards || []) as unknown as SupabaseCardRow[]).map((c) => ({
+      const mappedCards: Card[] = (cloudCards || []).map((c: SupabaseCardRow) => ({
         id: c.id,
         boardId: c.board_id,
         type: c.type,
@@ -958,7 +842,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         updatedAt: c.updated_at,
       }));
 
-      const mappedConns: Connection[] = ((cloudConns || []) as unknown as SupabaseConnRow[]).map((conn) => ({
+      const mappedConns: Connection[] = (cloudConns || []).map((conn: SupabaseConnRow) => ({
         id: conn.id,
         boardId: conn.board_id,
         fromCardId: conn.from_card_id,

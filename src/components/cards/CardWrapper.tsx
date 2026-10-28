@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Card, CardColor, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData, CommentCardData, LinkCardData } from '@/types/board';
+import { Card, NoteCardData, TodoCardData, EventCardData, ImageCardData, CodeCardData, PaletteCardData, MetricCardData, CommentCardData, LinkCardData } from '@/types/board';
 import { useBoardStore } from '@/lib/store';
+import { COLOR_CLASSES } from '@/lib/colors';
+import { CardColorPicker } from './CardColorPicker';
 import { TodoCard } from './TodoCard';
 import { NoteCard } from './NoteCard';
 import { EventCard } from './EventCard';
@@ -12,52 +14,12 @@ import { PaletteCard } from './PaletteCard';
 import { MetricCard } from './MetricCard';
 import { CommentCard } from './CommentCard';
 import { LinkCard } from './LinkCard';
-import { GripVertical, Trash2, GitCommit, Palette } from 'lucide-react';
+import { GripVertical, Trash2, GitCommit } from 'lucide-react';
 
 interface CardWrapperProps {
   card: Card;
   zoom: number;
 }
-
-const COLOR_CLASSES: Record<CardColor, { bg: string; border: string; accent: string }> = {
-  paper: {
-    bg: 'bg-[#FFFFFF] dark:bg-[#1D1B18]',
-    border: 'border-[#EBE6DE] dark:border-[#2F2C27]',
-    accent: 'text-stone-700 dark:text-stone-300',
-  },
-  cream: {
-    bg: 'bg-[#FBF8F2] dark:bg-[#23201C]',
-    border: 'border-[#EAE3D5] dark:border-[#332E27]',
-    accent: 'text-stone-800 dark:text-stone-200',
-  },
-  sage: {
-    bg: 'bg-[#F2F6F1] dark:bg-[#1C241D]',
-    border: 'border-[#DEE7DD] dark:border-[#29362B]',
-    accent: 'text-emerald-900 dark:text-emerald-200',
-  },
-  terracotta: {
-    bg: 'bg-[#FDF3F0] dark:bg-[#281E1C]',
-    border: 'border-[#EFE1DC] dark:border-[#3B2925]',
-    accent: 'text-orange-950 dark:text-orange-200',
-  },
-  amber: {
-    bg: 'bg-[#FDF6E9] dark:bg-[#28231A]',
-    border: 'border-[#EFE5D0] dark:border-[#3C3322]',
-    accent: 'text-amber-950 dark:text-amber-200',
-  },
-  lavender: {
-    bg: 'bg-[#F6F3FA] dark:bg-[#241E2B]',
-    border: 'border-[#E7E0F1] dark:border-[#382B45]',
-    accent: 'text-purple-950 dark:text-purple-200',
-  },
-  sky: {
-    bg: 'bg-[#F1F6FA] dark:bg-[#1B232A]',
-    border: 'border-[#D9E6EF] dark:border-[#283745]',
-    accent: 'text-sky-950 dark:text-sky-200',
-  },
-};
-
-const COLOR_PALETTE: CardColor[] = ['paper', 'cream', 'sage', 'terracotta', 'amber', 'lavender', 'sky'];
 
 export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
   const {
@@ -77,7 +39,6 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
     openConfirmModal,
   } = useBoardStore();
 
-  const [isColorMenuOpen, setIsColorMenuOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const isSelected = selectedCardIds.includes(card.id);
@@ -394,37 +355,11 @@ export const CardWrapper: React.FC<CardWrapperProps> = ({ card, zoom }) => {
             <GitCommit size={14} />
           </button>
 
-          {/* Color palette toggle */}
-          <div className="relative">
-            <button
-              onClick={() => setIsColorMenuOpen(!isColorMenuOpen)}
-              className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-500/10 rounded-md transition-colors"
-              title="Change card color"
-            >
-              <Palette size={13} />
-            </button>
-
-            {isColorMenuOpen && (
-              <div
-                className="absolute right-0 top-full mt-1 z-50 flex gap-1 p-1.5 bg-[#FAF7F2] dark:bg-[#25221E] border border-stone-300 dark:border-stone-700 rounded-xl shadow-lg"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {COLOR_PALETTE.map((col) => (
-                  <button
-                    key={col}
-                    onClick={() => {
-                      updateCardColor(card.id, col);
-                      setIsColorMenuOpen(false);
-                    }}
-                    className={`w-4 h-4 rounded-full border border-stone-300 dark:border-stone-600 transition-transform hover:scale-125 ${
-                      COLOR_CLASSES[col].bg
-                    } ${card.color === col ? 'ring-2 ring-stone-700 dark:ring-stone-200' : ''}`}
-                    title={col}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Color palette picker */}
+          <CardColorPicker
+            currentColor={card.color}
+            onSelectColor={(col) => updateCardColor(card.id, col)}
+          />
 
           {/* Delete card */}
           <button
