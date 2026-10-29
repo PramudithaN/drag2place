@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useBoardStore } from '@/lib/store';
 import { useClickOutside } from '@/lib/useClickOutside';
-import { ChevronDown, Plus, Trash2, Check, Edit2, Compass, X } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Check, Edit2, Compass } from 'lucide-react';
 import { ModeSelectorModal } from './ModeSelectorModal';
 import { WORKSPACE_MODE_CONFIGS, renderModeIcon } from '@/lib/modes';
 import { WorkspaceMode } from '@/types/board';
@@ -23,6 +23,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
     updateBoardMode,
     deleteBoard,
     allCards,
+    openConfirmModal,
   } = useBoardStore();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,6 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
   const [editingTitle, setEditingTitle] = useState(currentBoard.title);
   const [newBoardName, setNewBoardName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const activeMode: WorkspaceMode = currentBoard.mode || 'developer';
@@ -42,24 +42,22 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
     () => {
       setIsOpen(false);
       setIsCreating(false);
-      setDeletingBoardId(null);
     },
-    isOpen || isCreating || Boolean(deletingBoardId)
+    isOpen || isCreating
   );
 
   // Dismiss on Escape key
   React.useEffect(() => {
-    if (!isOpen && !isCreating && !deletingBoardId) return;
+    if (!isOpen && !isCreating) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsOpen(false);
         setIsCreating(false);
-        setDeletingBoardId(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isCreating, deletingBoardId]);
+  }, [isOpen, isCreating]);
 
   const handleSaveTitle = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -76,7 +74,6 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
       setNewBoardName('');
       setIsCreating(false);
       setIsOpen(false);
-      setDeletingBoardId(null);
     }
   };
 
@@ -164,17 +161,14 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
             {boards.map((b) => {
               const count = allCards.filter((c) => c.boardId === b.id).length;
               const isActive = b.id === activeBoardId;
-              const isConfirmingDelete = deletingBoardId === b.id;
               const bMode = b.mode || 'developer';
 
               return (
                 <div
                   key={b.id}
                   onClick={() => {
-                    if (isConfirmingDelete) return;
                     switchBoard(b.id);
                     setIsOpen(false);
-                    setDeletingBoardId(null);
                   }}
                   className={`group flex items-center justify-between p-2 rounded-xl text-xs cursor-pointer transition-colors ${
                     isActive
@@ -182,78 +176,56 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
                       : 'hover:bg-stone-200/60 dark:hover:bg-stone-800/60 text-stone-700 dark:text-stone-300'
                   }`}
                 >
-                  <div className="flex items-center gap-2 truncate min-w-0">
+                  <div className="flex items-center gap-2 truncate min-w-0 pr-1">
                     <span className="shrink-0">{renderModeIcon(bMode, 13)}</span>
                     <span className="font-oregon truncate">{b.title}</span>
                   </div>
 
-                  {isConfirmingDelete ? (
-                    <div
-                      className="flex items-center gap-1 shrink-0 ml-2 animate-in fade-in duration-100"
-                      onClick={(e) => e.stopPropagation()}
+                  <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                    <span
+                      className="text-[10px] opacity-60 font-mono"
+                      title={`${count} ${count === 1 ? 'card' : 'cards'} on this board`}
                     >
-                      <span className="text-[10px] text-rose-600 dark:text-rose-500 font-sans font-semibold select-none">
-                        Delete?
-                      </span>
+                      {count} {count === 1 ? 'card' : 'cards'}
+                    </span>
+                    {boards.length > 1 ? (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          deleteBoard(b.id);
-                          setDeletingBoardId(null);
+                          openConfirmModal({
+                            title: `Delete Workspace?`,
+                            message: `Are you sure you want to permanently delete "${b.title}" and its ${count} ${count === 1 ? 'card' : 'cards'}? This action cannot be undone.`,
+                            confirmText: 'Delete Workspace',
+                            cancelText: 'Cancel',
+                            isDestructive: true,
+                            icon: 'trash',
+                            onConfirm: () => {
+                              deleteBoard(b.id);
+                              setIsOpen(false);
+                            },
+                          });
                         }}
-                        className="px-2 py-0.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-xs cursor-pointer transition-colors"
-                        title={`Confirm delete workspace "${b.title}"`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          setDeletingBoardId(null);
-                        }}
-                        className={`p-1 rounded-md cursor-pointer transition-colors ${
+                        className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                           isActive
-                            ? 'text-stone-600 hover:text-stone-900 hover:bg-stone-200'
-                            : 'text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-200/60 dark:hover:bg-stone-700'
+                            ? 'text-stone-400 hover:text-rose-600 dark:text-stone-500 dark:hover:text-rose-600 hover:bg-rose-100/60 dark:hover:bg-rose-200/60'
+                            : 'text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-100/60 dark:hover:bg-rose-950/40'
                         }`}
-                        title="Cancel"
+                        title={`Delete workspace "${b.title}"`}
+                        aria-label={`Delete workspace "${b.title}"`}
                       >
-                        <X size={12} />
+                        <Trash2 size={13} />
                       </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    ) : (
                       <span
-                        className="text-[10px] opacity-60 font-mono"
-                        title={`${count} ${count === 1 ? 'card' : 'cards'} on this board`}
+                        className="p-1.5 opacity-20 cursor-not-allowed text-stone-400"
+                        title="At least one workspace is required"
                       >
-                        {count} {count === 1 ? 'card' : 'cards'}
+                        <Trash2 size={13} />
                       </span>
-                      {boards.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            setDeletingBoardId(b.id);
-                          }}
-                          className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                            isActive
-                              ? 'text-stone-400 hover:text-rose-600 dark:text-stone-500 dark:hover:text-rose-600 hover:bg-rose-100/60 dark:hover:bg-rose-200/60'
-                              : 'text-stone-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-100/60 dark:hover:bg-rose-950/40'
-                          }`}
-                          title={`Delete workspace "${b.title}"`}
-                          aria-label={`Delete workspace "${b.title}"`}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -326,7 +298,6 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
               <button
                 onClick={() => {
                   setIsCreating(true);
-                  setDeletingBoardId(null);
                 }}
                 className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-xl transition-colors cursor-pointer"
               >

@@ -520,6 +520,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       allConnections: state.allConnections.filter((conn) => conn.boardId !== boardId),
       allSections: state.allSections.filter((s) => s.boardId !== boardId),
       selectedCardIds: [],
+      selectedSectionId: null,
+      connectingFromCardId: null,
+      activeTool: 'select',
     }));
     get().saveBoardLocally();
 
@@ -632,100 +635,204 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   tidyUpBoard: () => {
-    const { getActiveCards, activeBoardId } = get();
+    const { getActiveCards, getActiveSections, activeBoardId } = get();
     const cards = getActiveCards();
     if (cards.length === 0) return;
 
-    // Stable sort: reading order (top to bottom bands, then left to right)
-    const sortedCards = [...cards].sort((a, b) => {
-      const bandA = Math.floor(a.y / 180);
-      const bandB = Math.floor(b.y / 180);
-      if (bandA !== bandB) return bandA - bandB;
-      return a.x - b.x;
+    const sections = getActiveSections();
+    const getCardSection = (c: Card) => {
+      if (c.sectionId) {
+        const s = sections.find((sec) => sec.id === c.sectionId);
+        if (s) return s;
+      }
+      const cx = c.x + c.width / 2;
+      const cy = c.y + c.height / 2;
+      return sections.find(
+        (s) => cx >= s.x && cx <= s.x + s.width && cy >= s.y && cy <= s.y + s.height
+      );
+    };
+
+    const sectionGroups = new Map<string, { section: BoardSection; cards: Card[] }>();
+    sections.forEach((sec) => sectionGroups.set(sec.id, { section: sec, cards: [] }));
+
+    const freeCards: Card[] = [];
+    cards.forEach((c) => {
+      const sec = getCardSection(c);
+      if (sec && sectionGroups.has(sec.id)) {
+        sectionGroups.get(sec.id)!.cards.push(c);
+      } else {
+        freeCards.push(c);
+      }
     });
 
-    // 1. Determine optimal column count for balanced 2D matrix
-    const count = sortedCards.length;
-    let numCols = 3;
-    if (count <= 2) numCols = count;
-    else if (count <= 4) numCols = 2;
-    else if (count <= 9) numCols = 3;
-    else numCols = 4;
-
-    const numRows = Math.ceil(count / numCols);
-
-    // 2. Build 2D matrix [row][col] to align horizontally & vertically
-    const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
-      new Array(numCols).fill(null)
-    );
-
-    sortedCards.forEach((card, index) => {
-      const r = Math.floor(index / numCols);
-      const c = index % numCols;
-      matrix[r][c] = card;
-    });
-
-    // 3. Compute row heights (tallest card in row) & col widths (widest card in col)
-    const rowHeights = new Array(numRows).fill(300);
-    for (let r = 0; r < numRows; r++) {
-      let maxH = 260;
-      for (let c = 0; c < numCols; c++) {
-        const card = matrix[r][c];
-        if (card) {
-          maxH = Math.max(maxH, card.height || 320);
-        }
-      }
-      rowHeights[r] = maxH;
-    }
-
-    const colWidths = new Array(numCols).fill(340);
-    for (let c = 0; c < numCols; c++) {
-      let maxW = 320;
-      for (let r = 0; r < numRows; r++) {
-        const card = matrix[r][c];
-        if (card) {
-          maxW = Math.max(maxW, card.width || 340);
-        }
-      }
-      colWidths[c] = maxW;
-    }
-
-    // 4. Calculate starting X and Y positions with clean spacing
-    const gapX = 40;
-    const gapY = 40;
-    const startX = 80;
-    const startY = 80;
-
-    const colStartX = new Array(numCols).fill(startX);
-    for (let c = 1; c < numCols; c++) {
-      colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
-    }
-
-    const rowStartY = new Array(numRows).fill(startY);
-    for (let r = 1; r < numRows; r++) {
-      rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
-    }
-
-    // 5. Place cards: strictly aligned horizontally in rows & vertically in columns
-    const updated: Card[] = [];
+    const updatedCards: Card[] = [];
+    const sectionSizeUpdates = new Map<string, { width: number; height: number }>();
     const now = new Date().toISOString();
 
-    for (let r = 0; r < numRows; r++) {
+    // 1. Tidy cards inside each section frame
+    sectionGroups.forEach(({ section, cards: secCards }) => {
+      if (secCards.length === 0) return;
+
+      const sorted = [...secCards].sort((a, b) => {
+        const bandA = Math.floor(a.y / 180);
+        const bandB = Math.floor(b.y / 180);
+        if (bandA !== bandB) return bandA - bandB;
+        return a.x - b.x;
+      });
+
+      const innerStartX = section.x + 24;
+      const innerStartY = section.y + 56;
+      const availWidth = Math.max(300, section.width - 48);
+      const gapX = 24;
+      const gapY = 24;
+      const avgCardW = Math.round(sorted.reduce((acc, c) => acc + (c.width || 320), 0) / sorted.length);
+      const maxColsInAvail = Math.max(1, Math.floor((availWidth + gapX) / (avgCardW + gapX)));
+
+      let numCols = Math.min(maxColsInAvail, Math.max(1, Math.ceil(Math.sqrt(sorted.length))));
+      if (sorted.length <= 2) numCols = sorted.length;
+      else if (sorted.length <= 4) numCols = Math.min(numCols, 2);
+
+      const numRows = Math.ceil(sorted.length / numCols);
+      const matrix: (Card | null)[][] = Array.from({ length: numRows }, () => new Array(numCols).fill(null));
+
+      sorted.forEach((card, index) => {
+        const r = Math.floor(index / numCols);
+        const c = index % numCols;
+        matrix[r][c] = card;
+      });
+
+      const rowHeights = new Array(numRows).fill(260);
+      for (let r = 0; r < numRows; r++) {
+        let maxH = 200;
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) maxH = Math.max(maxH, card.height || 260);
+        }
+        rowHeights[r] = maxH;
+      }
+
+      const colWidths = new Array(numCols).fill(300);
       for (let c = 0; c < numCols; c++) {
-        const card = matrix[r][c];
-        if (card) {
-          updated.push({
-            ...card,
-            x: colStartX[c],
-            y: rowStartY[r],
-            color: DEDICATED_TYPE_COLORS[card.type] || card.color,
-            updatedAt: now,
-          });
+        let maxW = 280;
+        for (let r = 0; r < numRows; r++) {
+          const card = matrix[r][c];
+          if (card) maxW = Math.max(maxW, card.width || 300);
+        }
+        colWidths[c] = maxW;
+      }
+
+      const colStartX = new Array(numCols).fill(innerStartX);
+      for (let c = 1; c < numCols; c++) {
+        colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
+      }
+
+      const rowStartY = new Array(numRows).fill(innerStartY);
+      for (let r = 1; r < numRows; r++) {
+        rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
+      }
+
+      for (let r = 0; r < numRows; r++) {
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) {
+            updatedCards.push({
+              ...card,
+              x: colStartX[c],
+              y: rowStartY[r],
+              sectionId: section.id,
+              color: DEDICATED_TYPE_COLORS[card.type] || card.color,
+              updatedAt: now,
+            });
+          }
+        }
+      }
+
+      const totalW = colStartX[numCols - 1] + colWidths[numCols - 1] + 24 - section.x;
+      const totalH = rowStartY[numRows - 1] + rowHeights[numRows - 1] + 32 - section.y;
+      sectionSizeUpdates.set(section.id, {
+        width: Math.max(section.width, totalW),
+        height: Math.max(section.height, totalH),
+      });
+    });
+
+    // 2. Tidy free cards outside sections
+    if (freeCards.length > 0) {
+      const sortedFree = [...freeCards].sort((a, b) => {
+        const bandA = Math.floor(a.y / 180);
+        const bandB = Math.floor(b.y / 180);
+        if (bandA !== bandB) return bandA - bandB;
+        return a.x - b.x;
+      });
+
+      let freeStartX = 80;
+      const freeStartY = 80;
+      if (sections.length > 0) {
+        const maxSectionRight = Math.max(...sections.map((s) => s.x + s.width));
+        freeStartX = maxSectionRight + 60;
+      }
+
+      const count = sortedFree.length;
+      let numCols = 3;
+      if (count <= 2) numCols = count;
+      else if (count <= 4) numCols = 2;
+      else if (count <= 9) numCols = 3;
+      else numCols = 4;
+
+      const numRows = Math.ceil(count / numCols);
+      const matrix: (Card | null)[][] = Array.from({ length: numRows }, () => new Array(numCols).fill(null));
+      sortedFree.forEach((card, index) => {
+        const r = Math.floor(index / numCols);
+        const c = index % numCols;
+        matrix[r][c] = card;
+      });
+
+      const rowHeights = new Array(numRows).fill(300);
+      for (let r = 0; r < numRows; r++) {
+        let maxH = 260;
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) maxH = Math.max(maxH, card.height || 320);
+        }
+        rowHeights[r] = maxH;
+      }
+
+      const colWidths = new Array(numCols).fill(340);
+      for (let c = 0; c < numCols; c++) {
+        let maxW = 320;
+        for (let r = 0; r < numRows; r++) {
+          const card = matrix[r][c];
+          if (card) maxW = Math.max(maxW, card.width || 340);
+        }
+        colWidths[c] = maxW;
+      }
+
+      const colStartX = new Array(numCols).fill(freeStartX);
+      for (let c = 1; c < numCols; c++) {
+        colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + 40;
+      }
+
+      const rowStartY = new Array(numRows).fill(freeStartY);
+      for (let r = 1; r < numRows; r++) {
+        rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + 40;
+      }
+
+      for (let r = 0; r < numRows; r++) {
+        for (let c = 0; c < numCols; c++) {
+          const card = matrix[r][c];
+          if (card) {
+            updatedCards.push({
+              ...card,
+              x: colStartX[c],
+              y: rowStartY[r],
+              color: DEDICATED_TYPE_COLORS[card.type] || card.color,
+              updatedAt: now,
+            });
+          }
         }
       }
     }
 
-    const updateMap = new Map(updated.map((u) => [u.id, u]));
+    const updateMap = new Map(updatedCards.map((u) => [u.id, u]));
 
     set((state) => ({
       allCards: state.allCards.map((c) => {
@@ -733,6 +840,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         const match = updateMap.get(c.id);
         return match || c;
       }),
+      allSections: sectionSizeUpdates.size === 0
+        ? state.allSections
+        : state.allSections.map((s) => {
+            const upd = sectionSizeUpdates.get(s.id);
+            return upd ? { ...s, width: upd.width, height: upd.height } : s;
+          }),
     }));
 
     soundFx.playDrop();
@@ -1372,134 +1485,335 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }),
 
   alignSelectedCards: (type) => {
-    const { getActiveCards, selectedCardIds } = get();
+    const { getActiveCards, selectedCardIds, getActiveSections } = get();
     const activeCards = getActiveCards().filter((c) => selectedCardIds.includes(c.id));
     if (activeCards.length < 2) return;
 
-    let updatedCards: { id: string; x: number; y: number }[] = [];
-
-    if (type === 'left') {
-      const minX = Math.min(...activeCards.map((c) => c.x));
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: minX, y: c.y }));
-    } else if (type === 'right') {
-      const maxRight = Math.max(...activeCards.map((c) => c.x + c.width));
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: maxRight - c.width, y: c.y }));
-    } else if (type === 'top') {
-      const minY = Math.min(...activeCards.map((c) => c.y));
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: minY }));
-    } else if (type === 'bottom') {
-      const maxBottom = Math.max(...activeCards.map((c) => c.y + c.height));
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: maxBottom - c.height }));
-    } else if (type === 'center-h') {
-      const avgCenterY = activeCards.reduce((sum, c) => sum + (c.y + c.height / 2), 0) / activeCards.length;
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: c.x, y: Math.round(avgCenterY - c.height / 2) }));
-    } else if (type === 'center-v') {
-      const avgCenterX = activeCards.reduce((sum, c) => sum + (c.x + c.width / 2), 0) / activeCards.length;
-      updatedCards = activeCards.map((c) => ({ id: c.id, x: Math.round(avgCenterX - c.width / 2), y: c.y }));
-    } else if (type === 'distribute-h') {
-      const sorted = [...activeCards].sort((a, b) => a.x - b.x);
-      const firstX = sorted[0].x;
-      const lastX = sorted[sorted.length - 1].x;
-      const totalSpacing = (lastX - firstX) / (sorted.length - 1);
-      updatedCards = sorted.map((c, index) => ({
-        id: c.id,
-        x: Math.round(firstX + index * totalSpacing),
-        y: c.y,
-      }));
-    } else if (type === 'distribute-v') {
-      const sorted = [...activeCards].sort((a, b) => a.y - b.y);
-      const firstY = sorted[0].y;
-      const lastY = sorted[sorted.length - 1].y;
-      const totalSpacing = (lastY - firstY) / (sorted.length - 1);
-      updatedCards = sorted.map((c, index) => ({
-        id: c.id,
-        x: c.x,
-        y: Math.round(firstY + index * totalSpacing),
-      }));
-    } else if (type === 'grid') {
-      // 2D Matrix Alignment: aligns selected cards horizontally in rows and vertically in columns
-      const sorted = [...activeCards].sort((a, b) => {
-        const bandA = Math.floor(a.y / 180);
-        const bandB = Math.floor(b.y / 180);
-        if (bandA !== bandB) return bandA - bandB;
-        return a.x - b.x;
-      });
-
-      const count = sorted.length;
-      let numCols = 3;
-      if (count <= 2) numCols = count;
-      else if (count <= 4) numCols = 2;
-      else if (count <= 9) numCols = 3;
-      else numCols = 4;
-
-      const numRows = Math.ceil(count / numCols);
-      const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
-        new Array(numCols).fill(null)
+    const sections = getActiveSections();
+    const getCardSection = (c: Card) => {
+      if (c.sectionId) {
+        const s = sections.find((sec) => sec.id === c.sectionId);
+        if (s) return s;
+      }
+      const cx = c.x + c.width / 2;
+      const cy = c.y + c.height / 2;
+      return sections.find(
+        (s) => cx >= s.x && cx <= s.x + s.width && cy >= s.y && cy <= s.y + s.height
       );
+    };
 
-      sorted.forEach((card, index) => {
-        const r = Math.floor(index / numCols);
-        const c = index % numCols;
-        matrix[r][c] = card;
-      });
-
-      const rowHeights = new Array(numRows).fill(300);
-      for (let r = 0; r < numRows; r++) {
-        let maxH = 260;
-        for (let c = 0; c < numCols; c++) {
-          const card = matrix[r][c];
-          if (card) maxH = Math.max(maxH, card.height || 320);
-        }
-        rowHeights[r] = maxH;
+    // Partition cards by section (or 'free' if outside all sections)
+    const groups = new Map<string, { section: BoardSection | null; cards: Card[] }>();
+    activeCards.forEach((c) => {
+      const sec = getCardSection(c);
+      const key = sec ? sec.id : 'free';
+      if (!groups.has(key)) {
+        groups.set(key, { section: sec || null, cards: [] });
       }
+      groups.get(key)!.cards.push(c);
+    });
 
-      const colWidths = new Array(numCols).fill(340);
-      for (let c = 0; c < numCols; c++) {
-        let maxW = 320;
-        for (let r = 0; r < numRows; r++) {
-          const card = matrix[r][c];
-          if (card) maxW = Math.max(maxW, card.width || 340);
-        }
-        colWidths[c] = maxW;
-      }
+    const updatedCards: { id: string; x: number; y: number; sectionId?: string }[] = [];
+    const sectionSizeUpdates = new Map<string, { width: number; height: number }>();
 
-      const minX = Math.min(...activeCards.map((c) => c.x));
-      const minY = Math.min(...activeCards.map((c) => c.y));
-      const gapX = 36;
-      const gapY = 36;
+    groups.forEach(({ section, cards: groupCards }) => {
+      if (groupCards.length === 0) return;
 
-      const colStartX = new Array(numCols).fill(minX);
-      for (let c = 1; c < numCols; c++) {
-        colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
-      }
+      if (section) {
+        // --- INSIDE SECTION CONTAINER ---
+        const innerStartX = section.x + 24;
+        const innerStartY = section.y + 56; // below section title header
+        const availWidth = Math.max(260, section.width - 48);
 
-      const rowStartY = new Array(numRows).fill(minY);
-      for (let r = 1; r < numRows; r++) {
-        rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
-      }
+        if (type === 'grid') {
+          const sorted = [...groupCards].sort((a, b) => {
+            const bandA = Math.floor(a.y / 180);
+            const bandB = Math.floor(b.y / 180);
+            if (bandA !== bandB) return bandA - bandB;
+            return a.x - b.x;
+          });
 
-      updatedCards = [];
-      for (let r = 0; r < numRows; r++) {
-        for (let c = 0; c < numCols; c++) {
-          const card = matrix[r][c];
-          if (card) {
-            updatedCards.push({
-              id: card.id,
-              x: colStartX[c],
-              y: rowStartY[r],
+          // Calculate columns that fit inside section width
+          const gapX = 24;
+          const gapY = 24;
+          const avgCardW = Math.round(sorted.reduce((acc, c) => acc + (c.width || 320), 0) / sorted.length);
+          const maxColsInAvail = Math.max(1, Math.floor((availWidth + gapX) / (avgCardW + gapX)));
+
+          let numCols = Math.min(maxColsInAvail, Math.max(1, Math.ceil(Math.sqrt(sorted.length))));
+          if (sorted.length <= 2) numCols = sorted.length;
+          else if (sorted.length <= 4) numCols = Math.min(numCols, 2);
+
+          const numRows = Math.ceil(sorted.length / numCols);
+          const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
+            new Array(numCols).fill(null)
+          );
+
+          sorted.forEach((card, index) => {
+            const r = Math.floor(index / numCols);
+            const c = index % numCols;
+            matrix[r][c] = card;
+          });
+
+          const rowHeights = new Array(numRows).fill(260);
+          for (let r = 0; r < numRows; r++) {
+            let maxH = 200;
+            for (let c = 0; c < numCols; c++) {
+              const card = matrix[r][c];
+              if (card) maxH = Math.max(maxH, card.height || 260);
+            }
+            rowHeights[r] = maxH;
+          }
+
+          const colWidths = new Array(numCols).fill(300);
+          for (let c = 0; c < numCols; c++) {
+            let maxW = 280;
+            for (let r = 0; r < numRows; r++) {
+              const card = matrix[r][c];
+              if (card) maxW = Math.max(maxW, card.width || 300);
+            }
+            colWidths[c] = maxW;
+          }
+
+          const colStartX = new Array(numCols).fill(innerStartX);
+          for (let c = 1; c < numCols; c++) {
+            colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
+          }
+
+          const rowStartY = new Array(numRows).fill(innerStartY);
+          for (let r = 1; r < numRows; r++) {
+            rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
+          }
+
+          for (let r = 0; r < numRows; r++) {
+            for (let c = 0; c < numCols; c++) {
+              const card = matrix[r][c];
+              if (card) {
+                updatedCards.push({
+                  id: card.id,
+                  x: colStartX[c],
+                  y: rowStartY[r],
+                  sectionId: section.id,
+                });
+              }
+            }
+          }
+
+          // Expand section bounds if cards require more space
+          const totalWidthNeeded = colStartX[numCols - 1] + colWidths[numCols - 1] + 24 - section.x;
+          const totalHeightNeeded = rowStartY[numRows - 1] + rowHeights[numRows - 1] + 32 - section.y;
+          if (totalWidthNeeded > section.width || totalHeightNeeded > section.height) {
+            sectionSizeUpdates.set(section.id, {
+              width: Math.max(section.width, totalWidthNeeded),
+              height: Math.max(section.height, totalHeightNeeded),
             });
+          }
+        } else if (type === 'left') {
+          const minX = Math.max(innerStartX, Math.min(...groupCards.map((c) => c.x)));
+          groupCards.forEach((c) => {
+            updatedCards.push({ id: c.id, x: minX, y: c.y, sectionId: section.id });
+          });
+        } else if (type === 'right') {
+          const maxRight = Math.min(section.x + section.width - 24, Math.max(...groupCards.map((c) => c.x + c.width)));
+          groupCards.forEach((c) => {
+            updatedCards.push({ id: c.id, x: maxRight - c.width, y: c.y, sectionId: section.id });
+          });
+        } else if (type === 'top') {
+          const minY = Math.max(innerStartY, Math.min(...groupCards.map((c) => c.y)));
+          groupCards.forEach((c) => {
+            updatedCards.push({ id: c.id, x: c.x, y: minY, sectionId: section.id });
+          });
+        } else if (type === 'bottom') {
+          const maxBottom = Math.max(...groupCards.map((c) => c.y + c.height));
+          groupCards.forEach((c) => {
+            updatedCards.push({ id: c.id, x: c.x, y: maxBottom - c.height, sectionId: section.id });
+          });
+          if (maxBottom + 24 - section.y > section.height) {
+            sectionSizeUpdates.set(section.id, {
+              width: section.width,
+              height: maxBottom + 32 - section.y,
+            });
+          }
+        } else if (type === 'center-h') {
+          const avgCenterY = groupCards.reduce((sum, c) => sum + (c.y + c.height / 2), 0) / groupCards.length;
+          groupCards.forEach((c) => {
+            updatedCards.push({
+              id: c.id,
+              x: c.x,
+              y: Math.max(innerStartY, Math.round(avgCenterY - c.height / 2)),
+              sectionId: section.id,
+            });
+          });
+        } else if (type === 'center-v') {
+          const avgCenterX = groupCards.reduce((sum, c) => sum + (c.x + c.width / 2), 0) / groupCards.length;
+          groupCards.forEach((c) => {
+            updatedCards.push({
+              id: c.id,
+              x: Math.max(innerStartX, Math.round(avgCenterX - c.width / 2)),
+              y: c.y,
+              sectionId: section.id,
+            });
+          });
+        } else if (type === 'distribute-h') {
+          const sorted = [...groupCards].sort((a, b) => a.x - b.x);
+          const firstX = sorted[0].x;
+          const lastX = sorted[sorted.length - 1].x;
+          const totalSpacing = sorted.length > 1 ? (lastX - firstX) / (sorted.length - 1) : 0;
+          sorted.forEach((c, index) => {
+            updatedCards.push({
+              id: c.id,
+              x: Math.round(firstX + index * totalSpacing),
+              y: c.y,
+              sectionId: section.id,
+            });
+          });
+        } else if (type === 'distribute-v') {
+          const sorted = [...groupCards].sort((a, b) => a.y - b.y);
+          const firstY = sorted[0].y;
+          const lastY = sorted[sorted.length - 1].y;
+          const totalSpacing = sorted.length > 1 ? (lastY - firstY) / (sorted.length - 1) : 0;
+          sorted.forEach((c, index) => {
+            updatedCards.push({
+              id: c.id,
+              x: c.x,
+              y: Math.round(firstY + index * totalSpacing),
+              sectionId: section.id,
+            });
+          });
+        }
+      } else {
+        // --- FREE CARDS (OUTSIDE ALL SECTIONS) ---
+        if (type === 'left') {
+          const minX = Math.min(...groupCards.map((c) => c.x));
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: minX, y: c.y }));
+        } else if (type === 'right') {
+          const maxRight = Math.max(...groupCards.map((c) => c.x + c.width));
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: maxRight - c.width, y: c.y }));
+        } else if (type === 'top') {
+          const minY = Math.min(...groupCards.map((c) => c.y));
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: c.x, y: minY }));
+        } else if (type === 'bottom') {
+          const maxBottom = Math.max(...groupCards.map((c) => c.y + c.height));
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: c.x, y: maxBottom - c.height }));
+        } else if (type === 'center-h') {
+          const avgCenterY = groupCards.reduce((sum, c) => sum + (c.y + c.height / 2), 0) / groupCards.length;
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: c.x, y: Math.round(avgCenterY - c.height / 2) }));
+        } else if (type === 'center-v') {
+          const avgCenterX = groupCards.reduce((sum, c) => sum + (c.x + c.width / 2), 0) / groupCards.length;
+          groupCards.forEach((c) => updatedCards.push({ id: c.id, x: Math.round(avgCenterX - c.width / 2), y: c.y }));
+        } else if (type === 'distribute-h') {
+          const sorted = [...groupCards].sort((a, b) => a.x - b.x);
+          const firstX = sorted[0].x;
+          const lastX = sorted[sorted.length - 1].x;
+          const totalSpacing = sorted.length > 1 ? (lastX - firstX) / (sorted.length - 1) : 0;
+          sorted.forEach((c, index) => {
+            updatedCards.push({ id: c.id, x: Math.round(firstX + index * totalSpacing), y: c.y });
+          });
+        } else if (type === 'distribute-v') {
+          const sorted = [...groupCards].sort((a, b) => a.y - b.y);
+          const firstY = sorted[0].y;
+          const lastY = sorted[sorted.length - 1].y;
+          const totalSpacing = sorted.length > 1 ? (lastY - firstY) / (sorted.length - 1) : 0;
+          sorted.forEach((c, index) => {
+            updatedCards.push({ id: c.id, x: c.x, y: Math.round(firstY + index * totalSpacing) });
+          });
+        } else if (type === 'grid') {
+          const sorted = [...groupCards].sort((a, b) => {
+            const bandA = Math.floor(a.y / 180);
+            const bandB = Math.floor(b.y / 180);
+            if (bandA !== bandB) return bandA - bandB;
+            return a.x - b.x;
+          });
+
+          const count = sorted.length;
+          let numCols = 3;
+          if (count <= 2) numCols = count;
+          else if (count <= 4) numCols = 2;
+          else if (count <= 9) numCols = 3;
+          else numCols = 4;
+
+          const numRows = Math.ceil(count / numCols);
+          const matrix: (Card | null)[][] = Array.from({ length: numRows }, () =>
+            new Array(numCols).fill(null)
+          );
+
+          sorted.forEach((card, index) => {
+            const r = Math.floor(index / numCols);
+            const c = index % numCols;
+            matrix[r][c] = card;
+          });
+
+          const rowHeights = new Array(numRows).fill(300);
+          for (let r = 0; r < numRows; r++) {
+            let maxH = 260;
+            for (let c = 0; c < numCols; c++) {
+              const card = matrix[r][c];
+              if (card) maxH = Math.max(maxH, card.height || 320);
+            }
+            rowHeights[r] = maxH;
+          }
+
+          const colWidths = new Array(numCols).fill(340);
+          for (let c = 0; c < numCols; c++) {
+            let maxW = 320;
+            for (let r = 0; r < numRows; r++) {
+              const card = matrix[r][c];
+              if (card) maxW = Math.max(maxW, card.width || 340);
+            }
+            colWidths[c] = maxW;
+          }
+
+          const minX = Math.min(...groupCards.map((c) => c.x));
+          const minY = Math.min(...groupCards.map((c) => c.y));
+          const gapX = 36;
+          const gapY = 36;
+
+          const colStartX = new Array(numCols).fill(minX);
+          for (let c = 1; c < numCols; c++) {
+            colStartX[c] = colStartX[c - 1] + colWidths[c - 1] + gapX;
+          }
+
+          const rowStartY = new Array(numRows).fill(minY);
+          for (let r = 1; r < numRows; r++) {
+            rowStartY[r] = rowStartY[r - 1] + rowHeights[r - 1] + gapY;
+          }
+
+          for (let r = 0; r < numRows; r++) {
+            for (let c = 0; c < numCols; c++) {
+              const card = matrix[r][c];
+              if (card) {
+                updatedCards.push({
+                  id: card.id,
+                  x: colStartX[c],
+                  y: rowStartY[r],
+                });
+              }
+            }
           }
         }
       }
-    }
+    });
 
     if (updatedCards.length > 0) {
       const updateMap = new Map(updatedCards.map((u) => [u.id, u]));
       set((state) => ({
         allCards: state.allCards.map((c) => {
           const match = updateMap.get(c.id);
-          return match ? { ...c, x: match.x, y: match.y, updatedAt: new Date().toISOString() } : c;
+          if (!match) return c;
+          return {
+            ...c,
+            x: match.x,
+            y: match.y,
+            sectionId: match.sectionId !== undefined ? match.sectionId : c.sectionId,
+            updatedAt: new Date().toISOString(),
+          };
         }),
+        allSections:
+          sectionSizeUpdates.size === 0
+            ? state.allSections
+            : state.allSections.map((s) => {
+                const upd = sectionSizeUpdates.get(s.id);
+                return upd ? { ...s, width: upd.width, height: upd.height } : s;
+              }),
       }));
       soundFx.playDrop();
       get().saveBoardLocally();

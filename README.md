@@ -50,7 +50,7 @@ flowchart TD
 
 - **Freeform Viewport & Navigation**: Navigate across unlimited spatial coordinates using click-and-drag panning, `Space + Drag`, middle-mouse panning, or trackpad gestures.
 - **Precision Zooming & Fit-to-Screen**: Zoom from 25% to 250% anchored dynamically to cursor coordinates, or press `Shift + 1` (or click Zoom-to-Fit) to smoothly frame all cards with optimal padding.
-- **Auto-Tidy & 2D Grid Alignment**: One-click intelligent layout algorithm that reorganizes cards into a balanced 2D matrix aligned strictly along both horizontal rows and vertical columns with zero overlapping.
+- **Auto-Tidy & 2D Grid Alignment**: One-click intelligent layout algorithm that reorganizes cards into a balanced 2D matrix aligned strictly along both horizontal rows and vertical columns with zero overlapping. Fully section-aware: cards placed within sections remain strictly bound inside their section frame, wrap dynamically to the section's available width, and auto-expand section bounds without drowning cards out.
 - **Visual Section Group Frames (Milanote / Miro Style)**: Labeled translucent group containers that visually organize cards into spatial work zones (e.g., *Focus & Intentions*, *Sprint Tasks*, *Research*). Selecting a section automatically routes newly added cards inside it in a neat non-overlapping layout, automatically adapts card widths to the section geometry, auto-expands section height when needed, and moves all contained cards together when dragging.
 - **Focused Viewport-Aware Placement & Auto-Pan**: Adding a new card prioritizes placing it in non-overlapping, vacant space directly inside the active visible viewport (focused canvas area). If the visible viewport is completely filled, it automatically places the card in the nearest adjacent open space and smoothly pans/focuses the canvas directly onto the new card.
 - **Spotlight & Type Filter Bar (`Ctrl + F`)**: Instant top filter bar offering full-text / `#tag` search and 1-click card type filtering (`[All]`, `[Notes]`, `[Tasks]`, `[Events]`, `[Embeds]`, `[Media]`, `[Code]`, `[Palettes]`, `[Metrics]`) that highlights matches and gently dims background clutter.
@@ -68,7 +68,7 @@ flowchart TD
 
 - **Isolated Boards**: Create independent spatial contexts (e.g., Daily Scratchpad, Engineering Roadmap, Creative Moodboard).
 - **Workspace Switcher**: Top navigation menu for instantaneous board transitions, featuring mode badges and direct mode switching.
-- **Board Management**: Inline workspace renaming and safe two-click inline workspace deletion with active board failover, drop sound effects, and persistent local/cloud synchronization.
+- **Board Management**: Inline workspace renaming and confirmation-guarded workspace deletion dialog with active board failover, drop sound effects, and persistent local/cloud synchronization.
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
 - **Curated Workspace Modes (10 Roles)**: Tailor boards for *Developer*, *Designer*, *Video Editor*, *Graphic Designer*, *Marketing*, *Creator/Influencer*, *Product Manager*, *Architect*, *Music Producer*, and *Author*.
 - **Dynamic Visual Atmosphere**: Distinct canvas styling per mode — technical blueprint drafting grid for Architects, obsidian terminal carbon for Developers, warm manuscript paper for Authors, and calibrated dot matrix tones.
