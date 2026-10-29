@@ -1,0 +1,29 @@
+# Drag2Place
+
+> Drag2Place is an open-source, spatial personal workspace and visual dashboard inspired by Milanote. Designed for organizing thoughts, planning projects, tracking deadlines, and assembling visual moodboards on an infinite, hardware-accelerated freeform canvas.
+
+## Overview
+- Architecture: Next.js (App Router), TypeScript, Tailwind CSS, Zustand, Supabase PostgreSQL with Row Level Security (RLS).
+- Mode: Local-first offline resilience with optional Supabase cloud synchronization.
+- Visual Canvas: Pan, zoom (25% - 250%), auto-tidy 2D grid matrix alignment, Milanote-style section frame grouping, bezier connection lines, radar minimap, and smart alignment guides.
+
+## Dynamic Card Types
+1. Notes and Prose: Markdown-capable stationery notes with Oregon LDO, Editorial Serif, Modern Sans, and Monospace typography.
+2. Checklists and Tasks: Multi-step to-do cards with progress counters and confetti celebrations.
+3. Code Snippets: Terminal-styled cards with line numbers and copy functionality.
+4. Data Grid / Editable Tables: Tabular backlog and specification cards with add/remove rows.
+5. Interactive Color Palettes: Hex swatch cards with real-time WCAG contrast ratio checks (AA/AAA).
+6. Audio Visualizer & Memo: Interactive audio player with custom streaming URLs and waveform visualizer.
+7. Countdown Launch Timer: Live ticking timer displaying days, hours, minutes, and seconds.
+8. Editorial Pull-Quotes: Memorable quote cards with author attribution.
+9. KPI Goal Metrics: Target tracking with progress bars and quick adjustment increments.
+10. Canvas Comments: Spatial review pins with discussion threads and resolved status toggles.
+11. Web Link & Media Embeds: Rich OpenGraph bookmarks and interactive embeds for YouTube, Spotify, Figma, and Loom.
+12. Events & Deadlines: Date pickers, Google Calendar 1-click sync, and .ics export.
+13. Media & Moodboards: Image upload and URL support with full-screen lightbox preview.
+
+## Curated Workspace Modes
+- Developer, Designer, Video Editor, Graphic Designer, Marketing, Creator/Influencer, Product Manager, Architect, Music Producer, and Author.
+
+## Links & Repository
+- Repository: https://github.com/PramudithaN/drag2place

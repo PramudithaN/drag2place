@@ -183,6 +183,16 @@ Curated professional workspace presets featuring domain-tailored card content, c
   - **Collision-Free Canvas Controls**: Dynamically floats above the dock on mobile screens, preserving zoom in/out, 100% reset, and theme toggling without overlapping tools.
   - **Responsive Modals**: All modals (Command Palette, Mode Selector, Export, Shortcuts, Auth, Notifications) adapt seamlessly from desktop monitors down to 360px mobile viewports with fluid scrolling and touch dismissal.
 
+### 14. Search Engine Optimization (SEO) & Crawler Discovery
+
+- **Robots Directives (`/robots.txt`)**: Programmatic Next.js App Router route (`src/app/robots.ts`) defining explicit crawl permissions and disallowing internal API endpoints for standard web engines (Googlebot, Bingbot, Applebot, Baidu, DuckDuckBot) as well as AI search indexers (GPTBot, ClaudeBot, PerplexityBot, CCBot, Bytespider).
+- **Dynamic Sitemap (`/sitemap.xml`)**: Automated sitemap generation (`src/app/sitemap.ts`) advertising canonical URLs, change frequencies, and index priority.
+- **Web Application Manifest (`/manifest.webmanifest`)**: PWA manifest (`src/app/manifest.ts`) providing native discoverability, standalone window display settings, branding icons, and theme colors.
+- **Rich OpenGraph & Twitter Cards**: Comprehensive social graph metadata (`src/app/layout.tsx`) including 1200x630 hero previews, responsive titles, localized descriptions, and author attribution.
+- **Schema.org Structured Data (JSON-LD)**: Search-engine readable semantic graph (`src/components/seo/JsonLd.tsx`) outputting structured `WebApplication` and `WebSite` schemas with feature lists, zero-cost offer models, and platform specifications.
+- **AI Search & LLM Discovery (`/llms.txt`)**: Machine-readable context file (`public/llms.txt`) tailored for modern generative AI search crawlers (Perplexity, ChatGPT, Claude) describing capabilities, card taxonomy, and repository links.
+- **Server-Rendered Semantic Outline & Non-JS Fallback**: Server Component boundary in `src/app/page.tsx` rendering an accessible semantic `<h1>` / `<h2>` hierarchy for zero-JS crawlers, accompanied by a clean `<noscript>` guidance fallback.
+
 ---
 
 ## Technology Stack
@@ -210,18 +220,23 @@ drag2place/
 │   ├── fonts/                   # Luke Owens Oregon LDO TrueType binaries
 │   ├── drag2place-display.png   # Workspace showcase / application display
 │   ├── drag2placeLogo.png       # Primary 1080x1080 brand logo
-│   └── favicon.ico              # Root favicon
+│   ├── favicon.ico              # Root favicon
+│   └── llms.txt                 # AI search and LLM crawler context manifest
 ├── src/
 │   ├── app/                     # Next.js App Router root
 │   │   ├── apple-icon.png       # Dynamic iOS touch icon endpoint
 │   │   ├── icon.png             # Dynamic standard icon endpoint
 │   │   ├── favicon.ico          # Dynamic browser tab favicon
 │   │   ├── globals.css          # Tailwind CSS v4 variables & theme overrides
-│   │   ├── layout.tsx           # Root layout, metadata, and font declarations
+│   │   ├── layout.tsx           # Root layout, metadata, OpenGraph, JSON-LD, and fonts
+│   │   ├── manifest.ts          # Web Application Manifest generator
 │   │   ├── oregon-font.css      # Base64 embedded Oregon LDO font definitions
-│   │   └── page.tsx             # Canvas entry point
+│   │   ├── page.tsx             # Server-rendered entry point with crawlable semantic outline
+│   │   ├── robots.ts            # Crawler and bot indexer directives (robots.txt)
+│   │   └── sitemap.ts           # Dynamic sitemap generator (sitemap.xml)
 │   ├── components/
 │   │   ├── canvas/              # Spatial engine
+│   │   │   ├── CanvasContainer.tsx  # Dynamic client canvas wrapper with loading fallback
 │   │   │   ├── CanvasControls.tsx   # Zoom, pan, snap, theme, sound toggles
 │   │   │   ├── CanvasGrid.tsx       # Dot matrix canvas grid
 │   │   │   ├── ConnectionLine.tsx   # Cubic bezier vector connections
@@ -248,6 +263,8 @@ drag2place/
 │   │   │   ├── OnboardingHint.tsx   # First-visit quick gesture & shortcut guidance
 │   │   │   ├── ProfileDropdown.tsx  # User avatar, account menu, and sign out
 │   │   │   └── ShortcutsModal.tsx   # Keyboard shortcuts & controls guide (?)
+│   │   ├── seo/                 # Structured data & crawler components
+│   │   │   └── JsonLd.tsx           # Schema.org WebApplication & WebSite JSON-LD
 │   │   └── ui/                  # Reusable presentation components
 │   │       ├── ConfirmationModal.tsx # Universal destructive action confirmation dialog
 │   │       └── Modal.tsx            # Accessible dialog primitive with portal & scroll lock
@@ -258,6 +275,7 @@ drag2place/
 │   │   ├── colors.ts            # Centralized tactile color palettes & Tailwind tokens
 │   │   ├── initialData.ts       # Baseline workspace templates, cards, and connections
 │   │   ├── notifications.ts     # Browser notification service
+│   │   ├── site.ts              # Canonical site configuration & SEO metadata constants
 │   │   ├── sound.ts             # Web Audio API acoustic synthesizer
 │   │   ├── store.ts             # Primary Zustand store with sync drivers
 │   │   ├── useClickOutside.ts   # Reusable outside-click detection hook
