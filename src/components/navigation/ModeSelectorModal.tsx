@@ -5,21 +5,9 @@ import { useBoardStore } from '@/lib/store';
 import { WORKSPACE_MODES } from '@/lib/templates';
 import { WorkspaceMode } from '@/types/board';
 import { Modal } from '@/components/ui/Modal';
-import {
-  X,
-  Terminal,
-  Layout,
-  Video,
-  PenTool,
-  Megaphone,
-  Camera,
-  Target,
-  Building2,
-  Music,
-  BookOpen,
-  ArrowRight,
-} from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
+import { WORKSPACE_MODE_CONFIGS, renderModeIcon } from '@/lib/modes';
 
 interface ModeSelectorModalProps {
   isOpen: boolean;
@@ -33,56 +21,6 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
     soundFx.playDrop();
     createBoardFromTemplate(mode, scenarioId);
     onClose();
-  };
-
-  const getModeIcon = (mode: WorkspaceMode) => {
-    switch (mode) {
-      case 'developer':
-        return <Terminal size={20} className="text-sky-600 dark:text-sky-400" />;
-      case 'designer':
-        return <Layout size={20} className="text-emerald-600 dark:text-emerald-400" />;
-      case 'video_editor':
-        return <Video size={20} className="text-amber-600 dark:text-amber-400" />;
-      case 'graphic_designer':
-        return <PenTool size={20} className="text-purple-600 dark:text-purple-400" />;
-      case 'marketing':
-        return <Megaphone size={20} className="text-orange-600 dark:text-orange-400" />;
-      case 'influencer':
-        return <Camera size={20} className="text-rose-600 dark:text-rose-400" />;
-      case 'product_manager':
-        return <Target size={20} className="text-indigo-600 dark:text-indigo-400" />;
-      case 'architect':
-        return <Building2 size={20} className="text-teal-600 dark:text-teal-400" />;
-      case 'music_producer':
-        return <Music size={20} className="text-violet-600 dark:text-violet-400" />;
-      case 'author':
-        return <BookOpen size={20} className="text-stone-700 dark:text-stone-300" />;
-    }
-  };
-
-  const getAccentBg = (mode: WorkspaceMode) => {
-    switch (mode) {
-      case 'developer':
-        return 'bg-sky-50 dark:bg-sky-950/40 border-sky-200/80 dark:border-sky-800/60';
-      case 'designer':
-        return 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-800/60';
-      case 'video_editor':
-        return 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60';
-      case 'graphic_designer':
-        return 'bg-purple-50 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-800/60';
-      case 'marketing':
-        return 'bg-orange-50 dark:bg-orange-950/40 border-orange-200/80 dark:border-orange-800/60';
-      case 'influencer':
-        return 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/60';
-      case 'product_manager':
-        return 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200/80 dark:border-indigo-800/60';
-      case 'architect':
-        return 'bg-teal-50 dark:bg-teal-950/40 border-teal-200/80 dark:border-teal-800/60';
-      case 'music_producer':
-        return 'bg-violet-50 dark:bg-violet-950/40 border-violet-200/80 dark:border-violet-800/60';
-      case 'author':
-        return 'bg-stone-100 dark:bg-stone-900/60 border-stone-200 dark:border-stone-700';
-    }
   };
 
   return (
@@ -135,8 +73,8 @@ export const ModeSelectorModal: React.FC<ModeSelectorModalProps> = ({ isOpen, on
             >
               <div>
                 <div className="flex items-center justify-between mb-2.5 sm:mb-3">
-                  <div className={`p-2 sm:p-2.5 rounded-xl border ${getAccentBg(modeKey)}`}>
-                    {getModeIcon(modeKey)}
+                  <div className={`p-2 sm:p-2.5 rounded-xl border ${WORKSPACE_MODE_CONFIGS[modeKey].accentBgClass} ${WORKSPACE_MODE_CONFIGS[modeKey].accentBorderClass}`}>
+                    {renderModeIcon(modeKey, 20)}
                   </div>
                   <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded-md">
                     {template.badge}

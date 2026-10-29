@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Card, Connection, Board, CardType, CardColor, CardContent, EventCardData, ConfirmModalConfig, WorkspaceMode, BoardSection, CardStatus } from '@/types/board';
 import { WORKSPACE_MODES } from './templates';
+import { WORKSPACE_MODE_CONFIGS } from './modes';
 import { soundFx } from './sound';
 import { notificationService } from './notifications';
 import { getSupabase } from './supabase/client';
@@ -28,6 +29,7 @@ interface BoardState {
   createBoard: (title: string, description?: string) => Board;
   createBoardFromTemplate: (mode: WorkspaceMode, scenarioId?: string) => Board;
   updateBoardTitle: (boardId: string, title: string) => void;
+  updateBoardMode: (boardId: string, mode: WorkspaceMode) => void;
   deleteBoard: (boardId: string) => void;
 
   // Theme actions
@@ -85,7 +87,7 @@ interface BoardState {
   clearSelection: () => void;
   
   // Card operations
-  addCard: (type: CardType, position?: { x: number; y: number }) => Card;
+  addCard: (type?: CardType, position?: { x: number; y: number }) => Card;
   duplicateCard: (id: string) => Card | null;
   duplicateSelectedCards: () => Card[];
   updateCardPosition: (id: string, x: number, y: number) => void;
@@ -396,13 +398,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       updatedAt: new Date().toISOString(),
     };
 
-    const createdCards: Card[] = template.cards.map((c, idx) => ({
-      ...c,
-      id: `card-${mode}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}-${idx}`,
+    const createdSections: BoardSection[] = (template.sections || []).map((sec, idx) => ({
+      ...sec,
+      id: `sec-${mode}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}-${idx}`,
       boardId: newBoardId,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     }));
+
+    const createdCards: Card[] = template.cards.map((c, idx) => {
+      const parentSection = createdSections.find(
+        (s) =>
+          c.x >= s.x &&
+          c.x <= s.x + s.width &&
+          c.y >= s.y &&
+          c.y <= s.y + s.height
+      );
+      return {
+        ...c,
+        id: `card-${mode}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}-${idx}`,
+        boardId: newBoardId,
+        sectionId: parentSection?.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    });
 
     const createdConnections: Connection[] = [];
 
@@ -412,6 +431,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       activeBoardId: newBoard.id,
       currentBoard: newBoard,
       allCards: [...state.allCards, ...createdCards],
+      allSections: [...state.allSections, ...createdSections],
       allConnections: [...state.allConnections, ...createdConnections],
       selectedCardIds: [createdCards[0]?.id || ''],
     }));
@@ -430,6 +450,24 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       return { boards: updatedBoards, currentBoard: updatedCurrent };
     });
     get().saveBoardLocally();
+  },
+
+  updateBoardMode: (boardId: string, mode: WorkspaceMode) => {
+    soundFx.playCheck();
+    const modeConfig = WORKSPACE_MODE_CONFIGS[mode] || WORKSPACE_MODE_CONFIGS.developer;
+    notificationService.trigger(
+      'Workspace Mode Updated',
+      `Switched to ${modeConfig.name} (${modeConfig.badge}). Dock & canvas grid adapted.`
+    );
+    set((state) => {
+      const updatedBoards = state.boards.map((b) =>
+        b.id === boardId ? { ...b, mode, updatedAt: new Date().toISOString() } : b
+      );
+      const updatedCurrent = state.currentBoard.id === boardId ? { ...state.currentBoard, mode } : state.currentBoard;
+      return { boards: updatedBoards, currentBoard: updatedCurrent };
+    });
+    get().saveBoardLocally();
+    get().syncWithSupabase();
   },
 
   deleteBoard: (boardId: string) => {
@@ -758,27 +796,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set({ selectedCardIds: activeCards.map((c) => c.id) });
   },
 
-  addCard: (type: CardType, position?: { x: number; y: number }) => {
+  addCard: (type?: CardType, position?: { x: number; y: number }) => {
     const { currentBoard, allCards, allSections, selectedSectionId, activeBoardId, getActiveCards } = get();
     const highestZ = allCards.reduce((max, c) => Math.max(max, c.zIndex), 0);
     const activeCards = getActiveCards();
+    const activeMode = currentBoard.mode || 'developer';
+    const modeConfig = WORKSPACE_MODE_CONFIGS[activeMode] || WORKSPACE_MODE_CONFIGS.developer;
+    const resolvedType: CardType = type || modeConfig.defaultCardType;
 
     let targetCardWidth =
-      type === 'code' || type === 'table'
+      resolvedType === 'code' || resolvedType === 'table'
         ? 380
-        : type === 'palette' || type === 'audio' || type === 'countdown' || type === 'quote'
+        : resolvedType === 'palette' || resolvedType === 'audio' || resolvedType === 'countdown' || resolvedType === 'quote'
         ? 320
-        : type === 'image' || type === 'link'
+        : resolvedType === 'image' || resolvedType === 'link'
         ? 340
-        : type === 'comment'
+        : resolvedType === 'comment'
         ? 270
         : 300;
     const cardHeight =
-      type === 'event' || type === 'comment' || type === 'audio' || type === 'countdown'
+      resolvedType === 'event' || resolvedType === 'comment' || resolvedType === 'audio' || resolvedType === 'countdown'
         ? 240
-        : type === 'metric' || type === 'quote'
+        : resolvedType === 'metric' || resolvedType === 'quote'
         ? 260
-        : type === 'table'
+        : resolvedType === 'table'
         ? 320
         : 340;
 
@@ -1059,35 +1100,39 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }
 
     const defaultColors: Record<CardType, CardColor> = DEDICATED_TYPE_COLORS;
+    const cardColor: CardColor =
+      !type && modeConfig.defaultCardColor
+        ? modeConfig.defaultCardColor
+        : defaultColors[resolvedType];
 
     let initialContent: CardContent;
 
-    if (type === 'todo') {
+    if (resolvedType === 'todo') {
       initialContent = {
         title: 'New Checklist',
         items: [
           { id: Math.random().toString(36).substring(2, 7), text: 'First task', completed: false },
         ],
       };
-    } else if (type === 'event') {
+    } else if (resolvedType === 'event') {
       initialContent = {
         title: 'New Event',
         date: new Date().toISOString().split('T')[0],
         startTime: '12:00',
         reminderMinutesBefore: 15,
       };
-    } else if (type === 'image') {
+    } else if (resolvedType === 'image') {
       initialContent = {
         url: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?q=80&w=1000&auto=format&fit=crop',
         caption: 'Aesthetic moodboard item',
       };
-    } else if (type === 'code') {
+    } else if (resolvedType === 'code') {
       initialContent = {
         title: 'Code Snippet',
         code: '// Paste or write code snippet here\nfunction calculateScore(x: number) {\n  return x * 1.5;\n}',
         language: 'typescript',
       };
-    } else if (type === 'palette') {
+    } else if (resolvedType === 'palette') {
       initialContent = {
         title: 'Color Palette',
         swatches: [
@@ -1097,7 +1142,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           { id: 'sw-4', name: 'Deep Slate', hex: '#3D405B', pantone: '534 C' },
         ],
       };
-    } else if (type === 'metric') {
+    } else if (resolvedType === 'metric') {
       initialContent = {
         title: 'Key Metric Goal',
         currentValue: 120,
@@ -1105,27 +1150,27 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         unit: 'users',
         subtitle: 'Target for Q4 Launch',
       };
-    } else if (type === 'comment') {
+    } else if (resolvedType === 'comment') {
       initialContent = {
         author: 'Reviewer',
         text: '',
         resolved: false,
         createdAt: new Date().toISOString(),
       };
-    } else if (type === 'link') {
+    } else if (resolvedType === 'link') {
       initialContent = {
         url: '',
         title: '',
         description: '',
       };
-    } else if (type === 'audio') {
+    } else if (resolvedType === 'audio') {
       initialContent = {
         title: 'Audio Track',
         artist: 'Voice Memo / Sound Design',
         url: '',
         duration: 180,
       };
-    } else if (type === 'table') {
+    } else if (resolvedType === 'table') {
       initialContent = {
         title: 'Project Backlog',
         columns: ['Feature / Milestone', 'Priority', 'Status'],
@@ -1135,7 +1180,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           { id: 'r3', cells: ['Vector Die-line Exporter', 'Low', 'Backlog'] },
         ],
       };
-    } else if (type === 'countdown') {
+    } else if (resolvedType === 'countdown') {
       const target = new Date();
       target.setDate(target.getDate() + 7);
       target.setHours(12, 0, 0, 0);
@@ -1144,7 +1189,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         targetDate: target.toISOString().slice(0, 16),
         description: 'Product Launch Date',
       };
-    } else if (type === 'quote') {
+    } else if (resolvedType === 'quote') {
       initialContent = {
         quote: 'Simplicity is about subtracting the obvious and adding the meaningful.',
         author: 'John Maeda',
@@ -1154,7 +1199,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       initialContent = {
         title: '',
         body: '',
-        fontFamily: 'oregon',
+        fontFamily: modeConfig.defaultNoteFont,
         fontSize: 'base',
       };
     }
@@ -1162,13 +1207,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const newCard: Card = {
       id: `card-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       boardId: activeBoardId,
-      type,
+      type: resolvedType,
       x: posX,
       y: posY,
       width: targetCardWidth,
       height: cardHeight,
       zIndex: highestZ + 1,
-      color: defaultColors[type],
+      color: cardColor,
       content: initialContent,
       sectionId: assignedSectionId,
       createdAt: new Date().toISOString(),

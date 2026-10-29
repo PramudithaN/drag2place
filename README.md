@@ -64,12 +64,17 @@ flowchart TD
 - **Hardware-Accelerated Dragging**: Direct CSS transform hardware layer promotion with zero interpolation latency.
 - **Dot Matrix Grid**: Responsive background matrix with optional 20px snap-to-grid alignment.
 
-### 2. Multi-Board Workspaces
+### 2. Multi-Board Workspaces & Role-Specific Modes
 
 - **Isolated Boards**: Create independent spatial contexts (e.g., Daily Scratchpad, Engineering Roadmap, Creative Moodboard).
-- **Workspace Switcher**: Top navigation menu for instantaneous board transitions.
+- **Workspace Switcher**: Top navigation menu for instantaneous board transitions, featuring mode badges and direct mode switching.
 - **Board Management**: Inline workspace renaming and safe two-click inline workspace deletion with active board failover, drop sound effects, and persistent local/cloud synchronization.
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
+- **Curated Workspace Modes (10 Roles)**: Tailor boards for *Developer*, *Designer*, *Video Editor*, *Graphic Designer*, *Marketing*, *Creator/Influencer*, *Product Manager*, *Architect*, *Music Producer*, and *Author*.
+- **Dynamic Visual Atmosphere**: Distinct canvas styling per mode — technical blueprint drafting grid for Architects, obsidian terminal carbon for Developers, warm manuscript paper for Authors, and calibrated dot matrix tones.
+- **Mode-Aware Primary Medium & Spawning**: Double-clicking empty canvas or quick-adding automatically spawns the mode's primary card type (Code for Developers, Color Palettes for Designers, Audio for Music Producers, Notes for Authors) with mode-tailored typography and colors.
+- **Interactive Mode Badge & On-The-Fly Switcher**: Header pill badge displaying the active mode's icon and styling, with instant mode switching directly from the workspace dropdown without having to recreate the board.
+- **Auto-Structured Section Frames**: Template generation automatically arranges starter cards inside Milanote-style translucent section frames grouping cards into functional work zones.
 
 ### 3. Visual Card Suite (13 Dynamic Types)
 

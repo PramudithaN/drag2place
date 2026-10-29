@@ -3,8 +3,10 @@
 import React, { useState, useRef } from 'react';
 import { useBoardStore } from '@/lib/store';
 import { useClickOutside } from '@/lib/useClickOutside';
-import { ChevronDown, Plus, Trash2, Check, Layout, Edit2, Compass, X } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Check, Edit2, Compass, X } from 'lucide-react';
 import { ModeSelectorModal } from './ModeSelectorModal';
+import { WORKSPACE_MODE_CONFIGS, renderModeIcon } from '@/lib/modes';
+import { WorkspaceMode } from '@/types/board';
 
 interface BoardSwitcherProps {
   onOpenModes?: () => void;
@@ -18,6 +20,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
     switchBoard,
     createBoard,
     updateBoardTitle,
+    updateBoardMode,
     deleteBoard,
     allCards,
   } = useBoardStore();
@@ -30,6 +33,9 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
   const [isCreating, setIsCreating] = useState(false);
   const [deletingBoardId, setDeletingBoardId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const activeMode: WorkspaceMode = currentBoard.mode || 'developer';
+  const modeConfig = WORKSPACE_MODE_CONFIGS[activeMode] || WORKSPACE_MODE_CONFIGS.developer;
 
   useClickOutside(
     menuRef,
@@ -64,7 +70,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* Board Title Trigger */}
+      {/* Board Title & Mode Pill Trigger */}
       <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-400">
         {isEditing ? (
           <form onSubmit={handleSaveTitle} className="flex items-center gap-1">
@@ -102,13 +108,27 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
             <ChevronDown size={13} className="text-stone-400 group-hover:text-stone-700 dark:group-hover:text-stone-200 transition-transform shrink-0" />
           </button>
         )}
+
+        {/* Mode Pill Badge */}
+        <button
+          type="button"
+          onClick={() => {
+            if (onOpenModes) onOpenModes();
+            else setIsModeModalOpen(true);
+          }}
+          className={`hidden xs:flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-lg border text-[10px] sm:text-[11px] font-sans font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer ${modeConfig.accentBgClass} ${modeConfig.accentTextClass} ${modeConfig.accentBorderClass}`}
+          title={`Active Workspace Mode: ${modeConfig.name} (${modeConfig.badge}) - Click to browse all modes`}
+        >
+          {renderModeIcon(activeMode, 11)}
+          <span className="font-semibold">{modeConfig.name}</span>
+        </button>
       </div>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div
           onWheel={(e) => e.stopPropagation()}
-          className="absolute left-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] p-2 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1"
+          className="absolute left-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] p-2.5 bg-[#FAF8F5] dark:bg-[#1C1A17] border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl shadow-xl z-50 flex flex-col space-y-1.5"
         >
           <div className="flex items-center justify-between px-2 py-1 text-[11px] font-mono uppercase tracking-wider text-stone-400 dark:text-stone-500 border-b border-stone-200 dark:border-stone-800">
             <span>Workspaces</span>
@@ -126,11 +146,12 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
           </div>
 
           {/* Boards List */}
-          <div className="max-h-56 overflow-y-auto space-y-0.5 py-1 scrollbar-thin">
+          <div className="max-h-48 overflow-y-auto space-y-0.5 py-1 scrollbar-thin">
             {boards.map((b) => {
               const count = allCards.filter((c) => c.boardId === b.id).length;
               const isActive = b.id === activeBoardId;
               const isConfirmingDelete = deletingBoardId === b.id;
+              const bMode = b.mode || 'developer';
 
               return (
                 <div
@@ -148,7 +169,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate min-w-0">
-                    <Layout size={13} className="shrink-0" />
+                    <span className="shrink-0">{renderModeIcon(bMode, 13)}</span>
                     <span className="font-oregon truncate">{b.title}</span>
                   </div>
 
@@ -224,6 +245,41 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
             })}
           </div>
 
+          {/* Active Board Mode Quick Switcher */}
+          <div className="p-2 bg-stone-100/80 dark:bg-stone-900/60 rounded-xl border border-stone-200/70 dark:border-stone-800/70 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-stone-500 dark:text-stone-400">
+              <span className="flex items-center gap-1">
+                <Compass size={11} className="text-amber-600 dark:text-amber-400" />
+                Mode: <span className="font-semibold text-stone-800 dark:text-stone-200">{modeConfig.name}</span>
+              </span>
+              <span className="text-[9px] text-stone-400">Adapts Dock & Grid</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1 max-h-28 overflow-y-auto scrollbar-thin pr-0.5">
+              {(Object.keys(WORKSPACE_MODE_CONFIGS) as WorkspaceMode[]).map((m) => {
+                const isSelected = activeMode === m;
+                const mConf = WORKSPACE_MODE_CONFIGS[m];
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      updateBoardMode(activeBoardId, m);
+                    }}
+                    className={`flex items-center gap-1 px-1.5 py-1 rounded-lg text-[10px] font-medium transition-all text-left cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-400/40 font-semibold shadow-xs'
+                        : 'hover:bg-stone-200/60 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300'
+                    }`}
+                    title={mConf.description}
+                  >
+                    <span className="shrink-0">{renderModeIcon(m, 10)}</span>
+                    <span className="truncate">{mConf.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Create New Board Form */}
           {isCreating ? (
             <form onSubmit={handleCreateNew} className="pt-1 border-t border-stone-200 dark:border-stone-800">
@@ -258,7 +314,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
                   setIsCreating(true);
                   setDeletingBoardId(null);
                 }}
-                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 rounded-xl transition-colors cursor-pointer"
               >
                 <Plus size={13} />
                 <span>Create Blank Board</span>
@@ -273,7 +329,7 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
                     setIsModeModalOpen(true);
                   }
                 }}
-                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 w-full p-2 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors cursor-pointer"
               >
                 <Compass size={13} />
                 <span>Start from Mode Template...</span>

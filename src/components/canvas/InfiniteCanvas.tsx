@@ -15,6 +15,7 @@ import { MultiSelectActionBar } from './MultiSelectActionBar';
 import { CanvasMinimap } from './CanvasMinimap';
 import { SectionFrame } from './SectionFrame';
 import { SpotlightFilterBar } from './SpotlightFilterBar';
+import { WORKSPACE_MODE_CONFIGS } from '@/lib/modes';
 
 export const InfiniteCanvas: React.FC = () => {
   const {
@@ -697,12 +698,40 @@ export const InfiniteCanvas: React.FC = () => {
   // Find cards for connection lines
   const cardMap = new Map(cards.map((c) => [c.id, c]));
 
+  // Mode configuration & canvas styling
+  const activeMode = currentBoard.mode || 'developer';
+  const modeConfig = WORKSPACE_MODE_CONFIGS[activeMode] || WORKSPACE_MODE_CONFIGS.developer;
+
+  // Double-click empty canvas to spawn mode's primary card
+  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    if (
+      target.closest('.card-wrapper') ||
+      target.closest('.section-frame-header') ||
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('[role="dialog"]') ||
+      target.closest('.no-canvas-click')
+    ) {
+      return;
+    }
+
+    const zoom = Math.max(0.1, currentBoard.zoom || 1);
+    const worldX = Math.round(e.clientX / zoom - currentBoard.pan.x - 150);
+    const worldY = Math.round(e.clientY / zoom - currentBoard.pan.y - 70);
+
+    addCard(undefined, { x: worldX, y: worldY });
+  };
+
   return (
     <div
       ref={containerRef}
       onMouseDown={handleMouseDown}
+      onDoubleClick={handleCanvasDoubleClick}
       onContextMenu={handleContextMenu}
-      className={`relative w-screen h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] select-none touch-none ${
+      className={`relative w-screen h-screen overflow-hidden ${modeConfig.canvasBgClass} transition-colors duration-500 select-none touch-none ${
         isPanning
           ? 'cursor-grabbing'
           : activeTool === 'connect'

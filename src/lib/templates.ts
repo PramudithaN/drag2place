@@ -1,4 +1,4 @@
-import { WorkspaceMode, Card } from '@/types/board';
+import { WorkspaceMode, Card, BoardSection } from '@/types/board';
 
 export interface ScenarioTemplate {
   id: string;
@@ -8,6 +8,7 @@ export interface ScenarioTemplate {
   boardTitle: string;
   boardDescription: string;
   cards: Omit<Card, 'id' | 'boardId' | 'createdAt' | 'updatedAt'>[];
+  sections?: Omit<BoardSection, 'id' | 'boardId' | 'createdAt'>[];
 }
 
 export interface ModeHeadstarter {
@@ -27,6 +28,7 @@ export interface ModeHeadstarter {
     style?: 'solid' | 'dashed' | 'curved';
     color?: string;
   }[];
+  sections?: Omit<BoardSection, 'id' | 'boardId' | 'createdAt'>[];
   subScenarios?: ScenarioTemplate[];
 }
 
@@ -43,6 +45,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Designed for full-stack developers and DevOps leads managing microservices contracts, database migrations, hotfix sprints, and cluster cutovers.',
     boardTitle: 'Engineering Architecture & Incident Workspace',
     boardDescription: 'API contract specifications, SQL spatial migration scripts, sprint backlog, and production cutover telemetry.',
+    sections: [
+      { title: 'API Gateway & Spatial Database', x: 40, y: 30, width: 420, height: 790, color: 'paper' },
+      { title: 'Sprint Backlog & Production Deploy', x: 460, y: 30, width: 400, height: 790, color: 'sky' },
+      { title: 'Infrastructure Topology & SLOs', x: 860, y: 30, width: 400, height: 790, color: 'terracotta' },
+    ],
     cards: [
       {
         type: 'code',
@@ -230,6 +237,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Crafted for product designers, UI/UX architects, and design leads organizing design tokens, user study protocols, prototype mockups, and redline handoffs.',
     boardTitle: 'Design System & Usability Sprint Workspace',
     boardDescription: 'Design token hierarchy, usability test protocol, user quotes, prototype mockups, and engineering redline handoffs.',
+    sections: [
+      { title: 'Design System Tokens & Palette', x: 40, y: 30, width: 410, height: 850, color: 'cream' },
+      { title: 'Usability Sprint & User Quotes', x: 450, y: 30, width: 390, height: 850, color: 'lavender' },
+      { title: 'UI Prototypes & Canvas Pins', x: 840, y: 30, width: 400, height: 850, color: 'sage' },
+    ],
     cards: [
       {
         type: 'note',
@@ -404,6 +416,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Engineered for video editors, colorists, and post-production supervisors managing rough assemblies, DaVinci Resolve LUT node trees, sound mixes, and multi-format master exports.',
     boardTitle: 'Commercial Post-Production & Grading Workspace',
     boardDescription: 'Camera ingest specifications, rough cut assembly checklists, DaVinci Resolve color node trees, and multi-platform aspect ratio deliverables.',
+    sections: [
+      { title: 'Ingest Specs & Cutdown Schedule', x: 40, y: 30, width: 410, height: 850, color: 'paper' },
+      { title: 'DaVinci LUT Node Tree & B-Roll', x: 450, y: 30, width: 400, height: 850, color: 'amber' },
+      { title: 'Color Grade & Export Milestones', x: 850, y: 30, width: 400, height: 850, color: 'cream' },
+    ],
     cards: [
       {
         type: 'note',
@@ -978,6 +995,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Engineered for architects, interior designers, and spatial planners managing material schedules, zoning codes, floor plans, and municipal permits.',
     boardTitle: 'Architectural Design & Material Schedule',
     boardDescription: 'Spatial concept notes, Carrara marble & white oak finish schedules, building code checklists, and client walkthrough milestones.',
+    sections: [
+      { title: 'Concept Philosophy & Building Codes', x: 40, y: 30, width: 420, height: 840, color: 'cream' },
+      { title: 'Material Matrix & Finishes', x: 450, y: 30, width: 400, height: 840, color: 'sky' },
+      { title: 'Walkthroughs & Visual Context', x: 840, y: 30, width: 400, height: 840, color: 'paper' },
+    ],
     cards: [
       {
         type: 'note',
@@ -1092,6 +1114,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Designed for music producers, recording engineers, and beatmakers structuring song arrangements, vocal mixing chains, and streaming masters.',
     boardTitle: 'Audio Production & Mixdown Workspace',
     boardDescription: 'Harmonic song arrangements, Neve/Pultec vocal chains, tracking checklists, and Apple Digital Master deliverables.',
+    sections: [
+      { title: 'Signal Flow & Vocal Processing', x: 40, y: 30, width: 420, height: 850, color: 'lavender' },
+      { title: 'Song Arrangement & Stem Tracking', x: 460, y: 30, width: 400, height: 850, color: 'paper' },
+      { title: 'Mastering Delivery & Release Dates', x: 860, y: 30, width: 380, height: 850, color: 'sky' },
+    ],
     cards: [
       {
         type: 'note',
@@ -1207,6 +1234,11 @@ export const WORKSPACE_MODES: Record<WorkspaceMode, ModeHeadstarter> = {
     description: 'Tailored for novelists, screenwriters, and creative authors managing 3-act story arcs, character dossiers, manuscript drafts, and literary submissions.',
     boardTitle: 'Novel Structure & Character Dossier Board',
     boardDescription: '3-Act thematic conflict arcs, protagonist flaws, chapter word count trackers, and literary agent submission milestones.',
+    sections: [
+      { title: 'Manuscript Draft & Character Arcs', x: 40, y: 30, width: 420, height: 890, color: 'paper' },
+      { title: 'Revision Checklist & Theme Quotes', x: 460, y: 30, width: 400, height: 890, color: 'cream' },
+      { title: 'Publishing Milestones & Deadlines', x: 860, y: 30, width: 380, height: 890, color: 'terracotta' },
+    ],
     cards: [
       {
         type: 'note',
