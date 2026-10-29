@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Lora, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({
@@ -51,6 +52,7 @@ export default function RootLayout({
     >
       <body className="h-full w-full overflow-hidden bg-[#FAF8F5] dark:bg-[#141311] text-stone-800 dark:text-stone-100 font-sans">
         {children}
+        <Analytics />
       </body>
     </html>
   );
