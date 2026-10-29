@@ -119,7 +119,7 @@ flowchart TD
 ### 7. Audio and Notification Engine
 
 - **Procedural Audio Synthesizer**: Tactile soundscapes (woodblock clicks, marimba drops, mellow chimes) generated via the Web Audio API without external audio files.
-- **Dual Notification System**: Native browser Push Notifications paired with an in-app slide-out alert drawer tracking active, overdue, and upcoming milestone reminders.
+- **Dual Notification System**: Native browser Push Notifications paired with an in-app slide-out alert drawer tracking active, overdue, and upcoming milestone reminders, featuring unread counters, 1-click Mark All Read, and individual read acknowledgment with tactile audio feedback.
 
 ### 8. Cloud Synchronization and Local-First Resilience
 

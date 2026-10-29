@@ -80,6 +80,12 @@ class NotificationService {
     this.notifyListeners();
   }
 
+  public markAllAsRead() {
+    this.notifications = this.notifications.map((n) => ({ ...n, read: true }));
+    this.persist();
+    this.notifyListeners();
+  }
+
   public clearAll() {
     this.notifications = [];
     this.persist();

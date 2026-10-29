@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { notificationService, AppNotification } from '@/lib/notifications';
 import { useClickOutside } from '@/lib/useClickOutside';
-import { Bell, Trash2, Clock, X, Volume2 } from 'lucide-react';
+import { Bell, Trash2, Clock, X, Volume2, CheckCheck } from 'lucide-react';
 import { soundFx } from '@/lib/sound';
 
 interface NotificationCenterProps {
@@ -34,6 +34,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
     }
   };
 
+  const unreadCount = notifications.filter((item) => !item.read).length;
+
+  const handleMarkAllAsRead = () => {
+    notificationService.markAllAsRead();
+    soundFx.playCheck();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -47,13 +54,31 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
         <div className="flex items-center gap-2">
           <Bell size={16} className="text-stone-700 dark:text-stone-300" />
           <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Notifications & Alerts</h3>
+          {unreadCount > 0 && (
+            <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-full">
+              {unreadCount}
+            </span>
+          )}
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800"
-        >
-          <X size={15} />
-        </button>
+        <div className="flex items-center gap-1.5">
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
+              title="Mark all notifications as read"
+            >
+              <CheckCheck size={13} />
+              <span>Mark all as read</span>
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
+            title="Close notifications"
+          >
+            <X size={15} />
+          </button>
+        </div>
       </div>
 
       {/* Permission banner */}
@@ -64,7 +89,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
           </div>
           <button
             onClick={handleRequestPermission}
-            className="px-2 py-1 text-[11px] font-medium bg-amber-700 text-white rounded-lg hover:bg-amber-800 shrink-0 ml-2"
+            className="px-2 py-1 text-[11px] font-medium bg-amber-700 text-white rounded-lg hover:bg-amber-800 shrink-0 ml-2 cursor-pointer"
           >
             Allow
           </button>
@@ -94,8 +119,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
                 <span>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 {!item.read && (
                   <button
-                    onClick={() => notificationService.markAsRead(item.id)}
-                    className="hover:text-stone-800 dark:hover:text-stone-200 font-medium"
+                    onClick={() => {
+                      notificationService.markAsRead(item.id);
+                      soundFx.playCheck();
+                    }}
+                    className="hover:text-stone-800 dark:hover:text-stone-200 font-medium cursor-pointer"
                   >
                     Mark read
                   </button>
@@ -112,16 +140,29 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
           onClick={() => {
             soundFx.playChime();
           }}
-          className="flex items-center gap-1 hover:text-stone-800 dark:hover:text-stone-200"
+          className="flex items-center gap-1 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
         >
           <Volume2 size={13} /> Test sound
         </button>
 
         <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="flex items-center gap-1 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
+              title="Mark all as read"
+            >
+              <CheckCheck size={13} /> Mark all read
+            </button>
+          )}
           {notifications.length > 0 && (
             <button
-              onClick={() => notificationService.clearAll()}
-              className="flex items-center gap-1 hover:text-rose-600 dark:hover:text-rose-400"
+              onClick={() => {
+                notificationService.clearAll();
+                soundFx.playDrop();
+              }}
+              className="flex items-center gap-1 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
+              title="Clear all notifications"
             >
               <Trash2 size={13} /> Clear
             </button>
