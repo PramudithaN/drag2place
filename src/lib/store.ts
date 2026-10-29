@@ -782,16 +782,63 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         ? 320
         : 340;
 
-    let posX = position ? position.x : -currentBoard.pan.x + 250;
-    let posY = position ? position.y : -currentBoard.pan.y + 150;
+    let posX = 0;
+    let posY = 0;
     let assignedSectionId: string | undefined;
+    let shouldFocusCanvas = false;
+    let targetPanX = currentBoard.pan.x;
+    let targetPanY = currentBoard.pan.y;
 
-    // Check if user has a section selected or if position falls inside a section
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1400;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const zoom = Math.max(0.1, currentBoard.zoom || 1);
+    const panX = currentBoard.pan.x;
+    const panY = currentBoard.pan.y;
+
+    // Viewport bounds in world canvas coordinates
+    const viewLeft = -panX;
+    const viewTop = -panY;
+    const viewRight = (winW / zoom) - panX;
+    const viewBottom = (winH / zoom) - panY;
+
+    // Usable focused area avoiding top header (~80px), bottom dock (~115px), and margins (~48px)
+    const topInset = 80 / zoom;
+    const bottomInset = 115 / zoom;
+    const sideInset = 48 / zoom;
+
+    const focusedLeft = viewLeft + sideInset;
+    const focusedTop = viewTop + topInset;
+    const focusedRight = viewRight - sideInset;
+    const focusedBottom = viewBottom - bottomInset;
+
+    const hasCollision = (x: number, y: number, w: number, h: number, margin = 20) => {
+      return activeCards.some((c) => {
+        const overlapX = x < c.x + c.width + margin && x + w + margin > c.x;
+        const overlapY = y < c.y + c.height + margin && y + h + margin > c.y;
+        return overlapX && overlapY;
+      });
+    };
+
+    // Check if user has a section selected
     const targetSection = !position && selectedSectionId
       ? allSections.find((s) => s.id === selectedSectionId && s.boardId === activeBoardId)
       : null;
 
-    if (targetSection) {
+    if (position) {
+      posX = position.x;
+      posY = position.y;
+      const container = allSections.find(
+        (s) =>
+          s.boardId === activeBoardId &&
+          posX >= s.x &&
+          posX <= s.x + s.width &&
+          posY >= s.y &&
+          posY <= s.y + s.height
+      );
+      if (container) {
+        assignedSectionId = container.id;
+      }
+    } else if (targetSection) {
       assignedSectionId = targetSection.id;
 
       // Cards that currently belong to this section
@@ -867,46 +914,147 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           ),
         }));
       }
-    } else if (position) {
-      const container = allSections.find(
-        (s) =>
-          s.boardId === activeBoardId &&
-          posX >= s.x &&
-          posX <= s.x + s.width &&
-          posY >= s.y &&
-          posY <= s.y + s.height
-      );
-      if (container) {
-        assignedSectionId = container.id;
+
+      // If the placed card inside section is out of the focused viewport, focus canvas to it
+      const inViewport =
+        posX >= focusedLeft &&
+        posX + targetCardWidth <= focusedRight &&
+        posY >= focusedTop &&
+        posY + cardHeight <= focusedBottom;
+
+      if (!inViewport) {
+        shouldFocusCanvas = true;
+        const cardCenterX = posX + targetCardWidth / 2;
+        const cardCenterY = posY + cardHeight / 2;
+        targetPanX = Math.round(winW / (2 * zoom) - cardCenterX);
+        targetPanY = Math.round(winH / (2 * zoom) - cardCenterY);
       }
-    } else if (!position && activeCards.length > 0) {
-      // Smart collision-free placement: when spawning from dock, find nearest vacant spot
-      const padding = 32;
-      let collision = true;
-      let attempts = 0;
-      const maxCols = 3;
-      let col = 0;
-      let row = 0;
-      const originX = posX;
-      const originY = posY;
+    } else {
+      // Automatic intelligent placement:
+      // 1. Check if there is space in the focused canvas area; place it there.
+      // 2. If no space in focused canvas area, place it in the next available space and focus the canvas there.
+      const padding = 28;
+      const availW = focusedRight - focusedLeft;
+      const availH = focusedBottom - focusedTop;
+      let foundInFocus = false;
 
-      while (collision && attempts < 30) {
-        collision = activeCards.some((c) => {
-          const overlapX = posX < c.x + c.width + padding && posX + targetCardWidth + padding > c.x;
-          const overlapY = posY < c.y + c.height + padding && posY + cardHeight + padding > c.y;
-          return overlapX && overlapY;
-        });
+      if (availW >= targetCardWidth && availH >= cardHeight) {
+        // Step 1A: Check near the center of the focused canvas area
+        const centerCandX = Math.round(focusedLeft + (availW - targetCardWidth) / 2);
+        const centerCandY = Math.round(focusedTop + (availH - cardHeight) / 2);
 
-        if (collision) {
-          col++;
-          if (col >= maxCols) {
-            col = 0;
-            row++;
+        if (!hasCollision(centerCandX, centerCandY, targetCardWidth, cardHeight)) {
+          foundInFocus = true;
+          posX = centerCandX;
+          posY = centerCandY;
+        } else {
+          // Step 1B: Scan available slots in a grid inside the focused viewport
+          const colStep = targetCardWidth + padding;
+          const rowStep = cardHeight + padding;
+          const numCols = Math.max(1, Math.floor((availW + padding) / colStep));
+          const numRows = Math.max(1, Math.floor((availH + padding) / rowStep));
+
+          const gridOffsetX = focusedLeft + Math.max(0, (availW - (numCols * targetCardWidth + (numCols - 1) * padding)) / 2);
+          const gridOffsetY = focusedTop + Math.max(0, (availH - (numRows * cardHeight + (numRows - 1) * padding)) / 2);
+
+          for (let r = 0; r < numRows; r++) {
+            for (let c = 0; c < numCols; c++) {
+              const candX = Math.round(gridOffsetX + c * colStep);
+              const candY = Math.round(gridOffsetY + r * rowStep);
+
+              if (candX + targetCardWidth <= focusedRight + 12 && candY + cardHeight <= focusedBottom + 12) {
+                if (!hasCollision(candX, candY, targetCardWidth, cardHeight)) {
+                  foundInFocus = true;
+                  posX = candX;
+                  posY = candY;
+                  break;
+                }
+              }
+            }
+            if (foundInFocus) break;
           }
-          posX = originX + col * (targetCardWidth + padding);
-          posY = originY + row * (cardHeight + padding);
+
+          // Step 1C: If grid scan was obstructed, test natural offsets adjacent to visible cards
+          if (!foundInFocus) {
+            const visibleCards = activeCards.filter(
+              (c) =>
+                c.x < focusedRight &&
+                c.x + c.width > focusedLeft &&
+                c.y < focusedBottom &&
+                c.y + c.height > focusedTop
+            );
+
+            for (const vc of visibleCards) {
+              const adjacentCandidates = [
+                { x: vc.x + vc.width + padding, y: vc.y },
+                { x: vc.x, y: vc.y + vc.height + padding },
+                { x: vc.x - targetCardWidth - padding, y: vc.y },
+                { x: vc.x, y: vc.y - cardHeight - padding },
+              ];
+
+              for (const cand of adjacentCandidates) {
+                if (
+                  cand.x >= focusedLeft - 8 &&
+                  cand.x + targetCardWidth <= focusedRight + 8 &&
+                  cand.y >= focusedTop - 8 &&
+                  cand.y + cardHeight <= focusedBottom + 8
+                ) {
+                  if (!hasCollision(cand.x, cand.y, targetCardWidth, cardHeight)) {
+                    foundInFocus = true;
+                    posX = Math.round(cand.x);
+                    posY = Math.round(cand.y);
+                    break;
+                  }
+                }
+              }
+              if (foundInFocus) break;
+            }
+          }
+        }
+      }
+
+      // Step 2: If no space in focused canvas area, place it in an available space next and focus the canvas there
+      if (!foundInFocus) {
+        const startNextX = focusedRight + padding;
+        const startNextY = focusedTop;
+        const colStep = targetCardWidth + padding;
+        const rowStep = cardHeight + padding;
+        const maxRowsToSearch = Math.max(2, Math.floor((availH + padding) / rowStep));
+
+        let nextCol = 0;
+        let nextRow = 0;
+        let nextFound = false;
+        let attempts = 0;
+
+        while (!nextFound && attempts < 80) {
+          const candX = Math.round(startNextX + nextCol * colStep);
+          const candY = Math.round(startNextY + nextRow * rowStep);
+
+          if (!hasCollision(candX, candY, targetCardWidth, cardHeight)) {
+            nextFound = true;
+            posX = candX;
+            posY = candY;
+          } else {
+            nextRow++;
+            if (nextRow >= maxRowsToSearch) {
+              nextRow = 0;
+              nextCol++;
+            }
+          }
           attempts++;
         }
+
+        if (!nextFound) {
+          const maxActiveX = activeCards.reduce((max, c) => Math.max(max, c.x + c.width), focusedRight);
+          posX = maxActiveX + padding * 2;
+          posY = focusedTop;
+        }
+
+        shouldFocusCanvas = true;
+        const cardCenterX = posX + targetCardWidth / 2;
+        const cardCenterY = posY + cardHeight / 2;
+        targetPanX = Math.round(winW / (2 * zoom) - cardCenterX);
+        targetPanY = Math.round(winH / (2 * zoom) - cardCenterY);
       }
     }
 
@@ -1029,10 +1177,25 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     soundFx.playDrop();
 
-    set((state) => ({
-      allCards: [...state.allCards, newCard],
-      selectedCardIds: [newCard.id],
-    }));
+    set((state) => {
+      const nextCurrentBoard = shouldFocusCanvas
+        ? {
+            ...state.currentBoard,
+            pan: { x: targetPanX, y: targetPanY },
+          }
+        : state.currentBoard;
+
+      const nextBoards = shouldFocusCanvas
+        ? state.boards.map((b) => (b.id === state.currentBoard.id ? nextCurrentBoard : b))
+        : state.boards;
+
+      return {
+        allCards: [...state.allCards, newCard],
+        selectedCardIds: [newCard.id],
+        currentBoard: nextCurrentBoard,
+        boards: nextBoards,
+      };
+    });
 
     get().saveBoardLocally();
     return newCard;
