@@ -68,7 +68,7 @@ flowchart TD
 
 - **Isolated Boards**: Create independent spatial contexts (e.g., Daily Scratchpad, Engineering Roadmap, Creative Moodboard).
 - **Workspace Switcher**: Top navigation menu for instantaneous board transitions.
-- **Board Management**: Inline workspace renaming and safe deletion with confirmation modals.
+- **Board Management**: Inline workspace renaming and safe two-click inline workspace deletion with active board failover, drop sound effects, and persistent local/cloud synchronization.
 - **Independent State**: Each workspace preserves its own viewport coordinates, zoom levels, card collections, and connection graphs.
 
 ### 3. Visual Card Suite (13 Dynamic Types)

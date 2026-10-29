@@ -383,7 +383,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const baseTemplate = WORKSPACE_MODES[mode];
     const template = (scenarioId && baseTemplate?.subScenarios?.find((s) => s.id === scenarioId)) || baseTemplate;
     if (!template) return get().currentBoard;
-    const newBoardId = `board-${mode}-${Date.now().toString(36)}`;
+    const newBoardId = `board-${mode}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
     const newBoard: Board = {
       id: newBoardId,
       title: template.boardTitle,
@@ -398,7 +398,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     const createdCards: Card[] = template.cards.map((c, idx) => ({
       ...c,
-      id: `card-${mode}-${Date.now()}-${idx}`,
+      id: `card-${mode}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}-${idx}`,
       boardId: newBoardId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -439,9 +439,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const targetBoard = boards.find((b) => b.id === boardId);
     const boardTitle = targetBoard?.title || 'workspace';
     const remainingBoards = boards.filter((b) => b.id !== boardId);
+    if (remainingBoards.length === 0) return;
+
     const nextActive = (activeBoardId === boardId || get().currentBoard.id === boardId)
       ? remainingBoards[0]
-      : get().currentBoard;
+      : (remainingBoards.find((b) => b.id === activeBoardId) || remainingBoards[0]);
 
     soundFx.playDrop();
     set((state) => ({
@@ -1429,8 +1431,24 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       let boardsList = INITIAL_BOARDS;
       if (savedBoards) {
-        boardsList = JSON.parse(savedBoards);
-        set({ boards: boardsList });
+        try {
+          const parsed = JSON.parse(savedBoards);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Deduplicate IDs so every board can be uniquely switched & deleted
+            const seenIds = new Set<string>();
+            boardsList = parsed.map((b: Board, idx: number) => {
+              let id = b.id || `board-${idx}-${Date.now().toString(36)}`;
+              if (seenIds.has(id)) {
+                id = `${id}-dup-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+              }
+              seenIds.add(id);
+              return { ...b, id };
+            });
+            set({ boards: boardsList });
+          }
+        } catch {
+          boardsList = INITIAL_BOARDS;
+        }
       }
 
       const activeId = savedActiveBoardId && boardsList.some((b) => b.id === savedActiveBoardId)

@@ -77,7 +77,7 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={ariaLabel}
-      className={`fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150 ${overlayClassName}`}
+      className={`fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-stone-900/50 dark:bg-black/70 backdrop-blur-xs animate-in fade-in duration-150 ${overlayClassName}`}
       onClick={handleBackdropClick}
       onWheel={(e) => e.stopPropagation()}
     >
