@@ -22,13 +22,14 @@ interface SectionFrameProps {
 
 export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => {
   const {
-    moveSection,
     updateSection,
+    updateSectionPositionAndCards,
     deleteSection,
     openConfirmModal,
     selectedSectionId,
     selectSection,
     clearSelection,
+    saveBoardLocally,
   } = useBoardStore();
 
   const isSelected = selectedSectionId === section.id;
@@ -39,7 +40,6 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
-  const dragStartRef = useRef<{ mouseX: number; mouseY: number }>({ mouseX: 0, mouseY: 0 });
   const resizeStartRef = useRef<{ width: number; height: number; mouseX: number; mouseY: number }>({
     width: section.width,
     height: section.height,
@@ -68,33 +68,124 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
     });
   };
 
-  // Dragging section moves section + all contained cards
+  // High-performance, zero-delay dragging for mouse
   const handleDragStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDragging(true);
-    dragStartRef.current = { mouseX: e.clientX, mouseY: e.clientY };
+
+    const startMouseX = e.clientX;
+    const startMouseY = e.clientY;
+    const initialSectionX = section.x;
+    const initialSectionY = section.y;
+
+    // Snapshot cards inside this section once at drag start
+    const allCards = useBoardStore.getState().allCards;
+    const containedCards = allCards
+      .filter((c) => {
+        if (c.boardId !== section.boardId) return false;
+        if (c.sectionId === section.id) return true;
+        const centerX = c.x + c.width / 2;
+        const centerY = c.y + c.height / 2;
+        return (
+          centerX >= section.x &&
+          centerX <= section.x + section.width &&
+          centerY >= section.y &&
+          centerY <= section.y + section.height
+        );
+      })
+      .map((c) => ({ id: c.id, x: c.x, y: c.y }));
+
+    document.body.style.cursor = 'grabbing';
+    document.body.style.userSelect = 'none';
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = (moveEvent.clientX - dragStartRef.current.mouseX) / zoom;
-      const deltaY = (moveEvent.clientY - dragStartRef.current.mouseY) / zoom;
+      const deltaX = (moveEvent.clientX - startMouseX) / zoom;
+      const deltaY = (moveEvent.clientY - startMouseY) / zoom;
 
-      if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5) {
-        moveSection(section.id, deltaX, deltaY);
-        dragStartRef.current = { mouseX: moveEvent.clientX, mouseY: moveEvent.clientY };
-      }
+      updateSectionPositionAndCards(
+        section.id,
+        initialSectionX + deltaX,
+        initialSectionY + deltaY,
+        containedCards.map((c) => ({
+          id: c.id,
+          x: c.x + deltaX,
+          y: c.y + deltaY,
+        }))
+      );
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      saveBoardLocally();
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Resizing section frame bounds
+  // High-performance, zero-delay dragging for touch devices
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    setIsDragging(true);
+
+    const touch = e.touches[0];
+    const startTouchX = touch.clientX;
+    const startTouchY = touch.clientY;
+    const initialSectionX = section.x;
+    const initialSectionY = section.y;
+
+    const allCards = useBoardStore.getState().allCards;
+    const containedCards = allCards
+      .filter((c) => {
+        if (c.boardId !== section.boardId) return false;
+        if (c.sectionId === section.id) return true;
+        const centerX = c.x + c.width / 2;
+        const centerY = c.y + c.height / 2;
+        return (
+          centerX >= section.x &&
+          centerX <= section.x + section.width &&
+          centerY >= section.y &&
+          centerY <= section.y + section.height
+        );
+      })
+      .map((c) => ({ id: c.id, x: c.x, y: c.y }));
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      if (moveEvent.touches.length !== 1) return;
+      moveEvent.preventDefault();
+      const currentTouch = moveEvent.touches[0];
+      const deltaX = (currentTouch.clientX - startTouchX) / zoom;
+      const deltaY = (currentTouch.clientY - startTouchY) / zoom;
+
+      updateSectionPositionAndCards(
+        section.id,
+        initialSectionX + deltaX,
+        initialSectionY + deltaY,
+        containedCards.map((c) => ({
+          id: c.id,
+          x: c.x + deltaX,
+          y: c.y + deltaY,
+        }))
+      );
+    };
+
+    const handleTouchEnd = () => {
+      setIsDragging(false);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      saveBoardLocally();
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+  };
+
+  // Resizing section frame bounds with zero-delay feedback
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsResizing(true);
@@ -122,6 +213,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
       setIsResizing(false);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      saveBoardLocally();
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -142,14 +234,17 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
         transform: `translate3d(${section.x}px, ${section.y}px, 0px)`,
         width: `${section.width}px`,
         height: `${section.height}px`,
-        zIndex: 5,
+        zIndex: isDragging ? 30 : 5,
+        willChange: isDragging || isResizing ? 'transform' : 'auto',
       }}
-      className={`absolute rounded-3xl border-2 transition-all select-none ${colorClass} ${
+      className={`absolute rounded-3xl border-2 select-none ${colorClass} ${
+        isDragging || isResizing
+          ? 'transition-none opacity-95 ring-2 ring-amber-500/50 shadow-xl'
+          : 'transition-all duration-200'
+      } ${
         isSelected
           ? 'border-amber-500/90 ring-2 ring-amber-500/70 border-solid shadow-xl'
           : 'border-dashed'
-      } ${
-        isDragging ? 'opacity-90 ring-2 ring-amber-500/30' : ''
       }`}
     >
       {/* Section Header Bar */}
@@ -159,7 +254,16 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
           clearSelection();
           handleDragStart(e);
         }}
-        className={`group absolute -top-11 left-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl backdrop-blur-md border shadow-sm text-stone-700 dark:text-stone-300 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${
+        onTouchStart={(e) => {
+          selectSection(section.id);
+          clearSelection();
+          handleTouchStart(e);
+        }}
+        className={`group absolute -top-11 left-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl backdrop-blur-md border shadow-sm text-stone-700 dark:text-stone-300 ${
+          isDragging
+            ? 'transition-none cursor-grabbing shadow-lg'
+            : 'transition-all duration-200 cursor-grab active:cursor-grabbing hover:shadow-md'
+        } ${
           isSelected
             ? 'bg-[#FAF8F5] dark:bg-[#1E1C19] border-amber-500 ring-2 ring-amber-500/40'
             : 'bg-[#FAF8F5]/90 dark:bg-[#1E1C19]/90 border-[#E5DFD5] dark:border-[#38332B]'
@@ -217,7 +321,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
               e.stopPropagation();
               setShowColorPicker(!showColorPicker);
             }}
-            className="p-1 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 transition-colors"
+            className="p-1 hover:bg-stone-200/60 dark:hover:bg-stone-800 rounded-md text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 transition-colors cursor-pointer"
             title="Change section frame tone"
           >
             <Palette size={12} />
@@ -235,7 +339,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
                     updateSection(section.id, { color: c });
                     setShowColorPicker(false);
                   }}
-                  className={`w-4 h-4 rounded-full border border-stone-300 dark:border-stone-700 hover:scale-125 transition-transform ${
+                  className={`w-4 h-4 rounded-full border border-stone-300 dark:border-stone-700 hover:scale-125 transition-transform cursor-pointer ${
                     c === 'cream' ? 'bg-[#FDF8EE]' : c === 'sage' ? 'bg-[#F0F6F2]' : c === 'amber' ? 'bg-[#FCF6E8]' : c === 'sky' ? 'bg-[#F0F6FB]' : c === 'lavender' ? 'bg-[#F6F2FC]' : c === 'terracotta' ? 'bg-[#FDF2ED]' : 'bg-white'
                   }`}
                   title={c}
@@ -249,7 +353,7 @@ export const SectionFrame: React.FC<SectionFrameProps> = ({ section, zoom }) => 
         <button
           type="button"
           onClick={handleDelete}
-          className="p-1 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 rounded-md text-stone-400 dark:text-stone-500 transition-colors"
+          className="p-1 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 rounded-md text-stone-400 dark:text-stone-500 transition-colors cursor-pointer"
           title="Delete Section Frame"
         >
           <Trash2 size={12} />

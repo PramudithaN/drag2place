@@ -44,6 +44,12 @@ interface BoardState {
   addSection: (title?: string, position?: { x: number; y: number }, size?: { width: number; height: number }, color?: CardColor) => BoardSection;
   updateSection: (id: string, updates: Partial<BoardSection>) => void;
   moveSection: (id: string, deltaX: number, deltaY: number) => void;
+  updateSectionPositionAndCards: (
+    sectionId: string,
+    sectionX: number,
+    sectionY: number,
+    cardPositions: { id: string; x: number; y: number }[]
+  ) => void;
   deleteSection: (id: string) => void;
 
   // Search & Spotlight Filtering
@@ -269,6 +275,27 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     get().saveBoardLocally();
   },
 
+  updateSectionPositionAndCards: (sectionId, sectionX, sectionY, cardPositions) => {
+    set((state) => {
+      const cardPosMap = new Map(cardPositions.map((cp) => [cp.id, cp]));
+      return {
+        allSections: state.allSections.map((s) =>
+          s.id === sectionId ? { ...s, x: sectionX, y: sectionY } : s
+        ),
+        allCards:
+          cardPositions.length === 0
+            ? state.allCards
+            : state.allCards.map((c) => {
+                const pos = cardPosMap.get(c.id);
+                if (pos) {
+                  return { ...c, x: pos.x, y: pos.y, sectionId };
+                }
+                return c;
+              }),
+      };
+    });
+  },
+
   moveSection: (id, deltaX, deltaY) => {
     set((state) => {
       const section = state.allSections.find((s) => s.id === id);
@@ -280,6 +307,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       // Cards inside this section prior to movement
       const cardsInside = state.allCards.filter((c) => {
         if (c.boardId !== section.boardId) return false;
+        if (c.sectionId === section.id) return true;
         const centerX = c.x + c.width / 2;
         const centerY = c.y + c.height / 2;
         return (
@@ -303,6 +331,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
               ...c,
               x: c.x + deltaX,
               y: c.y + deltaY,
+              sectionId: id,
               updatedAt: now,
             };
           }
@@ -310,7 +339,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         }),
       };
     });
-    get().saveBoardLocally();
   },
 
   deleteSection: (id) => {
