@@ -173,6 +173,7 @@ interface DockItemProps {
   active?: boolean;
   onHover?: () => void;
   onLeave?: () => void;
+  dataTrigger?: string;
 }
 
 const DockItem: React.FC<DockItemProps> = ({
@@ -182,12 +183,14 @@ const DockItem: React.FC<DockItemProps> = ({
   active,
   onHover,
   onLeave,
+  dataTrigger,
 }) => {
   return (
     <motion.button
       whileHover={{ scale: 1.15, y: -4 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
+      data-catalog-trigger={dataTrigger}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
       title={label}
@@ -243,8 +246,11 @@ export const FloatingDock: React.FC = () => {
   // Close catalog on outside click
   useEffect(() => {
     if (!showCatalog) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (target.closest('[data-catalog-trigger="true"]')) return;
+      if (popoverRef.current && !popoverRef.current.contains(target)) {
         setShowCatalog(false);
       }
     };
@@ -252,10 +258,12 @@ export const FloatingDock: React.FC = () => {
       if (e.key === 'Escape') setShowCatalog(false);
     };
 
-    window.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('mousedown', handleClickOutside, true);
+    window.addEventListener('touchstart', handleClickOutside, true);
     window.addEventListener('keydown', handleKeyDown);
     return () => {
-      window.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('mousedown', handleClickOutside, true);
+      window.removeEventListener('touchstart', handleClickOutside, true);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showCatalog]);
@@ -436,6 +444,7 @@ export const FloatingDock: React.FC = () => {
 
         {/* "+ More Cards" Popover Trigger */}
         <DockItem
+          dataTrigger="true"
           icon={<LayoutGrid className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-amber-700 dark:text-amber-400" />}
           label="More Card Types (+)"
           onClick={() => setShowCatalog(!showCatalog)}

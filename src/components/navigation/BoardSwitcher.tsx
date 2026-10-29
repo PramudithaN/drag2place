@@ -47,6 +47,20 @@ export const BoardSwitcher: React.FC<BoardSwitcherProps> = ({ onOpenModes }) => 
     isOpen || isCreating || Boolean(deletingBoardId)
   );
 
+  // Dismiss on Escape key
+  React.useEffect(() => {
+    if (!isOpen && !isCreating && !deletingBoardId) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+        setIsCreating(false);
+        setDeletingBoardId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isCreating, deletingBoardId]);
+
   const handleSaveTitle = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (editingTitle.trim()) {

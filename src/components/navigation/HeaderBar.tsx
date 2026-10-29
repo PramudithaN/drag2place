@@ -271,6 +271,7 @@ export const HeaderBar: React.FC = () => {
 
           {/* Notification bell */}
           <button
+            data-notification-trigger="true"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className="relative p-2.5 bg-[#FAF8F5]/90 dark:bg-[#1C1A17]/90 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-2xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
             title="Notifications & Reminders"
@@ -329,6 +330,7 @@ export const HeaderBar: React.FC = () => {
 
           {/* Notification Bell */}
           <button
+            data-notification-trigger="true"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
             className="relative p-2 bg-[#FAF8F5]/95 dark:bg-[#1C1A17]/95 hover:bg-[#F2ECE2] dark:hover:bg-[#2A2724] backdrop-blur-md border border-[#E7E0D4] dark:border-[#33302A] rounded-xl text-stone-700 dark:text-stone-300 shadow-sm transition-colors"
             title="Notifications"

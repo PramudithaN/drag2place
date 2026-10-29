@@ -24,7 +24,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, 
   }, []);
 
   // Click outside to close notification center
-  useClickOutside(drawerRef, onClose, isOpen);
+  useClickOutside(drawerRef, onClose, isOpen, '[data-notification-trigger="true"]');
+
+  // Dismiss on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleRequestPermission = async () => {
     const status = await notificationService.requestPermission();
